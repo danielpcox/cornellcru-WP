@@ -31,7 +31,7 @@ Template Name:No sidebar, No comment
 
       <div id="posts">
             <div class="post">
-                test
+              <?php the_content(); ?>
             </div><!--/#posts-->
       </div>
   <?php } ?>
