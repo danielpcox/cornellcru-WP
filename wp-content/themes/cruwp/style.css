@@ -832,3 +832,11 @@ BODY {
 
 
 /* #####################  end FROM MASTER MOCKUP ######################## */
+
+
+/* Salvaged from the piano-black style.css: */
+
+
+#return_top a { position:absolute; position:fixed; right:0; bottom:15px;
+display:block; height:138px; width:38px; background:url(img/return-top.png) no-repeat left top; }
+#return_top a:hover { background:url(img/return-top.png) no-repeat right top; text-decoration:none; }

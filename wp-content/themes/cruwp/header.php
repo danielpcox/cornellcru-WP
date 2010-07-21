@@ -37,6 +37,7 @@
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/jscript.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/comment.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/jquery.js"></script>
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/easySlider1.7.js"></script>
 </head>
 <body>
     <div id="header">
@@ -52,12 +53,14 @@
           </form>
          <?php endif; ?>
         <?php endif; ?>
+<!-- these are hidden until i know how to style them TODO
         <?php if ($options['header_rss']) : ?>
         <a href="<?php bloginfo('rss2_url'); ?>" id="rss-feed" title="<?php _e('Entries RSS','cruwp'); ?>" ><?php _e('RSS','cruwp'); ?></a>
         <?php endif; ?>
         <?php if ($options['header_twitter']) : ?>
         <a href="<?php echo $options['twitter_url']; ?>" id="twitter" title="<?php _e('TWITTER','cruwp'); ?>" ><?php _e('Twitter','cruwp'); ?></a>
         <?php endif; ?>
+-->
     </div><!--/#header-->
 
     <ul id="navigation">
