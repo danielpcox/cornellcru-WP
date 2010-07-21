@@ -36,8 +36,24 @@
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/scroll.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/jscript.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/comment.js"></script>
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/jquery.js"></script>
 </head>
 <body>
+    <div id="header">
+      <a href="/" id="logo">Cornell Campus Crusade for Christ</a><!--/#logo-->
+        <?php if ($options['header_search']) : ?>
+         <?php if ($options['use_google_search']) : ?>
+         <form action="http://www.google.com/cse" method="get" id="search">
+          <input type="text" value="<?php _e('Google Search','cruwp'); ?>" name="q" id="search-box" />
+         </form>
+         <?php else: ?>
+          <form method="get" id="search" action="<?php bloginfo('home'); ?>/">
+           <input type="text" value="<?php _e('Search','cruwp'); ?>" name="s" id="search-box" />
+          </form>
+         <?php endif; ?>
+        <?php endif; ?>
+    </div><!--/#header-->
+
 <div id="wrapper">
  <div id="contents">
 
