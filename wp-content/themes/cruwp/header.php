@@ -64,3 +64,18 @@
       <li class="<?php if (!is_paged() && is_home()) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo get_settings('home'); ?>/"><?php _e('HOME','cruwp'); ?></a></li>
       <?php wp_list_pages('sort_column=menu_order&depth=0&title_li=&exclude=' . $options['exclude_pages']); ?>
     </ul><!--/#navigation-->
+
+<script lang=javascript>
+	$(document).ready(function(){	
+		$("#hero").easySlider({
+			auto: true, 
+			continuous: true,
+			controlsShow: true,
+            numeric: true,
+			speed: 700,
+			pause: 5000
+		});
+        $("#hero").css({ width: "880px",height: "350px" });
+	});	
+</script>
+

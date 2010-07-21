@@ -8,6 +8,7 @@
   <span id="copy">&copy; Copyright 2010</span><!--/#copy-->
   <br />
   <span id="name">Cornell Campus Crusade for Christ</span><!--/#name-->
+  <?php wp_footer(); ?>
 </div><!--/#footer-->
 </body>
 </html>

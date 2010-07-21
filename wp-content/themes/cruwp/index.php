@@ -1,20 +1,6 @@
 <?php get_header(); ?>
 <?php $options = get_option('pb_options'); ?>
 
-<script lang=javascript>
-	$(document).ready(function(){	
-		$("#hero").easySlider({
-			auto: true, 
-			continuous: true,
-			controlsShow: true,
-            numeric: true,
-			speed: 700,
-			pause: 5000
-		});
-        $("#hero").css({ width: "880px",height: "350px" });
-	});	
-</script>
-
 <div id="hero">
   <ul>
     <li><a href="http://twitter.com/cornellcru"><img src="<?php bloginfo('template_url'); ?>/images/carousel_1.png" /></a></li>
@@ -67,6 +53,12 @@
       </li><!--/.post-->
     <?php endwhile; ?>
   </ul><!--/#posts-->
+  <?php else: ?> <!-- that is, if !have_posts() -->
+      <div class="common-navi-wrapper">
+        <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
+      </div>
+  <?php endif; ?>
+
 </div><!--/#blog-->
 
 <?php if (function_exists('wp_pagenavi')) { wp_pagenavi(); } else { include('navigation.php'); } ?>
@@ -75,12 +67,6 @@
 <ul id="pagination">
 </ul>
 -->
-
-<?php else: ?> <!-- that is, if !have_posts() -->
-    <div class="common-navi-wrapper">
-      <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
-    </div>
-<?php endif; ?>
 
 
 <?php //get_sidebar(); ?> <!-- TODO: style the sidebar -->
