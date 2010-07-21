@@ -24,66 +24,65 @@
   </ul>
 </div><!--/#hero-->
 
+<ul id="call-to-action">
+  <li class="cta" id="real-life">
+    <a href="real-life">Real Life<span class='subtitle'>our weekly large group meetings</span></a>
+  </li>
+  
+  <li class="cta" id="jesus-and-the-gospel">
+    <a href="Jesus-and-the-gospel">Jesus &amp;<br />The Gospel</a>
+  </li>
 
+  <li class="cta" id="community-groups">
+    <a href="community-groups">Community Groups<span class='subtitle'>our small group meetings</span></a>
+  </li>
+</ul><!--/#call-to-action-->
 
+<div id="blog">
+  <h1>The Cru Blog</h1>
+  <?php if ($options['header_rss']) : ?>
+    <a href="<?php bloginfo('rss2_url'); ?>" id="blog-subscribe" title="<?php _e('Entries RSS','cruwp'); ?>" >subscribe</a>
+  <?php endif; ?>
+<!-- Gonna have to figure out how to do these filters using the wordpress stuff
+  <ul id="filters">
+    <li><%= link_to 'By Date' %></li>
+    <li><%= link_to 'By Author' %></li>
+  </ul>--><!--/#filters-->
 
-
-
-
-
-
-
-
-
-
-
-
-
-  <div id="middle-contents" class="clearfix">
-
-   <div id="left-col">
-<?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
-
-    <div class="post">
-     <h2><a href="<?php the_permalink() ?>"><?php the_title(); ?></a></h2>
-     <ul class="post-info">
-      <li><?php the_time(__('F jS, Y', 'cruwp')) ?></li>
-      <?php if ($options['author']) : ?><li><?php _e('By ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
-      <li class="write-comment"><a href="<?php the_permalink() ?>#comments"><?php _e('Write comment','cruwp'); ?></a></li>
-      <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
-     </ul>
-     <div class="post-content">
+  <ul id="posts">
+    <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
+      <li class="post">
+          <h2><a href="<?php the_permalink() ?>"><?php the_title(); ?></a></h2>
+          <ul class="meta">
+            <li class="date"><?php the_time(__('F jS, Y', 'cruwp')) ?></li>
+            <?php if ($options['author']) : ?><li class="author"><?php _e('by ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
+            <li class="comments"><?php comments_popup_link(__('Write comment', 'cruwp'), __('1 comment', 'cruwp'), __('% comments', 'cruwp')); ?></li>
+            <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
+          </ul><!--/.meta-->
        <?php the_content(__('Read more', 'cruwp')); ?>
        <?php wp_link_pages(); ?>
-     </div>
-    </div>
-    <div class="post-meta">
-     <ul class="clearfix">
-      <?php if($options['post_meta_type'] == 'category') { ?>
-      <li class="post-category"><?php the_category(' . '); ?></li>
-      <?php } else { ?>
-      <?php the_tags('<li class="post-tag">', ' . ', '</li>'); ?>
-      <?php } ?>
-      <li class="post-comment"><?php comments_popup_link(__('Write comment', 'cruwp'), __('1 comment', 'cruwp'), __('% comments', 'cruwp')); ?></li>
-     </ul>
-    </div>
-
-<?php endwhile; ?>
+       <?php the_category(' . '); ?>
+       <?php the_tags('<li class="post-tag">', ' . ', '</li>'); ?>
+       
+      </li><!--/.post-->
+    <?php endwhile; ?>
+  </ul><!--/#posts-->
+</div><!--/#blog-->
 
 <?php if (function_exists('wp_pagenavi')) { wp_pagenavi(); } else { include('navigation.php'); } ?>
 
-<a href="#wrapper" id="back-top" class="clear"><?php _e('Return top','cruwp'); ?></a>
+<!-- We're gonna have to totally redo the pagination styling for wordpress
+<ul id="pagination">
+</ul>
+-->
 
-<?php else: ?>
+<?php else: ?> <!-- that is, if !have_posts() -->
     <div class="common-navi-wrapper">
       <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
     </div>
 <?php endif; ?>
 
-   </div><!-- #left-col end -->
 
-   <?php get_sidebar(); ?>
-
-  </div><!-- #middle-contents end -->
-
+<?php //get_sidebar(); ?> <!-- TODO: style the sidebar -->
 <?php get_footer(); ?>
+

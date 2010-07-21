@@ -54,9 +54,6 @@
          <?php endif; ?>
         <?php endif; ?>
 <!-- these are hidden until i know how to style them TODO
-        <?php if ($options['header_rss']) : ?>
-        <a href="<?php bloginfo('rss2_url'); ?>" id="rss-feed" title="<?php _e('Entries RSS','cruwp'); ?>" ><?php _e('RSS','cruwp'); ?></a>
-        <?php endif; ?>
         <?php if ($options['header_twitter']) : ?>
         <a href="<?php echo $options['twitter_url']; ?>" id="twitter" title="<?php _e('TWITTER','cruwp'); ?>" ><?php _e('Twitter','cruwp'); ?></a>
         <?php endif; ?>
