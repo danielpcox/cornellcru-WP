@@ -5,7 +5,7 @@ msgstr ""
 "POT-Creation-Date: 2010-05-17 18:58+0900\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Márcio Bremm <bremm@vtnc.org>\n"
-"Language-Team: mono-lab <mail@mono-lab.net>\n"
+"Language-Team: CornellCru <webmaster@cornellcru.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -477,8 +477,8 @@ msgid "Copyright &copy;&nbsp; "
 msgstr "Copyright &copy;&nbsp; "
 
 #: wp-content\themes\cruwp/sidebar.php:88
-msgid "Theme designed by <a href=\"http://www.mono-lab.net/\">mono-lab</a>"
-msgstr "Tema feito por <a href=\"http://www.mono-lab.net/\">mono-lab</a>"
+msgid "Theme designed by <a href=\"http://www.cornellcru.com/\">CornellCru</a>"
+msgstr "Tema feito por <a href=\"http://www.cornellcru.com/\">CornellCru</a>"
 
 #: wp-content\themes\cruwp/sidebar.php:89
 msgid "Powered by <a href=\"http://wordpress.org/\">WordPress</a>"

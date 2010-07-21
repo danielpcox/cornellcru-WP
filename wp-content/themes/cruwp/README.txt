@@ -5,13 +5,13 @@
   Version:2.2 (2010/06/06)
 
   Live demo
-  http://www.mono-lab.net/demo3/
+  http://www.cornellcru.com/demo3/
 
   Please send your translated files to
-  mail@mono-lab.net
+  webmaster@cornellcru.com
 
-  author:mono-lab
-  http://www.mono-lab.net/
+  Daniel Cox
+  http://www.cornellcru.com/
 
 ----------------------------------------------------------------------------
   Change log

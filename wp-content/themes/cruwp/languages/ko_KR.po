@@ -444,8 +444,8 @@ msgid "Copyright &copy;&nbsp; "
 msgstr "저작권 &copy;&nbsp; "
 
 #: wp-content\themes\cruwp/sidebar.php:81
-msgid "Theme designed by <a href=\"http://www.mono-lab.net/\">mono-lab</a>"
-msgstr "Theme designed by <a href=\"http://www.mono-lab.net/\">mono-lab</a>"
+msgid "Theme designed by <a href=\"http://www.cornellcru.com/\">CornellCru</a>"
+msgstr "Theme designed by <a href=\"http://www.cornellcru.com/\">CornellCru</a>"
 
 #: wp-content\themes\cruwp/sidebar.php:82
 msgid "Powered by <a href=\"http://wordpress.org/\">WordPress</a>"

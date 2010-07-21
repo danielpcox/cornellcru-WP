@@ -85,7 +85,7 @@
            }
        ?>
     &nbsp;<a href="<?php echo get_option('home'); ?>/"><?php bloginfo('name'); ?></a></li>
-   <li><?php _e('Theme designed by <a href="http://www.mono-lab.net/">mono-lab</a>','cruwp'); ?></li>
+   <li><?php _e('Theme designed by <a href="http://www.cornellcru.com/">CornellCru</a>','cruwp'); ?></li>
    <li id="wp"><?php _e('Powered by <a href="http://wordpress.org/">WordPress</a>','cruwp'); ?></li>
   </ul>
  </div>
