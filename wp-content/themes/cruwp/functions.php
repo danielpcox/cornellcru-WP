@@ -7,7 +7,7 @@ $cruwpDefaultOptions = array(
   'information_contents' => '',
   'use_wp_nav_menu' => false,
   'header_menu_type' => 'pages',
-  'include_pages' => '',
+  'exclude_pages' => '',
   'exclude_category' => '',
   'header_rss' => true,
   'header_twitter' => true,
@@ -87,7 +87,7 @@ function cruwp_add_theme_options() {
       // header menu
       $options['header_menu_type'] = stripslashes($_POST['header_menu_type']);
       // exclude pages
-      $options['include_pages'] = stripslashes($_POST['include_pages']);
+      $options['exclude_pages'] = stripslashes($_POST['exclude_pages']);
       // exclude category
       $options['exclude_category'] = stripslashes($_POST['exclude_category']);
 
