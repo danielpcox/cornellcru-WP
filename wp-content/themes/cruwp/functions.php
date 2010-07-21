@@ -214,7 +214,7 @@ function cruwp_add_theme_page () {
 <input name="header_menu_type" type="radio" value="categories" <?php if($options['header_menu_type'] == 'categories') echo "checked='checked'"; ?> /> <?php _e('Use categories for header menu.', 'cruwp'); ?>
 </p>
 <br />
-<p><?php _e('INCLUDE Pages<br />(Page ID\'s you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'cruwp'); ?></p>
+<p><?php _e('Exclude Pages<br />(Page ID\'s you don\'t want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'cruwp'); ?></p>
 <p><input type="text" name="exclude_pages" value="<?php echo($options['exclude_pages']); ?>" /></p>
 <br />
 <p><?php _e('Exclude Categories<br />(Category ID\'s you don\'t want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'cruwp'); ?></p>
