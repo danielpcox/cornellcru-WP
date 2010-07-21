@@ -264,11 +264,11 @@ msgid "Use categories for header menu."
 msgstr "Použít kategorie jako header menu."
 
 #: wp-content\themes\cruwp/functions.php:153
-msgid "Exclude Pages<br />(Page ID's you don't want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
+msgid "INCLUDE Pages<br />(Page ID's you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
 msgstr "Vyloučit stránky<br />(ID stránky, kterou nechcete zobrazit v navigaci headeru. Použijte čárkou oddělený seznam, například 1,2,3)"
 
 #: wp-content\themes\cruwp/functions.php:157
-msgid "Exclude Categories<br />(Category ID's you don't want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
+msgid "Exclude Categories<br />(Category ID's you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
 msgstr "Vyloučit kategorie<br />(ID kategorie, kterou nechcete zobrazit v navigaci headeru. Použijte čárkou oddělený seznam, například 1,2,3)"
 
 #: wp-content\themes\cruwp/functions.php:161

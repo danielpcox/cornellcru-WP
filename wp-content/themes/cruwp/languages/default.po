@@ -286,11 +286,11 @@ msgid "Use categories for header menu."
 msgstr ""
 
 #: wp-content\themes\cruwp/functions.php:209
-msgid "Exclude Pages<br />(Page ID's you don't want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
+msgid "INCLUDE Pages<br />(Page ID's you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
 msgstr ""
 
 #: wp-content\themes\cruwp/functions.php:212
-msgid "Exclude Categories<br />(Category ID's you don't want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
+msgid "Exclude Categories<br />(Category ID's you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
 msgstr ""
 
 #: wp-content\themes\cruwp/functions.php:218

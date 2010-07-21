@@ -266,12 +266,12 @@ msgstr "使用 ?? 作???菜?"
 
 #: wp-content\themes\cruwp/functions.php:145
 #, fuzzy
-msgid "Exclude Pages<br />(Page ID's you don't want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
+msgid "INCLUDE Pages<br />(Page ID's you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
 msgstr "排除的?面(使用用逗号分隔的列表，比如 1,2,3，来列出?不想在?部?航??示的?面的ID)<注意使用英文符的逗号>"
 
 #: wp-content\themes\cruwp/functions.php:149
 #, fuzzy
-msgid "Exclude Categories<br />(Category ID's you don't want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
+msgid "Exclude Categories<br />(Category ID's you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
 msgstr "排除的分?(使用用逗号分隔的列表，比如 1,2,3，来列出?不想在?部?航??示的分?的ID)<注意使用英文符的逗号>"
 
 #: wp-content\themes\cruwp/functions.php:153

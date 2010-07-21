@@ -263,11 +263,11 @@ msgid "Use categories for header menu."
 msgstr "Kategoriak hasznalata fejlec menukent"
 
 #: wp-content\themes\cruwp/functions.php:145
-msgid "Exclude Pages<br />(Page ID's you don't want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
+msgid "INCLUDE Pages<br />(Page ID's you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
 msgstr "Kategoria kivetelek<br />(Azoknak az oldalaknak az ID-je, amelyeket nem szeretnel szerepeltetni a fejlec menuben, vessz?vel elvalasztva, pl.: 1,2,3)"
 
 #: wp-content\themes\cruwp/functions.php:149
-msgid "Exclude Categories<br />(Category ID's you don't want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
+msgid "Exclude Categories<br />(Category ID's you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)"
 msgstr "Kategoria kivetelek<br />(Azoknak a kategoriaknak az ID-je, amelyeket nem szeretnel szerepeltetni a fejlec menuben, vessz?vel elvalasztva, pl.: 1,2,3)"
 
 #: wp-content\themes\cruwp/functions.php:153

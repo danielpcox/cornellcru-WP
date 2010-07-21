@@ -7,7 +7,7 @@ $cruwpDefaultOptions = array(
   'information_contents' => '',
   'use_wp_nav_menu' => false,
   'header_menu_type' => 'pages',
-  'exclude_pages' => '',
+  'include_pages' => '',
   'exclude_category' => '',
   'header_rss' => true,
   'header_twitter' => true,
@@ -87,7 +87,7 @@ function cruwp_add_theme_options() {
       // header menu
       $options['header_menu_type'] = stripslashes($_POST['header_menu_type']);
       // exclude pages
-      $options['exclude_pages'] = stripslashes($_POST['exclude_pages']);
+      $options['include_pages'] = stripslashes($_POST['include_pages']);
       // exclude category
       $options['exclude_category'] = stripslashes($_POST['exclude_category']);
 
@@ -214,8 +214,8 @@ function cruwp_add_theme_page () {
 <input name="header_menu_type" type="radio" value="categories" <?php if($options['header_menu_type'] == 'categories') echo "checked='checked'"; ?> /> <?php _e('Use categories for header menu.', 'cruwp'); ?>
 </p>
 <br />
-<p><?php _e('Exclude Pages<br />(Page ID\'s you don\'t want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'cruwp'); ?></p>
-<p><input type="text" name="exclude_pages" value="<?php echo($options['exclude_pages']); ?>" /></p>
+<p><?php _e('Include Pages<br />(Page ID\'s you want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'cruwp'); ?></p>
+<p><input type="text" name="include_pages" value="<?php echo($options['include_pages']); ?>" /></p>
 <br />
 <p><?php _e('Exclude Categories<br />(Category ID\'s you don\'t want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'cruwp'); ?></p>
 <p><input type="text" name="exclude_category" value="<?php echo($options['exclude_category']); ?>" /></p>
