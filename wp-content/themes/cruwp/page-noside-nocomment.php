@@ -5,7 +5,6 @@ Template Name:No sidebar, No comment
 ?>
 <?php get_header(); ?>
 
-<div id="main-cont">
   <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
   <?php
     if($post->post_parent) {
@@ -18,15 +17,13 @@ Template Name:No sidebar, No comment
     $titlenamer = get_the_title($post->ID);
     }
     if ($children) { ?>
-      <h2> <? echo $titlenamer ?> </h2>
-
       <div id="sidebar">
         <ul class="nav">
           <?php echo $children; ?>
         </ul><!--/.nav-->
       </div><!--/#sidebar-->
 
-
+<div id="main-cont">
       <h1>I Am New Here</h1>
 
       <div id="posts">
@@ -35,7 +32,9 @@ Template Name:No sidebar, No comment
             </div><!--/#posts-->
       </div>
   <?php } ?>
+
   <?php endwhile; else: ?>
+  <div id="main-cont">
       <h1>Page Not Found</h1>
       <div id="posts">
         <div class="post">
@@ -44,7 +43,7 @@ Template Name:No sidebar, No comment
       </div><!--/.post-->
   <?php endif; ?>
 
-</div>
+  </div> <!-- #main-cont -->
 
 
 <?php get_footer(); ?>
