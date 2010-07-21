@@ -1,5 +1,5 @@
 <?php
-$pianoblackDefaultOptions = array(
+$cruwpDefaultOptions = array(
   'use_logo' => false,
   'logo_name' => 'logo.gif',
   'show_information' => true,
@@ -25,9 +25,9 @@ $pianoblackDefaultOptions = array(
 );
 
 $optionsSaved = false;
-function pianoblack_create_options() {
+function cruwp_create_options() {
   // Default values
-  $options = $GLOBALS['pianoblackDefaultOptions'];
+  $options = $GLOBALS['cruwpDefaultOptions'];
 
   // Overridden values
   $DBOptions = get_option('pb_options');
@@ -42,23 +42,23 @@ function pianoblack_create_options() {
       return $options;
 }
 
-function pianoblack_get_options() {
+function cruwp_get_options() {
   static $return = false;
   if($return !== false)
     return $return;
 
     $options = get_option('pb_options');
-      if(!empty($options) && count($options) == count($GLOBALS['pianoblackDefaultOptions']))
+      if(!empty($options) && count($options) == count($GLOBALS['cruwpDefaultOptions']))
       $return = $options;
-      else $return = $GLOBALS['pianoblackDefaultOptions'];
+      else $return = $GLOBALS['cruwpDefaultOptions'];
       return $return;
 }
 
-function pianoblack_add_theme_options() {
+function cruwp_add_theme_options() {
   global $optionsSaved;
-    if(isset($_POST['pianoblack_save_options'])) {
+    if(isset($_POST['cruwp_save_options'])) {
 
-      $options = pianoblack_create_options();
+      $options = cruwp_create_options();
 
       // logo
       if ($_POST['use_logo']) {
@@ -165,34 +165,34 @@ function pianoblack_add_theme_options() {
       $optionsSaved = true;
     }
 
-    add_theme_page(__('Theme Options', 'cruwp'), __('Theme Options', 'cruwp'), 'edit_themes', basename(__FILE__), 'pianoblack_add_theme_page');
+    add_theme_page(__('Theme Options', 'cruwp'), __('Theme Options', 'cruwp'), 'edit_themes', basename(__FILE__), 'cruwp_add_theme_page');
 }
 
-function pianoblack_add_theme_page () {
+function cruwp_add_theme_page () {
   global $optionsSaved;
 
-  $options = pianoblack_get_options();
+  $options = cruwp_get_options();
   if ( $optionsSaved )
    echo '<div id="message" class="updated fade"><p><strong>'.__('Theme options have been saved.', 'cruwp').'</strong></p></div>';
 ?>
 
 <div class="wrap">
 
-<h2><?php _e('Piano Black Options', 'cruwp'); ?></h2>
+<h2><?php _e('Cru WP Options', 'cruwp'); ?></h2>
 
 <form method="post" action="#" enctype="multipart/form-data">
 
-<p><input class="button-primary" type="submit" name="pianoblack_save_options" value="<?php _e('Save Changes', 'cruwp'); ?>" /></p>
+<p><input class="button-primary" type="submit" name="cruwp_save_options" value="<?php _e('Save Changes', 'cruwp'); ?>" /></p>
 <br />
 
-<div class="pianoblack_box">
-<p><?php _e('Check if you would like to use original image for logo instead of using plain text.<br />( Don\'t forget to upload image to, wp-content/themes/pianoblack/img/ )', 'cruwp'); ?></p>
+<div class="cruwp_box">
+<p><?php _e('Check if you would like to use original image for logo instead of using plain text.<br />( Don\'t forget to upload image to, wp-content/themes/cruwp/img/ )', 'cruwp'); ?></p>
 <p><input name="use_logo" type="checkbox" value="checkbox" <?php if($options['use_logo']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 <p><?php _e('Write your logo file name.', 'cruwp'); ?></p>
 <p><input type="text" name="logo_name" value="<?php echo($options['logo_name']); ?>" /></p>
 </div>
 
-<div class="pianoblack_box">
+<div class="cruwp_box">
 <p><?php _e('Show Information on sidebar.', 'cruwp'); ?></p>
 <p><input name="show_information" type="checkbox" value="checkbox" <?php if($options['show_information']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 <br />
@@ -203,7 +203,7 @@ function pianoblack_add_theme_page () {
 <p><textarea name="information_contents" cols="70%" rows="5"><?php echo($options['information_contents']); ?></textarea></p>
 </div>
 
-<div class="pianoblack_box">
+<div class="cruwp_box">
 <p><?php _e('Check if you would like to use Custom Navigation Menus in WordPress 3.0.', 'cruwp'); ?></p>
 <p><input name="use_wp_nav_menu" type="checkbox" value="checkbox" <?php if($options['use_wp_nav_menu']) echo "checked='checked'"; ?> id="use_wp_nav_menu" /> <?php _e('Yes', 'cruwp'); ?></p>
 <br />
@@ -222,7 +222,7 @@ function pianoblack_add_theme_page () {
 </div>
 </div>
 
-<div class="pianoblack_box">
+<div class="cruwp_box">
 <p><?php _e('Show search on header.', 'cruwp'); ?></p>
 <p><input name="header_search" type="checkbox" value="checkbox" <?php if($options['header_search']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 <br />
@@ -232,19 +232,19 @@ function pianoblack_add_theme_page () {
 <p><input type="text" name="custom_search_id" value="<?php echo($options['custom_search_id']); ?>" style="width:400px;" /></p>
 </div>
 
-<div class="pianoblack_box">
+<div class="cruwp_box">
 <p><?php _e('Show rss on header.', 'cruwp'); ?></p>
 <p><input name="header_rss" type="checkbox" value="checkbox" <?php if($options['header_rss']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 </div>
 
-<div class="pianoblack_box">
+<div class="cruwp_box">
 <p><?php _e('Show Twitter button on header.', 'cruwp'); ?></p>
 <p><input name="header_twitter" type="checkbox" value="checkbox" <?php if($options['header_twitter']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 <p><?php _e('Write your Twitter URL.', 'cruwp'); ?></p>
 <p><input type="text" name="twitter_url" value="<?php echo($options['twitter_url']); ?>" style="width:400px;" /></p>
 </div>
 
-<div class="pianoblack_box">
+<div class="cruwp_box">
 <p><?php _e('Show author.', 'cruwp'); ?></p>
 <p><input name="author" type="checkbox" value="checkbox" <?php if($options['author']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 <br />
@@ -261,12 +261,12 @@ function pianoblack_add_theme_page () {
 <p><input name="next_preview_post" type="checkbox" value="checkbox" <?php if($options['next_preview_post']) echo "checked='checked'"; ?> /><?php _e('Yes', 'cruwp'); ?></p>
 </div>
 
-<div class="pianoblack_box">
+<div class="cruwp_box">
 <p><?php _e('Show time on comment.', 'cruwp'); ?></p>
 <p><input name="time_stamp" type="checkbox" value="checkbox" <?php if($options['time_stamp']) echo "checked='checked'"; ?> /><?php _e('Yes', 'cruwp'); ?></p>
 </div>
 
-<div class="pianoblack_box">
+<div class="cruwp_box">
 <p><?php _e('Page navi type.', 'cruwp'); ?></p>
 <p>
 <input name="page_navi_type" type="radio" value="pager" <?php if($options['page_navi_type'] != 'normal') echo "checked='checked'"; ?> /> <?php _e('Use Pager.', 'cruwp'); ?><br />
@@ -274,12 +274,12 @@ function pianoblack_add_theme_page () {
 </p>
 </div>
 
-<div class="pianoblack_box">
+<div class="cruwp_box">
 <p><?php _e('Check if you want to show Return top link.', 'cruwp'); ?></p>
 <p><input name="return_top" type="checkbox" value="checkbox" <?php if($options['return_top']) echo "checked='checked'"; ?> /> <?php _e('Show Return top link.', 'cruwp'); ?></p>
 </div>
 
-<p><input class="button-primary" type="submit" name="pianoblack_save_options" value="<?php _e('Save Changes', 'cruwp'); ?>" /></p>
+<p><input class="button-primary" type="submit" name="cruwp_save_options" value="<?php _e('Save Changes', 'cruwp'); ?>" /></p>
 
 </form>
 
@@ -289,19 +289,19 @@ function pianoblack_add_theme_page () {
   }
 
 // register function
-add_action('admin_menu', 'pianoblack_create_options');
-add_action('admin_menu', 'pianoblack_add_theme_options');
+add_action('admin_menu', 'cruwp_create_options');
+add_action('admin_menu', 'cruwp_add_theme_options');
 
 // CSS for admin page
-add_action('admin_print_styles', 'pianoblack_admin_CSS');
-function pianoblack_admin_CSS() {
-	wp_enqueue_style('pianoblackAdminCSS', get_bloginfo('template_url').'/admin/admin.css');
+add_action('admin_print_styles', 'cruwp_admin_CSS');
+function cruwp_admin_CSS() {
+	wp_enqueue_style('cruwpAdminCSS', get_bloginfo('template_url').'/admin/admin.css');
 }
 
 // javascript for admin page
-add_action('admin_print_scripts', 'pianoblack_admin_script');
-function pianoblack_admin_script() {
-	wp_enqueue_script('pianoblackAdminScript', get_bloginfo('template_url').'/admin/script.js');
+add_action('admin_print_scripts', 'cruwp_admin_script');
+function cruwp_admin_script() {
+	wp_enqueue_script('cruwpAdminScript', get_bloginfo('template_url').'/admin/script.js');
 }
 
 // for localization
