@@ -286,7 +286,7 @@ BODY {
   min-width: 960px;
   max-width: 960px;
   margin: 0 auto;
-  background: #0e0e0e url(/images/body-bg.jpg) top center no-repeat;
+  background: #0e0e0e url(images/body-bg.jpg) top center no-repeat;
   border: 1px solid #303030;
   border-width: 0 1px;
 }
@@ -358,7 +358,7 @@ BODY {
   font-size: 18px;
 }
 #navigation LI A:hover {
-  background: url(/images/top-nav-active.gif) repeat-x;
+  background: url(images/top-nav-active.gif) repeat-x;
   border: 1px solid #303030;
   border-top: 1px solid #111111;
   color: #ffffff;
@@ -367,7 +367,7 @@ BODY {
   -webkit-border-radius: 0 0 8px 8px;
 }
 #navigation LI A:active {
-  background: url(/images/top-nav-active.gif) repeat-x;
+  background: url(images/top-nav-active.gif) repeat-x;
   border: 1px solid #303030;
   border-top: 1px solid #111111;
   color: #ffffff;
@@ -375,8 +375,8 @@ BODY {
   -moz-border-radius: 0 0 8px 8px;
   -webkit-border-radius: 0 0 8px 8px;
 }
-#navigation LI.current A {
-  background: url(/images/top-nav-active.gif) repeat-x;
+#navigation LI.current_page_item A {
+  background: url(images/top-nav-active.gif) repeat-x;
   border: 1px solid #303030;
   border-top: 1px solid #111111;
   color: #0084ff;
@@ -426,7 +426,7 @@ BODY {
   -moz-border-radius: 0 10px 0 0;
   -webkit-border-radius: 0 10px 0 0;
 }
-#controls .current A {
+#controls .current_page_item A {
   color: #0084ff;
   background: #222222;
   -webkit-transition: all 0.2s;
@@ -538,7 +538,7 @@ BODY {
   background: #181818;
   color: #333333;
 }
-#pagination .pagination .current {
+#pagination .pagination .current_page_item {
   background: #171717;
   color: #0084ff;
 }
@@ -574,7 +574,7 @@ BODY {
 }
 #sidebar .nav LI { padding-bottom: 1px; }
 #sidebar .nav LI A {
-  background: url(/images/sidebar-inactive.gif);
+  background: url(images/sidebar-inactive.gif);
   color: #5185cd;
   display: block;
   width: 156px;
@@ -586,11 +586,11 @@ BODY {
 }
 #sidebar .nav LI A:hover {
   color: #0084ff;
-  background: url(/images/sidebar-active.gif);
+  background: url(images/sidebar-active.gif);
 }
 #sidebar .nav LI A:active {
   color: #0084ff;
-  background: url(/images/sidebar-active.gif);
+  background: url(images/sidebar-active.gif);
 }
 #sidebar .nav LI:first-child A {
   border-radius: 8px 0 0 0;
@@ -602,9 +602,9 @@ BODY {
   -moz-border-radius: 0 0 0 8px;
   -webkit-border-radius: 0 0 0 8px;
 }
-#sidebar .nav LI.current A {
+#sidebar .nav LI.current_page_item A {
   color: #0084ff;
-  background: url(/images/sidebar-active.gif);
+  background: url(images/sidebar-active.gif);
 }
 #sidebar + #main-cont { margin-right: 221px; }
 #blog {

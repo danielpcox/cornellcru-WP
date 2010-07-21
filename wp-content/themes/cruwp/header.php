@@ -40,7 +40,7 @@
 </head>
 <body>
     <div id="header">
-      <a href="/" id="logo">Cornell Campus Crusade for Christ</a><!--/#logo-->
+      <a id="logo" href="<?php echo get_option('home'); ?>/"><?php bloginfo('name'); ?></a><!--/#logo-->
         <?php if ($options['header_search']) : ?>
          <?php if ($options['use_google_search']) : ?>
          <form action="http://www.google.com/cse" method="get" id="search">
@@ -52,72 +52,15 @@
           </form>
          <?php endif; ?>
         <?php endif; ?>
+        <?php if ($options['header_rss']) : ?>
+        <a href="<?php bloginfo('rss2_url'); ?>" id="rss-feed" title="<?php _e('Entries RSS','cruwp'); ?>" ><?php _e('RSS','cruwp'); ?></a>
+        <?php endif; ?>
+        <?php if ($options['header_twitter']) : ?>
+        <a href="<?php echo $options['twitter_url']; ?>" id="twitter" title="<?php _e('TWITTER','cruwp'); ?>" ><?php _e('Twitter','cruwp'); ?></a>
+        <?php endif; ?>
     </div><!--/#header-->
 
-<div id="wrapper">
- <div id="contents">
-
- <div class="header-menu-wrapper clearfix">
- <div id="pngfix-right"></div>
-  <?php if($options['use_wp_nav_menu']) { ?>
-  <?php if (function_exists('wp_nav_menu')) { wp_nav_menu( array( 'sort_column' => 'menu_order') ); }; ?>
-  <?php } else { ?>
-  <ul class="menu">
-   <li class="<?php if (!is_paged() && is_home()) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo get_settings('home'); ?>/"><?php _e('HOME','cruwp'); ?></a></li>
-   <?php 
-         if($options['header_menu_type'] == 'pages') {
-         wp_list_pages('sort_column=menu_order&depth=0&title_li=&exclude=' . $options['exclude_pages']);
-         } else {
-         wp_list_categories('depth=0&title_li=&exclude=' . $options['exclude_category']);
-         }
-   ?>
-  </ul>
-  <?php }; ?>
-  <div id="pngfix-left"></div>
-  </div>
-
-  <div id="header">
-
-   <?php if ($options['use_logo']) : ?>
-   <div id="logo_image">
-    <h1><a href="<?php echo get_option('home'); ?>/"><img src="<?php bloginfo('template_url'); ?>/img/<?php echo $options['logo_name']; ?>" title="<?php bloginfo('name'); ?>" alt="<?php bloginfo('name'); ?>" /></a></h1>
-   </div>
-   <?php else : ?>
-   <div id="logo">
-    <a href="<?php echo get_option('home'); ?>/"><?php bloginfo('name'); ?></a>
-    <h1><?php bloginfo('description'); ?></h1>
-   </div>
-   <?php endif; ?>
-
-   <div id="header_meta">
-
-    <?php if ($options['header_search']) : ?>
-    <div id="search-area"<?php if (!$options['header_rss']&&!$options['header_twitter']) : echo ' style="margin-right:0;"'; endif; ?>>
-     <?php if ($options['use_google_search']) : ?>
-     <form action="http://www.google.com/cse" method="get" id="searchform">
-      <div><input type="text" value="<?php _e('Google Search','cruwp'); ?>" name="q" id="search-input" onfocus="this.value=''; changefc('white');" /></div>
-      <div>
-       <input type="image" src="<?php bloginfo('template_url'); ?>/img/search-button.gif" name="sa" alt="<?php _e('Search from this blog.','cruwp'); ?>" title="<?php _e('Search from this blog.','cruwp'); ?>" id="search-button" />
-       <input type="hidden" name="cx" value="<?php echo $options['custom_search_id']; ?>" />
-       <input type="hidden" name="ie" value="UTF-8" />
-      </div>
-     </form>
-     <?php else: ?>
-      <form method="get" id="searchform" action="<?php bloginfo('home'); ?>/">
-       <div><input type="text" value="<?php _e('Search','cruwp'); ?>" name="s" id="search-input" onfocus="this.value=''; changefc('white');" /></div>
-       <div><input type="image" src="<?php bloginfo('template_url'); ?>/img/search-button.gif" alt="<?php _e('Search from this blog.','cruwp'); ?>" title="<?php _e('Search from this blog.','cruwp'); ?>" id="search-button" /></div>
-      </form>
-     <?php endif; ?>
-    </div>
-    <?php endif; ?>
-
-    <?php if ($options['header_rss']) : ?>
-    <a href="<?php bloginfo('rss2_url'); ?>" id="rss-feed" title="<?php _e('Entries RSS','cruwp'); ?>" ><?php _e('RSS','cruwp'); ?></a>
-    <?php endif; ?>
-    <?php if ($options['header_twitter']) : ?>
-    <a href="<?php echo $options['twitter_url']; ?>" id="twitter" title="<?php _e('TWITTER','cruwp'); ?>" ><?php _e('Twitter','cruwp'); ?></a>
-    <?php endif; ?>
-
-   </div><!-- #header_meta end -->
-
-  </div><!-- #header end -->
+    <ul id="navigation">
+      <li class="<?php if (!is_paged() && is_home()) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo get_settings('home'); ?>/"><?php _e('HOME','cruwp'); ?></a></li>
+      <?php wp_list_pages('sort_column=menu_order&depth=0&title_li=&exclude=' . $options['exclude_pages']); ?>
+    </ul><!--/#navigation-->
