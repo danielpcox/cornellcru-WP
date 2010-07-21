@@ -5,7 +5,7 @@
   Version:2.2 (2010/06/06)
 
   Live demo
-  http://www.cornellcru.com/demo3/
+  http://www.cornellcru.com
 
   Please send your translated files to
   webmaster@cornellcru.com
