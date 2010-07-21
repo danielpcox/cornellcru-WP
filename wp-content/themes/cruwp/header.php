@@ -62,7 +62,7 @@
 
     <ul id="navigation">
       <li class="<?php if (!is_paged() && is_home()) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo get_settings('home'); ?>/"><?php _e('HOME','cruwp'); ?></a></li>
-      <?php wp_list_pages('sort_column=menu_order&depth=0&title_li=&exclude=' . $options['exclude_pages']); ?>
+      <?php wp_list_pages('sort_column=menu_order&depth=0&title_li=&include=' . $options['exclude_pages']); ?> <!-- using exclude as if it were really include -->
     </ul><!--/#navigation-->
 
 <script lang=javascript>
