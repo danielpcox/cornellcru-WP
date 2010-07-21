@@ -2,9 +2,9 @@
 
  <?php $options = get_option('pb_options'); ?>
  <?php if ($options['show_information']) : ?>
- <h3 class="side-title" id="information-title"><?php if($options['information_title']) { echo ($options['information_title']); } else { _e('INFORMATION','piano-black'); } ?></h3>
+ <h3 class="side-title" id="information-title"><?php if($options['information_title']) { echo ($options['information_title']); } else { _e('INFORMATION','cruwp'); } ?></h3>
  <div class="information-contents">
- <?php if($options['information_contents']) { echo ($options['information_contents']); } else { _e('Change this sentence and title from admin Theme option page.','piano-black'); } ?>
+ <?php if($options['information_contents']) { echo ($options['information_contents']); } else { _e('Change this sentence and title from admin Theme option page.','cruwp'); } ?>
  </div>
  <?php endif; ?>
 
@@ -29,7 +29,7 @@
 
  <div id="side-top">
   <div class="side-box">
-   <h3 class="side-title"><?php _e('RECENT ENTRY','piano-black'); ?></h3>
+   <h3 class="side-title"><?php _e('RECENT ENTRY','cruwp'); ?></h3>
    <ul>
     <?php $myposts = get_posts('numberposts=5'); foreach($myposts as $post) : ?>
     <li><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></li>
@@ -40,7 +40,7 @@
  <div id="side_middle" class="clearfix">
   <div id="side-left-ex">
    <div class="side-box-short">
-    <h3 class="side-title"><?php _e('CATEGORY','piano-black'); ?></h3>
+    <h3 class="side-title"><?php _e('CATEGORY','cruwp'); ?></h3>
     <ul>
      <?php wp_list_cats('sort_column=name'); ?>
     </ul>
@@ -48,7 +48,7 @@
   </div>
   <div id="side-right-ex">
    <div class="side-box-short">
-    <h3 class="side-title"><?php _e('ARCHIVES','piano-black'); ?></h3>
+    <h3 class="side-title"><?php _e('ARCHIVES','cruwp'); ?></h3>
     <ul>
      <?php wp_get_archives('type=monthly'); ?>
     </ul>
@@ -57,7 +57,7 @@
  </div>
  <div id="side-bottom-ex">
   <div class="side-box">
-   <h3 class="side-title"><?php _e('LINKS','piano-black'); ?></h3>
+   <h3 class="side-title"><?php _e('LINKS','cruwp'); ?></h3>
    <ul>
     <?php wp_list_bookmarks('title_li=&categorize=0'); ?>
    </ul>
@@ -76,7 +76,7 @@
            if ($post_datetimes) {
              $firstpost_year = $post_datetimes->firstyear;
              $lastpost_year = $post_datetimes->lastyear;
-             $copyright = __('Copyright &copy;&nbsp; ', 'piano-black') . $firstpost_year;
+             $copyright = __('Copyright &copy;&nbsp; ', 'cruwp') . $firstpost_year;
              if($firstpost_year != $lastpost_year) {
                $copyright .= '-'. $lastpost_year;
              }
@@ -85,8 +85,8 @@
            }
        ?>
     &nbsp;<a href="<?php echo get_option('home'); ?>/"><?php bloginfo('name'); ?></a></li>
-   <li><?php _e('Theme designed by <a href="http://www.mono-lab.net/">mono-lab</a>','piano-black'); ?></li>
-   <li id="wp"><?php _e('Powered by <a href="http://wordpress.org/">WordPress</a>','piano-black'); ?></li>
+   <li><?php _e('Theme designed by <a href="http://www.mono-lab.net/">mono-lab</a>','cruwp'); ?></li>
+   <li id="wp"><?php _e('Powered by <a href="http://wordpress.org/">WordPress</a>','cruwp'); ?></li>
   </ul>
  </div>
 

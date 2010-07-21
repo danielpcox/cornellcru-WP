@@ -165,7 +165,7 @@ function pianoblack_add_theme_options() {
       $optionsSaved = true;
     }
 
-    add_theme_page(__('Theme Options', 'piano-black'), __('Theme Options', 'piano-black'), 'edit_themes', basename(__FILE__), 'pianoblack_add_theme_page');
+    add_theme_page(__('Theme Options', 'cruwp'), __('Theme Options', 'cruwp'), 'edit_themes', basename(__FILE__), 'pianoblack_add_theme_page');
 }
 
 function pianoblack_add_theme_page () {
@@ -173,113 +173,113 @@ function pianoblack_add_theme_page () {
 
   $options = pianoblack_get_options();
   if ( $optionsSaved )
-   echo '<div id="message" class="updated fade"><p><strong>'.__('Theme options have been saved.', 'piano-black').'</strong></p></div>';
+   echo '<div id="message" class="updated fade"><p><strong>'.__('Theme options have been saved.', 'cruwp').'</strong></p></div>';
 ?>
 
 <div class="wrap">
 
-<h2><?php _e('Piano Black Options', 'piano-black'); ?></h2>
+<h2><?php _e('Piano Black Options', 'cruwp'); ?></h2>
 
 <form method="post" action="#" enctype="multipart/form-data">
 
-<p><input class="button-primary" type="submit" name="pianoblack_save_options" value="<?php _e('Save Changes', 'piano-black'); ?>" /></p>
+<p><input class="button-primary" type="submit" name="pianoblack_save_options" value="<?php _e('Save Changes', 'cruwp'); ?>" /></p>
 <br />
 
 <div class="pianoblack_box">
-<p><?php _e('Check if you would like to use original image for logo instead of using plain text.<br />( Don\'t forget to upload image to, wp-content/themes/pianoblack/img/ )', 'piano-black'); ?></p>
-<p><input name="use_logo" type="checkbox" value="checkbox" <?php if($options['use_logo']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'piano-black'); ?></p>
-<p><?php _e('Write your logo file name.', 'piano-black'); ?></p>
+<p><?php _e('Check if you would like to use original image for logo instead of using plain text.<br />( Don\'t forget to upload image to, wp-content/themes/pianoblack/img/ )', 'cruwp'); ?></p>
+<p><input name="use_logo" type="checkbox" value="checkbox" <?php if($options['use_logo']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
+<p><?php _e('Write your logo file name.', 'cruwp'); ?></p>
 <p><input type="text" name="logo_name" value="<?php echo($options['logo_name']); ?>" /></p>
 </div>
 
 <div class="pianoblack_box">
-<p><?php _e('Show Information on sidebar.', 'piano-black'); ?></p>
-<p><input name="show_information" type="checkbox" value="checkbox" <?php if($options['show_information']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'piano-black'); ?></p>
+<p><?php _e('Show Information on sidebar.', 'cruwp'); ?></p>
+<p><input name="show_information" type="checkbox" value="checkbox" <?php if($options['show_information']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 <br />
-<p><?php _e('Information title.', 'piano-black'); ?></p>
+<p><?php _e('Information title.', 'cruwp'); ?></p>
 <p><input type="text" name="information_title" value="<?php echo($options['information_title']); ?>" /></p>
 <br />
-<p><?php _e('Information contents. ( HTML tag is available. )', 'piano-black'); ?></p>
+<p><?php _e('Information contents. ( HTML tag is available. )', 'cruwp'); ?></p>
 <p><textarea name="information_contents" cols="70%" rows="5"><?php echo($options['information_contents']); ?></textarea></p>
 </div>
 
 <div class="pianoblack_box">
-<p><?php _e('Check if you would like to use Custom Navigation Menus in WordPress 3.0.', 'piano-black'); ?></p>
-<p><input name="use_wp_nav_menu" type="checkbox" value="checkbox" <?php if($options['use_wp_nav_menu']) echo "checked='checked'"; ?> id="use_wp_nav_menu" /> <?php _e('Yes', 'piano-black'); ?></p>
+<p><?php _e('Check if you would like to use Custom Navigation Menus in WordPress 3.0.', 'cruwp'); ?></p>
+<p><input name="use_wp_nav_menu" type="checkbox" value="checkbox" <?php if($options['use_wp_nav_menu']) echo "checked='checked'"; ?> id="use_wp_nav_menu" /> <?php _e('Yes', 'cruwp'); ?></p>
 <br />
 <div id="old_menu_function">
-<p><?php _e('Header menu.', 'piano-black'); ?></p>
+<p><?php _e('Header menu.', 'cruwp'); ?></p>
 <p>
-<input name="header_menu_type" type="radio" value="pages" <?php if($options['header_menu_type'] != 'categories') echo "checked='checked'"; ?> /> <?php _e('Use pages for header menu.', 'piano-black'); ?><br />
-<input name="header_menu_type" type="radio" value="categories" <?php if($options['header_menu_type'] == 'categories') echo "checked='checked'"; ?> /> <?php _e('Use categories for header menu.', 'piano-black'); ?>
+<input name="header_menu_type" type="radio" value="pages" <?php if($options['header_menu_type'] != 'categories') echo "checked='checked'"; ?> /> <?php _e('Use pages for header menu.', 'cruwp'); ?><br />
+<input name="header_menu_type" type="radio" value="categories" <?php if($options['header_menu_type'] == 'categories') echo "checked='checked'"; ?> /> <?php _e('Use categories for header menu.', 'cruwp'); ?>
 </p>
 <br />
-<p><?php _e('Exclude Pages<br />(Page ID\'s you don\'t want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'piano-black'); ?></p>
+<p><?php _e('Exclude Pages<br />(Page ID\'s you don\'t want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'cruwp'); ?></p>
 <p><input type="text" name="exclude_pages" value="<?php echo($options['exclude_pages']); ?>" /></p>
 <br />
-<p><?php _e('Exclude Categories<br />(Category ID\'s you don\'t want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'piano-black'); ?></p>
+<p><?php _e('Exclude Categories<br />(Category ID\'s you don\'t want displayed in your header navigation. Use a comma-delimited list, eg. 1,2,3)', 'cruwp'); ?></p>
 <p><input type="text" name="exclude_category" value="<?php echo($options['exclude_category']); ?>" /></p>
 </div>
 </div>
 
 <div class="pianoblack_box">
-<p><?php _e('Show search on header.', 'piano-black'); ?></p>
-<p><input name="header_search" type="checkbox" value="checkbox" <?php if($options['header_search']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'piano-black'); ?></p>
+<p><?php _e('Show search on header.', 'cruwp'); ?></p>
+<p><input name="header_search" type="checkbox" value="checkbox" <?php if($options['header_search']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 <br />
-<p><?php _e('Use <a href="http://www.google.com/cse/">Google Custom Search</a><br />(If you check this option,don\'t forget to write your Google Custom Search ID below.)', 'piano-black'); ?></p>
-<p><input name="use_google_search" type="checkbox" value="checkbox" <?php if($options['use_google_search']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'piano-black'); ?></p>
-<p><?php _e('Input your Google Custom Search ID.', 'piano-black'); ?></p>
+<p><?php _e('Use <a href="http://www.google.com/cse/">Google Custom Search</a><br />(If you check this option,don\'t forget to write your Google Custom Search ID below.)', 'cruwp'); ?></p>
+<p><input name="use_google_search" type="checkbox" value="checkbox" <?php if($options['use_google_search']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
+<p><?php _e('Input your Google Custom Search ID.', 'cruwp'); ?></p>
 <p><input type="text" name="custom_search_id" value="<?php echo($options['custom_search_id']); ?>" style="width:400px;" /></p>
 </div>
 
 <div class="pianoblack_box">
-<p><?php _e('Show rss on header.', 'piano-black'); ?></p>
-<p><input name="header_rss" type="checkbox" value="checkbox" <?php if($options['header_rss']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'piano-black'); ?></p>
+<p><?php _e('Show rss on header.', 'cruwp'); ?></p>
+<p><input name="header_rss" type="checkbox" value="checkbox" <?php if($options['header_rss']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 </div>
 
 <div class="pianoblack_box">
-<p><?php _e('Show Twitter button on header.', 'piano-black'); ?></p>
-<p><input name="header_twitter" type="checkbox" value="checkbox" <?php if($options['header_twitter']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'piano-black'); ?></p>
-<p><?php _e('Write your Twitter URL.', 'piano-black'); ?></p>
+<p><?php _e('Show Twitter button on header.', 'cruwp'); ?></p>
+<p><input name="header_twitter" type="checkbox" value="checkbox" <?php if($options['header_twitter']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
+<p><?php _e('Write your Twitter URL.', 'cruwp'); ?></p>
 <p><input type="text" name="twitter_url" value="<?php echo($options['twitter_url']); ?>" style="width:400px;" /></p>
 </div>
 
 <div class="pianoblack_box">
-<p><?php _e('Show author.', 'piano-black'); ?></p>
-<p><input name="author" type="checkbox" value="checkbox" <?php if($options['author']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'piano-black'); ?></p>
+<p><?php _e('Show author.', 'cruwp'); ?></p>
+<p><input name="author" type="checkbox" value="checkbox" <?php if($options['author']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 <br />
-<p><?php _e('Show border aroud image in post area.', 'piano-black'); ?></p>
-<p><input name="image_style" type="checkbox" value="checkbox" <?php if($options['image_style']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'piano-black'); ?></p>
+<p><?php _e('Show border aroud image in post area.', 'cruwp'); ?></p>
+<p><input name="image_style" type="checkbox" value="checkbox" <?php if($options['image_style']) echo "checked='checked'"; ?> /> <?php _e('Yes', 'cruwp'); ?></p>
 <br />
-<p><?php _e('Post meta.', 'piano-black'); ?></p>
+<p><?php _e('Post meta.', 'cruwp'); ?></p>
 <p>
-<input name="post_meta_type" type="radio" value="category" <?php if($options['post_meta_type'] != 'tag') echo "checked='checked'"; ?> /> <?php _e('Show category.', 'piano-black'); ?><br />
-<input name="post_meta_type" type="radio" value="tag" <?php if($options['post_meta_type'] == 'tag') echo "checked='checked'"; ?> /> <?php _e('Show tag.', 'piano-black'); ?>
+<input name="post_meta_type" type="radio" value="category" <?php if($options['post_meta_type'] != 'tag') echo "checked='checked'"; ?> /> <?php _e('Show category.', 'cruwp'); ?><br />
+<input name="post_meta_type" type="radio" value="tag" <?php if($options['post_meta_type'] == 'tag') echo "checked='checked'"; ?> /> <?php _e('Show tag.', 'cruwp'); ?>
 </p>
 <br />
-<p><?php _e('Show next preview post at the bottom of single post page.', 'piano-black'); ?></p>
-<p><input name="next_preview_post" type="checkbox" value="checkbox" <?php if($options['next_preview_post']) echo "checked='checked'"; ?> /><?php _e('Yes', 'piano-black'); ?></p>
+<p><?php _e('Show next preview post at the bottom of single post page.', 'cruwp'); ?></p>
+<p><input name="next_preview_post" type="checkbox" value="checkbox" <?php if($options['next_preview_post']) echo "checked='checked'"; ?> /><?php _e('Yes', 'cruwp'); ?></p>
 </div>
 
 <div class="pianoblack_box">
-<p><?php _e('Show time on comment.', 'piano-black'); ?></p>
-<p><input name="time_stamp" type="checkbox" value="checkbox" <?php if($options['time_stamp']) echo "checked='checked'"; ?> /><?php _e('Yes', 'piano-black'); ?></p>
+<p><?php _e('Show time on comment.', 'cruwp'); ?></p>
+<p><input name="time_stamp" type="checkbox" value="checkbox" <?php if($options['time_stamp']) echo "checked='checked'"; ?> /><?php _e('Yes', 'cruwp'); ?></p>
 </div>
 
 <div class="pianoblack_box">
-<p><?php _e('Page navi type.', 'piano-black'); ?></p>
+<p><?php _e('Page navi type.', 'cruwp'); ?></p>
 <p>
-<input name="page_navi_type" type="radio" value="pager" <?php if($options['page_navi_type'] != 'normal') echo "checked='checked'"; ?> /> <?php _e('Use Pager.', 'piano-black'); ?><br />
-<input name="page_navi_type" type="radio" value="normal" <?php if($options['page_navi_type'] == 'normal') echo "checked='checked'"; ?> /> <?php _e('Use normal style next-previous link.', 'piano-black'); ?>
+<input name="page_navi_type" type="radio" value="pager" <?php if($options['page_navi_type'] != 'normal') echo "checked='checked'"; ?> /> <?php _e('Use Pager.', 'cruwp'); ?><br />
+<input name="page_navi_type" type="radio" value="normal" <?php if($options['page_navi_type'] == 'normal') echo "checked='checked'"; ?> /> <?php _e('Use normal style next-previous link.', 'cruwp'); ?>
 </p>
 </div>
 
 <div class="pianoblack_box">
-<p><?php _e('Check if you want to show Return top link.', 'piano-black'); ?></p>
-<p><input name="return_top" type="checkbox" value="checkbox" <?php if($options['return_top']) echo "checked='checked'"; ?> /> <?php _e('Show Return top link.', 'piano-black'); ?></p>
+<p><?php _e('Check if you want to show Return top link.', 'cruwp'); ?></p>
+<p><input name="return_top" type="checkbox" value="checkbox" <?php if($options['return_top']) echo "checked='checked'"; ?> /> <?php _e('Show Return top link.', 'cruwp'); ?></p>
 </div>
 
-<p><input class="button-primary" type="submit" name="pianoblack_save_options" value="<?php _e('Save Changes', 'piano-black'); ?>" /></p>
+<p><input class="button-primary" type="submit" name="pianoblack_save_options" value="<?php _e('Save Changes', 'cruwp'); ?>" /></p>
 
 </form>
 
@@ -305,7 +305,7 @@ function pianoblack_admin_script() {
 }
 
 // for localization
-load_textdomain('piano-black', dirname(__FILE__).'/languages/' . get_locale() . '.mo');
+load_textdomain('cruwp', dirname(__FILE__).'/languages/' . get_locale() . '.mo');
 
 // to use wp_nav_menu() in WordPress3.0
 if (function_exists('add_theme_support')) { add_theme_support( 'nav-menus' ); };
@@ -398,28 +398,28 @@ function custom_comments($comment, $args, $depth) {
 </span>
 <?php endif; ?>
      </li>
-     <li class="comment-date"><?php echo get_comment_time(__('F jS, Y', 'piano-black')); if ($options['time_stamp']) : echo get_comment_time(__(' g:ia', 'piano-black')); endif; ?></li>
+     <li class="comment-date"><?php echo get_comment_time(__('F jS, Y', 'cruwp')); if ($options['time_stamp']) : echo get_comment_time(__(' g:ia', 'cruwp')); endif; ?></li>
     </ul>
    </div>
 
    <ul class="comment-act">
 <?php if (function_exists('comment_reply_link')) { 
         if ( get_option('thread_comments') == '1' ) { ?>
-    <li class="comment-reply"><?php comment_reply_link(array_merge( $args, array('add_below' => 'comment-content', 'depth' => $depth, 'max_depth' => $args['max_depth'], 'reply_text' => '<span><span>'.__('REPLY','piano-black').'</span></span>'.$my_comment_count))) ?></li>
+    <li class="comment-reply"><?php comment_reply_link(array_merge( $args, array('add_below' => 'comment-content', 'depth' => $depth, 'max_depth' => $args['max_depth'], 'reply_text' => '<span><span>'.__('REPLY','cruwp').'</span></span>'.$my_comment_count))) ?></li>
 <?php   } else { ?>
-    <li class="comment-reply"><a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-<?php comment_ID() ?>', 'comment-<?php comment_ID() ?>', 'comment');"><?php _e('REPLY', 'piano-black'); ?></a></li>
+    <li class="comment-reply"><a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-<?php comment_ID() ?>', 'comment-<?php comment_ID() ?>', 'comment');"><?php _e('REPLY', 'cruwp'); ?></a></li>
 <?php   }
       } else { ?>
-    <li class="comment-reply"><a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-<?php comment_ID() ?>', 'comment-<?php comment_ID() ?>', 'comment');"><?php _e('REPLY', 'piano-black'); ?></a></li>
+    <li class="comment-reply"><a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-<?php comment_ID() ?>', 'comment-<?php comment_ID() ?>', 'comment');"><?php _e('REPLY', 'cruwp'); ?></a></li>
 <?php } ?>
-    <li class="comment-quote"><a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-<?php comment_ID() ?>', 'comment-<?php comment_ID() ?>', 'comment-content-<?php comment_ID() ?>', 'comment');"><?php _e('QUOTE', 'piano-black'); ?></a></li>
-    <?php edit_comment_link(__('EDIT', 'piano-black'), '<li class="comment-edit">', '</li>'); ?>
+    <li class="comment-quote"><a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-<?php comment_ID() ?>', 'comment-<?php comment_ID() ?>', 'comment-content-<?php comment_ID() ?>', 'comment');"><?php _e('QUOTE', 'cruwp'); ?></a></li>
+    <?php edit_comment_link(__('EDIT', 'cruwp'), '<li class="comment-edit">', '</li>'); ?>
    </ul>
 
   </div>
   <div class="comment-content" id="comment-content-<?php comment_ID() ?>">
   <?php if ($comment->comment_approved == '0') : ?>
-   <span class="comment-note"><?php _e('Your comment is awaiting moderation.', 'piano-black'); ?></span>
+   <span class="comment-note"><?php _e('Your comment is awaiting moderation.', 'cruwp'); ?></span>
   <?php endif; ?>
   <?php comment_text(); ?>
   </div>

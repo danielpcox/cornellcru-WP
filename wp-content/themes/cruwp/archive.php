@@ -9,25 +9,25 @@
 <div class="common-navi-wrapper">
 <?php $post = $posts[0]; // Hack. Set $post so that the_date() works. ?>
  <?php if (is_category()) { ?>
- <p><?php printf(__('Archive for the &#8216;%s&#8217; Category', 'piano-black'), single_cat_title('', false)); ?></p>
+ <p><?php printf(__('Archive for the &#8216;%s&#8217; Category', 'cruwp'), single_cat_title('', false)); ?></p>
  
  <?php } elseif( is_tag() ) { ?>
- <p><?php printf(__('Posts Tagged &#8216;%s&#8217;', 'piano-black'), single_tag_title('', false) ); ?></p>
+ <p><?php printf(__('Posts Tagged &#8216;%s&#8217;', 'cruwp'), single_tag_title('', false) ); ?></p>
 
  <?php } elseif (is_day()) { ?>
- <p><?php printf(__('Archive for %s', 'piano-black'), get_the_time(__('F jS, Y', 'piano-black'))); ?></p>
+ <p><?php printf(__('Archive for %s', 'cruwp'), get_the_time(__('F jS, Y', 'cruwp'))); ?></p>
 
  <?php } elseif (is_month()) { ?>
- <p><?php printf(__('Archive for %s', 'piano-black'), get_the_time(__('F, Y', 'piano-black'))); ?></p>
+ <p><?php printf(__('Archive for %s', 'cruwp'), get_the_time(__('F, Y', 'cruwp'))); ?></p>
 
  <?php } elseif (is_year()) { ?>
- <p><?php printf(__('Archive for %s', 'piano-black'), get_the_time(__('Y', 'piano-black'))); ?></p>
+ <p><?php printf(__('Archive for %s', 'cruwp'), get_the_time(__('Y', 'cruwp'))); ?></p>
 
  <?php } elseif (is_author()) { ?>
- <p><?php _e('Author Archive', 'piano-black'); ?></p>
+ <p><?php _e('Author Archive', 'cruwp'); ?></p>
 
  <?php } elseif (isset($_GET['paged']) && !empty($_GET['paged'])) { ?>
- <p><?php _e('Blog Archives', 'piano-black'); ?></p>
+ <p><?php _e('Blog Archives', 'cruwp'); ?></p>
 <?php } ?>
 </div>
 
@@ -36,13 +36,13 @@
     <div class="post">
      <h2><a href="<?php the_permalink() ?>"><?php the_title(); ?></a></h2>
      <ul class="post-info">
-      <li><?php the_time(__('F jS, Y', 'piano-black')) ?></li>
-      <?php if ($options['author']) : ?><li><?php _e('By ','piano-black'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
-      <li class="write-comment"><a href="<?php the_permalink() ?>#comments"><?php _e('Write comment','piano-black'); ?></a></li>
-      <?php edit_post_link(__('[ EDIT ]', 'piano-black'), '<li class="post-edit">', '</li>' ); ?>
+      <li><?php the_time(__('F jS, Y', 'cruwp')) ?></li>
+      <?php if ($options['author']) : ?><li><?php _e('By ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
+      <li class="write-comment"><a href="<?php the_permalink() ?>#comments"><?php _e('Write comment','cruwp'); ?></a></li>
+      <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
      </ul>
      <div class="post-content">
-       <?php the_content(__('Read more', 'piano-black')); ?>
+       <?php the_content(__('Read more', 'cruwp')); ?>
        <?php wp_link_pages(); ?>
      </div>
     </div>
@@ -53,19 +53,19 @@
       <?php } else { ?>
       <?php the_tags('<li class="post-tag">', ' . ', '</li>'); ?>
       <?php } ?>
-      <li class="post-comment"><?php comments_popup_link(__('Write comment', 'piano-black'), __('1 comment', 'piano-black'), __('% comments', 'piano-black')); ?></li>
+      <li class="post-comment"><?php comments_popup_link(__('Write comment', 'cruwp'), __('1 comment', 'cruwp'), __('% comments', 'cruwp')); ?></li>
      </ul>
     </div>
 
 <?php endwhile; else: ?>
 <div class="common-navi-wrapper">
-  <p><?php _e("Sorry, but you are looking for something that isn't here.","piano-black"); ?></p>
+  <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
 </div>
 <?php endif; ?>
 
 <?php if (function_exists('wp_pagenavi')) { wp_pagenavi(); } else { include('navigation.php'); } ?>
 
-<a href="#wrapper" id="back-top"><?php _e('Return top','piano-black'); ?></a>
+<a href="#wrapper" id="back-top"><?php _e('Return top','cruwp'); ?></a>
 
    </div><!-- #left-col end -->
 

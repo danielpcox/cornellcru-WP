@@ -23,15 +23,15 @@ echo paginate_links( array(
 	'mid_size' => 2,
 	'current' => ($paged ? $paged : 1),
         'type' => 'list',
-        'prev_text' => __('&laquo; Previous', 'piano-black'),
-        'next_text' => __('Next &raquo;', 'piano-black'),
+        'prev_text' => __('&laquo; Previous', 'cruwp'),
+        'next_text' => __('Next &raquo;', 'cruwp'),
 ));
 echo "\n</div>\n";
 
 } else {
 
-      echo '<div class="next-previous-navi clearfix">'."\n".'<div id="previous-page">'; previous_posts_link(__('Newer Entries','piano-black'));
-      echo "</div>\n".'<div id="next-page">'; next_posts_link(__('Older Entries','piano-black'));
+      echo '<div class="next-previous-navi clearfix">'."\n".'<div id="previous-page">'; previous_posts_link(__('Newer Entries','cruwp'));
+      echo "</div>\n".'<div id="next-page">'; next_posts_link(__('Older Entries','cruwp'));
       echo "</div>\n</div>\n";
 
 }

@@ -47,7 +47,7 @@
   <?php if (function_exists('wp_nav_menu')) { wp_nav_menu( array( 'sort_column' => 'menu_order') ); }; ?>
   <?php } else { ?>
   <ul class="menu">
-   <li class="<?php if (!is_paged() && is_home()) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo get_settings('home'); ?>/"><?php _e('HOME','piano-black'); ?></a></li>
+   <li class="<?php if (!is_paged() && is_home()) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo get_settings('home'); ?>/"><?php _e('HOME','cruwp'); ?></a></li>
    <?php 
          if($options['header_menu_type'] == 'pages') {
          wp_list_pages('sort_column=menu_order&depth=0&title_li=&exclude=' . $options['exclude_pages']);
@@ -79,27 +79,27 @@
     <div id="search-area"<?php if (!$options['header_rss']&&!$options['header_twitter']) : echo ' style="margin-right:0;"'; endif; ?>>
      <?php if ($options['use_google_search']) : ?>
      <form action="http://www.google.com/cse" method="get" id="searchform">
-      <div><input type="text" value="<?php _e('Google Search','piano-black'); ?>" name="q" id="search-input" onfocus="this.value=''; changefc('white');" /></div>
+      <div><input type="text" value="<?php _e('Google Search','cruwp'); ?>" name="q" id="search-input" onfocus="this.value=''; changefc('white');" /></div>
       <div>
-       <input type="image" src="<?php bloginfo('template_url'); ?>/img/search-button.gif" name="sa" alt="<?php _e('Search from this blog.','piano-black'); ?>" title="<?php _e('Search from this blog.','piano-black'); ?>" id="search-button" />
+       <input type="image" src="<?php bloginfo('template_url'); ?>/img/search-button.gif" name="sa" alt="<?php _e('Search from this blog.','cruwp'); ?>" title="<?php _e('Search from this blog.','cruwp'); ?>" id="search-button" />
        <input type="hidden" name="cx" value="<?php echo $options['custom_search_id']; ?>" />
        <input type="hidden" name="ie" value="UTF-8" />
       </div>
      </form>
      <?php else: ?>
       <form method="get" id="searchform" action="<?php bloginfo('home'); ?>/">
-       <div><input type="text" value="<?php _e('Search','piano-black'); ?>" name="s" id="search-input" onfocus="this.value=''; changefc('white');" /></div>
-       <div><input type="image" src="<?php bloginfo('template_url'); ?>/img/search-button.gif" alt="<?php _e('Search from this blog.','piano-black'); ?>" title="<?php _e('Search from this blog.','piano-black'); ?>" id="search-button" /></div>
+       <div><input type="text" value="<?php _e('Search','cruwp'); ?>" name="s" id="search-input" onfocus="this.value=''; changefc('white');" /></div>
+       <div><input type="image" src="<?php bloginfo('template_url'); ?>/img/search-button.gif" alt="<?php _e('Search from this blog.','cruwp'); ?>" title="<?php _e('Search from this blog.','cruwp'); ?>" id="search-button" /></div>
       </form>
      <?php endif; ?>
     </div>
     <?php endif; ?>
 
     <?php if ($options['header_rss']) : ?>
-    <a href="<?php bloginfo('rss2_url'); ?>" id="rss-feed" title="<?php _e('Entries RSS','piano-black'); ?>" ><?php _e('RSS','piano-black'); ?></a>
+    <a href="<?php bloginfo('rss2_url'); ?>" id="rss-feed" title="<?php _e('Entries RSS','cruwp'); ?>" ><?php _e('RSS','cruwp'); ?></a>
     <?php endif; ?>
     <?php if ($options['header_twitter']) : ?>
-    <a href="<?php echo $options['twitter_url']; ?>" id="twitter" title="<?php _e('TWITTER','piano-black'); ?>" ><?php _e('Twitter','piano-black'); ?></a>
+    <a href="<?php echo $options['twitter_url']; ?>" id="twitter" title="<?php _e('TWITTER','cruwp'); ?>" ><?php _e('Twitter','cruwp'); ?></a>
     <?php endif; ?>
 
    </div><!-- #header_meta end -->

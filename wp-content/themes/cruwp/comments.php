@@ -7,7 +7,7 @@ if (function_exists('post_password_required'))
 	{
 	if ( post_password_required() ) 
 		{
-		echo '<div class="nocomments"><p>';_e('This post is password protected. Enter the password to view comments.','piano-black'); echo '</p></div></div>';
+		echo '<div class="nocomments"><p>';_e('This post is password protected. Enter the password to view comments.','cruwp'); echo '</p></div></div>';
 		return;
 		}
 	} else 
@@ -16,7 +16,7 @@ if (function_exists('post_password_required'))
 		{ // if there's a password
 			if ($_COOKIE['wp-postpass_' . COOKIEHASH] != $post->post_password) 
 			{  // and it doesn't match the cookie  ?>
-				<div class="nocomments"><p><?php _e('This post is password protected. Enter the password to view comments.','piano-black'); ?></p></div></div>
+				<div class="nocomments"><p><?php _e('This post is password protected. Enter the password to view comments.','cruwp'); ?></p></div></div>
 				<?php return;
 			}
 		}
@@ -34,21 +34,21 @@ if (function_exists('post_password_required'))
 
  <div id="comment-header">
   <ul id="comment-header-top" class="clearfix">
-   <li id="comment-feed"><a href="<?php bloginfo('comments_rss2_url'); ?>" title="<?php _e('Comments RSS','piano-black'); ?>"></a></li>
+   <li id="comment-feed"><a href="<?php bloginfo('comments_rss2_url'); ?>" title="<?php _e('Comments RSS','cruwp'); ?>"></a></li>
    <li id="comment-title"><?php the_title(); ?></li>
   </ul>
   <div id="comment-header-bottom" class="clearfix">
    <ul class="switch">
 <?php if(pings_open()) ://if trackback is open ?>
-    <li id="comment-switch" class="active"><a href="javascript:void(0);" onclick="MGJS.switchTab('comment-list', 'trackback-list', 'comment-switch', 'active', 'trackback-switch', 'non-active');"><?php _e('Comments','piano-black'); ?><?php echo (' ( ' . (count($comments)-count($trackbacks)) . ' )'); ?></a></li>
-    <li id="trackback-switch" class="non-active"><a href="javascript:void(0);" onclick="MGJS.switchTab('trackback-list', 'comment-list', 'trackback-switch', 'active', 'comment-switch', 'non-active');"><?php _e('Trackbacks','piano-black'); ?><?php echo (' ( ' . count($trackbacks) . ' )'); ?></a></li>
+    <li id="comment-switch" class="active"><a href="javascript:void(0);" onclick="MGJS.switchTab('comment-list', 'trackback-list', 'comment-switch', 'active', 'trackback-switch', 'non-active');"><?php _e('Comments','cruwp'); ?><?php echo (' ( ' . (count($comments)-count($trackbacks)) . ' )'); ?></a></li>
+    <li id="trackback-switch" class="non-active"><a href="javascript:void(0);" onclick="MGJS.switchTab('trackback-list', 'comment-list', 'trackback-switch', 'active', 'comment-switch', 'non-active');"><?php _e('Trackbacks','cruwp'); ?><?php echo (' ( ' . count($trackbacks) . ' )'); ?></a></li>
 <?php else ://if comment is closed,show onky number ?>
-    <li><?php _e('Comments', 'piano-black'); echo (' (' . (count($comments)-count($trackbacks)) . ')'); ?></li>
-    <li id="trackback-closed"><?php _e('Trackbacks are closed.','piano-black'); ?></li>
+    <li><?php _e('Comments', 'cruwp'); echo (' (' . (count($comments)-count($trackbacks)) . ')'); ?></li>
+    <li id="trackback-closed"><?php _e('Trackbacks are closed.','cruwp'); ?></li>
 <?php endif; ?>
    </ul>
 <?php if(comments_open()) ://if comment is open ?>
-   <a href="#respond" id="add-comment"><?php _e('Write comment','piano-black'); ?></a>
+   <a href="#respond" id="add-comment"><?php _e('Write comment','cruwp'); ?></a>
 <?php endif; ?>
 
 <?php if(pings_open()) ://if trackback is open ?>
@@ -76,7 +76,7 @@ if (function_exists('post_password_required'))
 			}
 		} else {
 	?>
-<li class="comment"><p><?php _e('No comments yet.','piano-black'); ?></p></li>
+<li class="comment"><p><?php _e('No comments yet.','cruwp'); ?></p></li>
 	<?php
 		}
 	?>
@@ -103,7 +103,7 @@ if (function_exists('post_password_required'))
 <?php if (pings_open()) ://id trackback is open ?>
 
 <div id="trackback-url">
-<label for="trackback_url"><?php _e('TrackBack URL' , 'piano-black'); ?></label>
+<label for="trackback_url"><?php _e('TrackBack URL' , 'cruwp'); ?></label>
 <input type="text" name="trackback_url" id="trackback_url" size="60" value="<?php trackback_url() ?>" readonly="readonly" onfocus="this.select()" />
 </div>
 
@@ -114,17 +114,17 @@ if (function_exists('post_password_required'))
 <?php foreach ($trackbacks as $comment) : ?>
 <li class="comment">
  <div class="trackback-time">
-  <?php echo get_comment_time(__('F jS, Y', 'piano-black')) ?>
-  <?php edit_comment_link(__('[ EDIT ]', 'piano-black'), '', ''); ?>
+  <?php echo get_comment_time(__('F jS, Y', 'cruwp')) ?>
+  <?php edit_comment_link(__('[ EDIT ]', 'cruwp'), '', ''); ?>
  </div>
  <div class="trackback-title">
-  <?php _e('Trackback from : ' , 'piano-black'); ?><a href="<?php comment_author_url() ?>"><?php comment_author(); ?></a>
+  <?php _e('Trackback from : ' , 'cruwp'); ?><a href="<?php comment_author_url() ?>"><?php comment_author(); ?></a>
  </div>
 </li>
 <?php endforeach; ?>
 
 <?php else : ?>
-<li class="comment"><p><?php _e('No trackbacks yet.','piano-black'); ?></p></li>
+<li class="comment"><p><?php _e('No trackbacks yet.','cruwp'); ?></p></li>
 <?php endif; ?>
 </ol>
 <?php endif; ?>
@@ -139,10 +139,10 @@ if (function_exists('post_password_required'))
 <?php if (!comments_open()) : // if comment are closed ?>
 
 <div class="comment-closed" id="respond">
-<?php _e('Comments are closed.','piano-black'); ?>
+<?php _e('Comments are closed.','cruwp'); ?>
 </div>
 
-<a href="#pngfix-right" id="back-top"><?php _e('Return top','piano-black'); ?></a>
+<a href="#pngfix-right" id="back-top"><?php _e('Return top','cruwp'); ?></a>
 
 
 
@@ -155,7 +155,7 @@ if (function_exists('post_password_required'))
        else 
         { $login_link = get_option('siteurl') . '/wp-login.php?redirect_to=' . urlencode(get_permalink()); }
  ?>
-<?php printf(__('You must be <a href="%s">logged in</a> to post a comment.', 'piano-black'), $login_link); ?>
+<?php printf(__('You must be <a href="%s">logged in</a> to post a comment.', 'cruwp'), $login_link); ?>
 </div>
 
 
@@ -174,16 +174,16 @@ if (function_exists('post_password_required'))
 <?php if ( $user_ID ) : ?>
 <div id="comment-user-login">
 <?php if (function_exists('wp_logout_url')) { ?>
-<p><?php printf(__('Logged in as <a href="%1$s">%2$s</a>.', 'piano-black'), get_option('siteurl') . '/wp-admin/profile.php', $user_identity); ?><span><a href="<?php echo wp_logout_url(get_permalink()); ?>" title="<?php _e('Log out of this account', 'piano-black'); ?>"><?php _e('Log out', 'piano-black'); ?></a></span></p>
+<p><?php printf(__('Logged in as <a href="%1$s">%2$s</a>.', 'cruwp'), get_option('siteurl') . '/wp-admin/profile.php', $user_identity); ?><span><a href="<?php echo wp_logout_url(get_permalink()); ?>" title="<?php _e('Log out of this account', 'cruwp'); ?>"><?php _e('Log out', 'cruwp'); ?></a></span></p>
 <?php } else { ?>
-<p><?php printf(__('Logged in as <a href="%1$s">%2$s</a>.', 'piano-black'), get_option('siteurl') . '/wp-admin/profile.php', $user_identity); ?><span><a href="<?php echo get_option('siteurl'); ?>/wp-login.php?action=logout" title="<?php _e('Log out of this account', 'piano-black'); ?>"><?php _e('Log out', 'piano-black'); ?></a></span></p>
+<p><?php printf(__('Logged in as <a href="%1$s">%2$s</a>.', 'cruwp'), get_option('siteurl') . '/wp-admin/profile.php', $user_identity); ?><span><a href="<?php echo get_option('siteurl'); ?>/wp-login.php?action=logout" title="<?php _e('Log out of this account', 'cruwp'); ?>"><?php _e('Log out', 'cruwp'); ?></a></span></p>
 <?php } ?>
 </div><!-- #comment-user-login END -->
 <?php else : ?>
 <div id="guest-info">
- <div id="guest-name"><label for="author"><span><?php _e('NAME','piano-black'); ?></span><?php if ($req) _e('( required )', 'piano-black'); ?></label><input type="text" name="author" id="author" value="<?php echo $comment_author; ?>" size="22" tabindex="1" <?php if ($req) echo "aria-required='true'"; ?> /></div>
- <div id="guest-email"><label for="email"><span><?php _e('E-MAIL','piano-black'); ?></span><?php if ($req) _e('( required )', 'piano-black'); ?> <?php _e('- will not be published -','piano-black'); ?></label><input type="text" name="email" id="email" value="<?php echo $comment_author_email; ?>" size="22" tabindex="2" <?php if ($req) echo "aria-required='true'"; ?> /></div>
- <div id="guest-url"><label for="url"><span><?php _e('URL','piano-black'); ?></span></label><input type="text" name="url" id="url" value="<?php echo $comment_author_url; ?>" size="22" tabindex="3" /></div>
+ <div id="guest-name"><label for="author"><span><?php _e('NAME','cruwp'); ?></span><?php if ($req) _e('( required )', 'cruwp'); ?></label><input type="text" name="author" id="author" value="<?php echo $comment_author; ?>" size="22" tabindex="1" <?php if ($req) echo "aria-required='true'"; ?> /></div>
+ <div id="guest-email"><label for="email"><span><?php _e('E-MAIL','cruwp'); ?></span><?php if ($req) _e('( required )', 'cruwp'); ?> <?php _e('- will not be published -','cruwp'); ?></label><input type="text" name="email" id="email" value="<?php echo $comment_author_email; ?>" size="22" tabindex="2" <?php if ($req) echo "aria-required='true'"; ?> /></div>
+ <div id="guest-url"><label for="url"><span><?php _e('URL','cruwp'); ?></span></label><input type="text" name="url" id="url" value="<?php echo $comment_author_url; ?>" size="22" tabindex="3" /></div>
 </div>
 <?php endif; ?>
 
@@ -192,7 +192,7 @@ if (function_exists('post_password_required'))
 </div>
 
 <div id="comment-submit-area">
- <input name="submit" type="submit" id="comment-submit" class="button" tabindex="5" value="<?php _e('Submit Comment', 'piano-black'); ?>" title="<?php _e('Submit Comment', 'piano-black'); ?>" alt="<?php _e('Submit Comment', 'piano-black'); ?>" />
+ <input name="submit" type="submit" id="comment-submit" class="button" tabindex="5" value="<?php _e('Submit Comment', 'cruwp'); ?>" title="<?php _e('Submit Comment', 'cruwp'); ?>" alt="<?php _e('Submit Comment', 'cruwp'); ?>" />
 </div>
 
 <div id="input_hidden_field">

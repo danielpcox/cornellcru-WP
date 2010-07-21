@@ -10,15 +10,15 @@
     <div class="post" id="single">
      <h2><?php the_title(); ?></h2>
      <ul class="post-info">
-      <li><?php the_time(__('F jS, Y', 'piano-black')) ?></li>
-      <li><?php _e('Posted in ','piano-black'); ?><?php the_category(' . '); ?></li>
-      <?php if ($options['author']) : ?><li><?php _e('By ','piano-black'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
-      <li class="write-comment"><a href="#respond"><?php _e('Write comment','piano-black'); ?></a></li>
-      <?php edit_post_link(__('[ EDIT ]', 'piano-black'), '<li class="post-edit">', '</li>' ); ?>
+      <li><?php the_time(__('F jS, Y', 'cruwp')) ?></li>
+      <li><?php _e('Posted in ','cruwp'); ?><?php the_category(' . '); ?></li>
+      <?php if ($options['author']) : ?><li><?php _e('By ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
+      <li class="write-comment"><a href="#respond"><?php _e('Write comment','cruwp'); ?></a></li>
+      <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
 
      </ul>
      <div class="post-content">
-       <?php the_content(__('Read more', 'piano-black')); ?>
+       <?php the_content(__('Read more', 'cruwp')); ?>
        <?php wp_link_pages(); ?>
      </div>
 
@@ -26,7 +26,7 @@
 
 <?php endwhile; else: ?>
     <div class="post-content">
-      <p><?php _e("Sorry, but you are looking for something that isn't here.","piano-black"); ?></p>
+      <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
     </div>
 <?php endif; ?>
 
@@ -39,7 +39,7 @@
    </div>
    <?php endif; ?>
 
-   <a href="#wrapper" id="back-top"><?php _e('Return top','piano-black'); ?></a>
+   <a href="#wrapper" id="back-top"><?php _e('Return top','cruwp'); ?></a>
 
    </div><!-- #left-col end -->
 

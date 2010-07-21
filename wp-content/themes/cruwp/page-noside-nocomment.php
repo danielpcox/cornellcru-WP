@@ -11,14 +11,14 @@ Template Name:No sidebar, No comment
     <div class="post" id="single">
      <h2><?php the_title(); ?></h2>
      <div class="post-content">
-       <?php the_content(__('Read more', 'piano-black')); ?>
+       <?php the_content(__('Read more', 'cruwp')); ?>
        <?php wp_link_pages(); ?>
      </div>
     </div>
 
 <?php endwhile; else: ?>
     <div class="post-content">
-      <p><?php _e("Sorry, but you are looking for something that isn't here.","piano-black"); ?></p>
+      <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
     </div>
 <?php endif; ?>
 
