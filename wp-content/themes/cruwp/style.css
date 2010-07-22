@@ -649,13 +649,17 @@ BODY {
   -webkit-border-radius: 0 8px 8px 0;
 }
 #blog #filters LI A {
-  color: #76b8ed;
-  padding: 5px 10px;
+    font-size:small;
+  color: white;
+  /*color: #76b8ed;     <-- stu original*/
+  padding: 2px 5px;
+  /*padding: 5px 10px;     <-- stu original*/
   background: #2b2b2b;
 }
 #blog #filters LI A:hover {
   background: #222222;
-  color: #037fe4;
+  color: #76b8ed;
+  /*color: #037fe4;    <-- stu original*/
 }
 #blog #blog-subscribe {
   margin: 10px 30px 0 0px;

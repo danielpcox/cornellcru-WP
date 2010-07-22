@@ -26,14 +26,21 @@
 
 <div id="blog">
   <h1>The Cru Blog</h1>
+
+  <!-- original "subscribe" link
   <?php if ($options['header_rss']) : ?>
-    <a href="<?php bloginfo('rss2_url'); ?>" id="blog-subscribe" title="<?php _e('Entries RSS','cruwp'); ?>" >subscribe</a>
+    <a href="<?php bloginfo('rss2_url'); ?>" id="blog-subscribe" >subscribe</a>
   <?php endif; ?>
-<!-- Gonna have to figure out how to do these filters using the wordpress stuff
+-->
+
   <ul id="filters">
-    <li><%= link_to 'By Date' %></li>
-    <li><%= link_to 'By Author' %></li>
-  </ul>--><!--/#filters-->
+      <?php if ($options['header_rss']) : ?>
+        <li><a href="<?php bloginfo('rss2_url'); ?>" >feed</a></li>
+      <?php endif; ?>
+      <?php if ($options['header_twitter']) : ?>
+          <li><a href="<?php echo $options['twitter_url']; ?>" id="twitter" >twitter</a></li>
+      <?php endif; ?>
+  </ul><!--/#filters-->
 
   <ul id="posts">
     <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
@@ -41,14 +48,15 @@
           <h2><a href="<?php the_permalink() ?>"><?php the_title(); ?></a></h2>
           <ul class="meta">
             <li class="date"><?php the_time(__('F jS, Y', 'cruwp')) ?></li>
-            <?php if ($options['author']) : ?><li class="author"><?php _e('by ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
-            <li class="comments"><?php comments_popup_link(__('Write comment', 'cruwp'), __('1 comment', 'cruwp'), __('% comments', 'cruwp')); ?></li>
+            <!--<?php if ($options['author']) : ?><li class="author"><?php _e('by ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>--><!-- TODO : enable author link? -->
+            <?php if ($options['author']) : ?><li class="author"><?php _e('by ','cruwp'); ?><?php the_author(); ?></li><?php endif; ?>
+            <!--<li class="comments"><?php comments_popup_link(__('Write comment', 'cruwp'), __('1 comment', 'cruwp'), __('% comments', 'cruwp')); ?></li>--><!-- TODO : enable comments -->
             <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
           </ul><!--/.meta-->
-       <?php the_content(__('Read more', 'cruwp')); ?>
+       <?php the_content(__('[...more]', 'cruwp')); ?>
        <?php wp_link_pages(); ?>
-       <?php the_category(' . '); ?>
-       <?php the_tags('<li class="post-tag">', ' . ', '</li>'); ?>
+       <!--<?php the_category(' . '); ?>--><!-- TODO : enable categories? -->
+       <!--<?php the_tags('<li class="post-tag">', ' . ', '</li>'); ?>--> <!-- TODO : enable tags? -->
        
       </li><!--/.post-->
     <?php endwhile; ?>
