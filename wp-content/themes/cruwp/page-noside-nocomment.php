@@ -1,6 +1,6 @@
 <?php
 /*
-Template Name:No sidebar, No comment
+TempDISABLEDlate Name:No sidebar, No comment
 */
 ?>
 <?php get_header(); ?>
@@ -23,15 +23,15 @@ Template Name:No sidebar, No comment
         </ul><!--/.nav-->
       </div><!--/#sidebar-->
 
+  <?php } ?>
 <div id="main-cont">
-      <h1>I Am New Here</h1>
+      <h1><?php the_title(); ?></h1>
 
       <div id="posts">
             <div class="post">
               <?php the_content(); ?>
             </div><!--/#posts-->
       </div>
-  <?php } ?>
 
   <?php endwhile; else: ?>
   <div id="main-cont">

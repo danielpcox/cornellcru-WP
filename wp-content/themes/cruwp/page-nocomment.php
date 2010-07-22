@@ -1,6 +1,6 @@
 <?php
 /*
-Template Name:No comment
+TempDISABLEDlate Name:No comment
 */
 ?>
 <?php get_header(); ?>

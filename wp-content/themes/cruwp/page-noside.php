@@ -1,6 +1,6 @@
 <?php
 /*
-Template Name:No sidebar
+TempDISABLEDlate Name:No sidebar
 */
 ?>
 <?php get_header(); ?>
