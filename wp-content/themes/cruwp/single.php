@@ -1,50 +1,44 @@
 <?php get_header(); ?>
-<?php $options = get_option('pb_options'); ?>
 
-  <div id="middle-contents" class="clearfix">
+  <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
+  <?php
+    if($post->post_parent) {
+    $children = wp_list_pages("title_li=&child_of=".$post->post_parent."&echo=0");
+    $titlenamer = get_the_title($post->post_parent);
+    }
 
-   <div id="left-col">
+    else {
+    $children = wp_list_pages("title_li=&child_of=".$post->ID."&echo=0");
+    $titlenamer = get_the_title($post->ID);
+    }
+    if ($children) { ?>
+      <div id="sidebar">
+        <ul class="nav">
+          <?php echo $children; ?>
+        </ul><!--/.nav-->
+      </div><!--/#sidebar-->
 
-<?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
+  <?php } ?>
+<div id="main-cont">
+      <h1><?php the_title(); ?></h1>
 
-    <div class="post" id="single">
-     <h2><?php the_title(); ?></h2>
-     <ul class="post-info">
-      <li><?php the_time(__('F jS, Y', 'cruwp')) ?></li>
-      <li><?php _e('Posted in ','cruwp'); ?><?php the_category(' . '); ?></li>
-      <?php if ($options['author']) : ?><li><?php _e('By ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
-      <li class="write-comment"><a href="#respond"><?php _e('Write comment','cruwp'); ?></a></li>
-      <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
+      <div id="posts">
+            <div class="post">
+              <?php the_content(); ?>
+            </div><!--/#posts-->
+      </div>
 
-     </ul>
-     <div class="post-content">
-       <?php the_content(__('Read more', 'cruwp')); ?>
-       <?php wp_link_pages(); ?>
-     </div>
+  <?php endwhile; else: ?>
+  <div id="main-cont">
+      <h1>Page Not Found</h1>
+      <div id="posts">
+        <div class="post">
+          <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
+        </div>
+      </div><!--/.post-->
+  <?php endif; ?>
 
-    </div>
+  </div> <!-- #main-cont -->
 
-<?php endwhile; else: ?>
-    <div class="post-content">
-      <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
-    </div>
-<?php endif; ?>
-
-<?php if (function_exists('wp_list_comments')) { comments_template('', true); } else { comments_template(); } ?>
-
-   <?php if ($options['next_preview_post']) : ?>
-   <div id="previous_next_post" class="clearfix">
-    <p id="previous_post"><?php previous_post_link('%link') ?></p>
-    <p id="next_post"><?php next_post_link('%link') ?></p>
-   </div>
-   <?php endif; ?>
-
-   <a href="#wrapper" id="back-top"><?php _e('Return top','cruwp'); ?></a>
-
-   </div><!-- #left-col end -->
-
-   <?php get_sidebar(); ?>
-
-  </div><!-- #middle-contents end -->
 
 <?php get_footer(); ?>
