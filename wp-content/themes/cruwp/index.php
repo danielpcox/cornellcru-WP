@@ -12,15 +12,15 @@
 
 <ul id="call-to-action">
   <li class="cta" id="real-life">
-    <a href="real-life">Real Life<span class='subtitle'>our weekly large group meetings</span></a>
+      <a href="<?php echo bloginfo('url') ?>/real-life/">Real Life<span class='subtitle'>our weekly large group meetings</span></a>
   </li>
   
   <li class="cta" id="jesus-and-the-gospel">
-    <a href="Jesus-and-the-gospel">Jesus &amp;<br />The Gospel</a>
+    <a href="<?php echo bloginfo('url') ?>/jesus-and-the-gospel/">Jesus &amp;<br />The Gospel</a>
   </li>
 
   <li class="cta" id="community-groups">
-    <a href="community-groups">Community Groups<span class='subtitle'>our small group meetings</span></a>
+    <a href="<?php echo bloginfo('url') ?>/community-groups/">Community Groups<span class='subtitle'>our small group meetings</span></a>
   </li>
 </ul><!--/#call-to-action-->
 
