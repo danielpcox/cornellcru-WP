@@ -62,7 +62,11 @@
 
     <ul id="navigation">
       <li class="<?php if (!is_paged() && is_home()) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo get_settings('home'); ?>/"><?php _e('HOME','cruwp'); ?></a></li>
-      <?php wp_list_pages('sort_column=menu_order&depth=0&title_li=&include=' . $options['exclude_pages']); ?> <!-- using exclude pages as if they were actually INCLUDE pages -->
+      <li class="<?php if (is_tree('im-new-here')) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo bloginfo('url'); ?>/im-new-here/">I'm New Here</a></li>
+      <li class="<?php if (is_tree('news-and-events')) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo bloginfo('url'); ?>/news-and-events/">News and Events</a></li>
+      <li class="<?php if (is_tree('following-jesus')) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo bloginfo('url'); ?>/following-jesus/">Following Jesus</a></li>
+      <li class="<?php if (is_tree('about-us')) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo bloginfo('url'); ?>/about-us/">About Us</a></li>
+      <!--<?php wp_list_pages('sort_column=menu_order&depth=0&title_li=&include=' . $options['exclude_pages']); ?>--><!-- using exclude pages as if they were actually INCLUDE pages -->
     </ul><!--/#navigation-->
 
 <script lang=javascript>

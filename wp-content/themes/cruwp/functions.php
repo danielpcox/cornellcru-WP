@@ -353,6 +353,32 @@ if ( function_exists('register_sidebar') ) {
     ));
 }
 
+// FUNCTIONS ADDED BY DANIEL
+
+function get_page_id($page_name)
+{
+	global $wpdb;
+	$page_name_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_name = '".$page_name."'");
+	return $page_name_id;
+}
+
+function is_tree($pslug) {      // $pid = The ID of the page we're looking for pages underneath
+    $pid = get_page_id($pslug);
+    global $post;         // load details about this page
+    $anc = get_post_ancestors( $post->ID );
+    foreach($anc as $ancestor) {
+        if(is_page() && $ancestor == $pid) {
+            return true;
+        }
+    }
+    if(is_page()&&(is_page($pid))) 
+        return true;   // we're at the page or at a sub page
+    else 
+        return false;  // we're elsewhere
+};
+
+// END /FUNCTIONS ADDED BY DANIEL
+
 
 // Original custom comments function is written by mg12 - http://www.neoease.com/
 
