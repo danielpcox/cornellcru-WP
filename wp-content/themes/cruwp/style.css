@@ -794,17 +794,40 @@ BODY {
   color: #ffffff;
   text-decoration: none;
 }
+#main-cont A {
+  color: #ffffff;
+  text-decoration: none;
+}
 #main-cont #posts .post A:hover { color: #76b8ed; }
-#main-cont #posts .post .meta {
+
+
+/*#main-cont #posts .post .meta {*/
+/*margin: 20px 0;*/
+/*float: right;*/
+/*list-style: none;*/
+/*font-size: 11px;*/
+/*color: #d7d7d7;*/
+/*}                                ]<--    stu original*/
+
+
+#main-cont .meta {
   margin: 20px 0;
   float: right;
   list-style: none;
   font-size: 11px;
   color: #d7d7d7;
+  padding-top:10px;
+  padding-right:50px;
 }
-#main-cont #posts .post .meta LI { display: inline; }
+
+
+/*#main-cont #posts .post .meta LI { display: inline; }
 #main-cont #posts .post .meta .comments { padding-left: 10px; }
-#main-cont #posts .post .meta + * { clear: both; }
+#main-cont #posts .post .meta + * { clear: both; }                            ]<-- stu original*/
+
+#main-cont .meta LI { display: inline; }
+#main-cont .meta .comments { padding-left: 10px; }
+#main-cont .meta + * { clear: both; }
 #main-cont #posts .post H1 { margin-left: 20px; }
 #main-cont #posts .post H2 { margin-left: 20px; }
 #main-cont #posts .post H3 { margin-left: 20px; }
