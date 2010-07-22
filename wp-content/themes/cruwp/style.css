@@ -522,33 +522,33 @@ BODY {
   font-size: 10px;
 }
 #call-to-action #real-life A { text-align: right; }
-#pagination .pagination {
+#pagination {
   margin: 40px 40px 40px 0;
   background: transparent;
   font-size: 10px;
 }
-#pagination .pagination * {
+#pagination * {
   padding: 3px 4px;
   background: #333333;
 }
-#pagination .pagination A { color: #bbbbbb; }
-#pagination .pagination A:hover { color: #ffffff; }
-#pagination .pagination A:active { color: #ffffff; }
-#pagination .pagination .disabled {
+#pagination A { color: #bbbbbb; }
+#pagination A:hover { color: #ffffff; }
+#pagination A:active { color: #ffffff; }
+#pagination .disabled {
   background: #181818;
   color: #333333;
 }
-#pagination .pagination .current_page_item {
+#pagination .page-numbers.current {
   background: #171717;
   color: #0084ff;
 }
-#pagination .pagination .prev_page {
+#pagination .page-numbers.prev {
   border-radius: 8px 0 0 8px;
   -moz-border-radius: 8px 0 0 8px;
   -webkit-border-radius: 8px 0 0 8px;
   text-decoration: none;
 }
-#pagination .pagination .next_page {
+#pagination .page-numbers.next {
   border-radius: 0 8px 8px 0;
   -moz-border-radius: 0 8px 8px 0;
   -webkit-border-radius: 0 8px 8px 0;
@@ -863,6 +863,10 @@ BODY {
 
 /* ############# appended by Daniel #################*/
 #blog #posts .post img {
+    border: 1px solid #232323;
+    margin: 10px;
+}
+#main-cont #posts .post img {
     border: 1px solid #232323;
     margin: 10px;
 }

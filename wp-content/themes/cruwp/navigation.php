@@ -15,18 +15,18 @@ if (strpos($paginate_base, '?') || ! $wp_rewrite->using_permalinks()) {
 	$paginate_base .= '%_%';
 }
 
-echo '<div class="page-navi clearfix">'. "\n";
+echo '<ul id="pagination">'. "\n";
 echo paginate_links( array(
 	'base' => $paginate_base,
 	'format' => $paginate_format,
 	'total' => $wp_query->max_num_pages,
 	'mid_size' => 2,
 	'current' => ($paged ? $paged : 1),
-        'type' => 'list',
-        'prev_text' => __('&laquo; Previous', 'cruwp'),
-        'next_text' => __('Next &raquo;', 'cruwp'),
+        'type' => 'link',
+        'prev_text' => __('&laquo; Newer', 'cruwp'),
+        'next_text' => __('Older &raquo;', 'cruwp'),
 ));
-echo "\n</div>\n";
+echo "\n</ul>\n";
 
 } else {
 
