@@ -861,6 +861,20 @@ BODY {
 /* #####################  end FROM MASTER MOCKUP ######################## */
 
 
+/* ############# appended by Daniel #################*/
+#blog #posts .post img {
+    border: 1px solid #232323;
+    margin: 10px;
+}
+.alignright {
+    float:right;
+}
+.alignleft {
+    float:left;
+}
+/* ############# END /appended by Daniel #################*/
+
+
 /* Salvaged from the piano-black style.css: */
 
 
