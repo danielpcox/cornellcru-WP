@@ -1,37 +1,44 @@
 <?php get_header(); ?>
-<?php $options = get_option('pb_options'); ?>
 
-  <div id="middle-contents" class="clearfix">
+  <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
+  <?php
+    if($post->post_parent) {
+    $children = wp_list_pages("title_li=&child_of=".$post->post_parent."&echo=0");
+    $titlenamer = get_the_title($post->post_parent);
+    }
 
-   <div id="left-col">
+    else {
+    $children = wp_list_pages("title_li=&child_of=".$post->ID."&echo=0");
+    $titlenamer = get_the_title($post->ID);
+    }
+    if ($children) { ?>
+      <div id="sidebar">
+        <ul class="nav">
+          <?php echo $children; ?>
+        </ul><!--/.nav-->
+      </div><!--/#sidebar-->
 
-<?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
+  <?php } ?>
+<div id="main-cont">
+      <h1><?php the_title(); ?></h1>
 
-    <div class="post" id="single">
-     <h2><?php the_title(); ?></h2>
-     <ul class="post-info">
-      <?php if ($options['author']) : ?><li><?php _e('By ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
-      <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
-     </ul>
-     <div class="post-content">
-       <?php the_content(__('Read more', 'cruwp')); ?>
-       <?php wp_link_pages(); ?>
-     </div>
-    </div>
+      <div id="posts">
+            <div class="post">
+              <?php the_content(); ?>
+            </div><!--/#posts-->
+      </div>
 
-<?php endwhile; else: ?>
-    <div class="post-content">
-      <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
-    </div>
-<?php endif; ?>
+  <?php endwhile; else: ?>
+  <div id="main-cont">
+      <h1>Page Not Found</h1>
+      <div id="posts">
+        <div class="post">
+          <p><?php _e("Sorry, but you are looking for something that isn't here.","cruwp"); ?></p>
+        </div>
+      </div><!--/.post-->
+  <?php endif; ?>
 
-<?php if (function_exists('wp_list_comments')) { comments_template('', true); } else { comments_template(); } ?>
+  </div> <!-- #main-cont -->
 
-
-   </div><!-- #left-col end -->
-
-   <?php get_sidebar(); ?>
-
-  </div><!-- #middle-contents end -->
 
 <?php get_footer(); ?>
