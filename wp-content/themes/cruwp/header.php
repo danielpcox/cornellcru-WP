@@ -63,18 +63,3 @@
       <li class="<?php if (is_tree('about-us')) { ?>current_page_item<?php } else { ?>page_item<?php } ?>"><a href="<?php echo bloginfo('url'); ?>/about-us/">About Us</a></li>
       <!--<?php wp_list_pages('sort_column=menu_order&depth=0&title_li=&include=' . $options['exclude_pages']); ?>--><!-- using exclude pages as if they were actually INCLUDE pages -->
     </ul><!--/#navigation-->
-
-<script lang=javascript>
-	$(document).ready(function(){	
-		$("#hero").easySlider({
-			auto: true, 
-			continuous: true,
-			controlsShow: true,
-            numeric: true,
-			speed: 700,
-			pause: 5000
-		});
-        $("#hero").css({ width: "880px",height: "350px" });
-	});	
-</script>
-

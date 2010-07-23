@@ -1,6 +1,20 @@
 <?php get_header(); ?>
 <?php $options = get_option('pb_options'); ?>
 
+<script lang=javascript>
+	$(document).ready(function(){	
+		$("#hero").easySlider({
+			auto: true, 
+			continuous: true,
+			controlsShow: true,
+            numeric: true,
+			speed: 700,
+			pause: 5000
+		});
+        $("#hero").css({ width: "880px",height: "350px" });
+	});	
+</script>
+
 <div id="hero">
   <ul>
     <li><a href="http://twitter.com/cornellcru"><img src="<?php bloginfo('template_url'); ?>/images/carousel_1.png" /></a></li>
