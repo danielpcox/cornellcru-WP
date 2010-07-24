@@ -3,7 +3,7 @@
 
 
 <div id="blog">
-  <h1>Search Results for <?php echo "\"" .$s. "\""; ?></h1>
+  <h1>Search Results for <?php echo "\"" .$s. "\""; ?>:</h1>
 
   <!-- original "subscribe" link
   <?php if ($options['header_rss']) : ?>
