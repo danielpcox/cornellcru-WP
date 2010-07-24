@@ -38,6 +38,7 @@
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/comment.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/jquery.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/easySlider1.7.js"></script>
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/application.js"></script>
 </head>
 <body>
     <div id="header">
