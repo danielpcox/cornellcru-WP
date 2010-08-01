@@ -789,6 +789,7 @@ BODY {
   -webkit-border-radius: 10px;
   font-size: 14px;
   line-height: 22px;
+  overflow: hidden;
 }
 #main-cont #posts .post H2:first-child { float: left; }
 #main-cont #posts .post A {
