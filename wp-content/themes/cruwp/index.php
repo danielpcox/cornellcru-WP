@@ -15,14 +15,15 @@
 	});	
 </script>
 
-<div id="hero">
-  <ul>
-    <li><a href="http://twitter.com/cornellcru"><img src="<?php bloginfo('template_url'); ?>/images/carousel_1.png" /></a></li>
-    <li><a href="http://google.com"><img src="<?php bloginfo('template_url'); ?>/images/carousel_2.png" /></a></li>
-    <li><a href="http://yahoo.com"><img src="<?php bloginfo('template_url'); ?>/images/carousel_3.png" /></a></li>
-    <li><a href="http://github.com"><img src="<?php bloginfo('template_url'); ?>/images/carousel_4.png" /></a></li>
-  </ul>
-</div><!--/#hero-->
+  <!-- HEROES AND CAROUSEL -->
+  <?php
+    $hero_category = "Front Page";
+  ?>
+  <div id="hero">
+    <ul>
+      <?php echo wp_list_bookmarks("categorize=0&title_li=&orderby=rating&category_name=".$hero_category); ?>
+    </ul>
+  </div><!--/#hero-->
 
 <ul id="call-to-action">
   <li class="cta" id="real-life">
@@ -57,6 +58,7 @@
   </ul><!--/#filters-->
 
   <ul id="posts">
+    <?php query_posts($query_string . '&cat=-5'); // exclude news and events category TODO : hardcoded is bad ?>
     <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
       <li class="post">
           <h2><a href="<?php the_permalink() ?>"><?php the_title(); ?></a></h2>

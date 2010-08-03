@@ -355,6 +355,13 @@ if ( function_exists('register_sidebar') ) {
 
 // FUNCTIONS ADDED BY DANIEL
 
+function get_category_id($category_name)
+{
+	global $wpdb;
+	$category_name_id = $wpdb->get_var("SELECT ID FROM $wpdb->categories WHERE category_name = '".$category_name."'");
+	return $category_name_id;
+}
+
 function get_page_id($page_name)
 {
 	global $wpdb;
