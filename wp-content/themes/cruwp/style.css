@@ -426,7 +426,7 @@ BODY {
   -moz-border-radius: 0 10px 0 0;
   -webkit-border-radius: 0 10px 0 0;
 }
-#controls .current_page_item A {
+#controls .current A {
   color: #0084ff;
   background: #222222;
   -webkit-transition: all 0.2s;
