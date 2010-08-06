@@ -1,10 +1,16 @@
 <?php get_header(); ?>
 <?php $options = get_option('pb_options'); ?>
 
+<!-- HEROES AND CAROUSEL -->
+<?php
+    $hero_category = "Front Page";
+?>
+<?php $only_one_hero = (count(get_bookmarks("categorize=0&title_li=&orderby=rating&category_name=".$hero_category)) == 1); ?>
+
 <script lang=javascript>
 	$(document).ready(function(){	
 		$("#hero").easySlider({
-			auto: true, 
+			auto: <?php if ($only_one_hero) { echo "false"; } else { echo "true"; } ?>, 
 			continuous: true,
 			controlsShow: true,
             numeric: true,
@@ -15,10 +21,6 @@
 	});	
 </script>
 
-  <!-- HEROES AND CAROUSEL -->
-  <?php
-    $hero_category = "Front Page";
-  ?>
   <div id="hero">
     <ul>
       <?php echo wp_list_bookmarks("categorize=0&title_li=&orderby=rating&category_name=".$hero_category); ?>
