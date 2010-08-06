@@ -5,10 +5,19 @@ Template Name:Page Content Under Hero
 ?>
 <?php get_header(); ?>
 
+<?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
+
+<!-- HEROES AND CAROUSEL -->
+<?php
+    $custom_fields = get_post_custom();
+    $hero_category = $custom_fields['hero_category'][0];
+?>
+<?php $only_one_hero = (count(get_bookmarks("categorize=0&title_li=&orderby=rating&category_name=".$hero_category)) == 1); ?>
+
 <script lang=javascript>
 	$(document).ready(function(){	
 		$("#hero").easySlider({
-			auto: true, 
+      auto: <?php if ($only_one_hero) { echo "false"; } else { echo "true"; } ?>, 
 			continuous: true,
 			controlsShow: true,
             numeric: true,
@@ -19,13 +28,7 @@ Template Name:Page Content Under Hero
 	});	
 </script>
 
-  <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
 
-  <!-- HEROES AND CAROUSEL -->
-  <?php
-    $custom_fields = get_post_custom();
-    $hero_category = $custom_fields['hero_category'][0];
-  ?>
 
   <div id="hero">
     <ul>
