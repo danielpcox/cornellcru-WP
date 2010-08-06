@@ -1,6 +1,6 @@
 <?php
 /*
-Template Name:One Recent Post, Page with Hero
+Template Name:Page Content Under Hero
 */
 ?>
 <?php get_header(); ?>
@@ -19,7 +19,6 @@ Template Name:One Recent Post, Page with Hero
 	});	
 </script>
 
-
   <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
 
   <!-- HEROES AND CAROUSEL -->
@@ -27,12 +26,12 @@ Template Name:One Recent Post, Page with Hero
     $custom_fields = get_post_custom();
     $hero_category = $custom_fields['hero_category'][0];
   ?>
+
   <div id="hero">
     <ul>
       <?php echo wp_list_bookmarks("categorize=0&title_li=&orderby=rating&category_name=".$hero_category); ?>
     </ul>
   </div><!--/#hero-->
-
 
 
   <?php
@@ -53,27 +52,18 @@ Template Name:One Recent Post, Page with Hero
       </div><!--/#sidebar-->
 
   <?php } ?>
-<div id="main-cont">
-      <h1><?php the_title(); ?></h1>
-
+<div id="blog">
+    <div>&nbsp;</div>
       <div id="posts">
-          <?php
-            $my_query = new WP_Query('posts_per_page=1&category_name='.$hero_category);
-            while ($my_query->have_posts()) : $my_query->the_post();
-          ?>
-
           <div class="post">
             <h2><a href="<?php the_permalink() ?>"><?php the_title(); ?></a></h2>
             <ul class="meta">
-              <li class="date"><?php the_time(__('F jS, Y', 'cruwp')) ?></li>
-              <!--<?php if ($options['author']) : ?><li class="author"><?php _e('by ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>--><!-- TODO : enable author link? -->
-              <?php if ($options['author']) : ?><li class="author"><?php _e('by ','cruwp'); ?><?php the_author(); ?></li><?php endif; ?>
-              <!--<li class="comments"><?php comments_popup_link(__('Write comment', 'cruwp'), __('1 comment', 'cruwp'), __('% comments', 'cruwp')); ?></li>--><!-- TODO : enable comments -->
+              <li class="date">Updated on <?php the_modified_time(__('F jS, Y', 'cruwp')) ?></li>
+              <li class="author">by <?php the_author(); ?></li>
               <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
             </ul><!--/.meta-->
             <?php the_content(); ?>
           </div><!--/#posts-->
-          <?php endwhile; ?>
       </div>
 
   <?php endwhile; else: ?>

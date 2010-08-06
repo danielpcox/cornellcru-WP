@@ -58,7 +58,6 @@
   </ul><!--/#filters-->
 
   <ul id="posts">
-    <?php query_posts($query_string . '&cat=-5'); // exclude news and events category TODO : hardcoded is bad ?>
     <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
       <li class="post">
           <h2><a href="<?php the_permalink() ?>"><?php the_title(); ?></a></h2>
