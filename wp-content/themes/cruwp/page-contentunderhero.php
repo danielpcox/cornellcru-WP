@@ -32,7 +32,10 @@ Template Name:Page Content Under Hero
 
   <div id="hero">
     <ul>
-      <?php echo wp_list_bookmarks("categorize=0&title_li=&orderby=rating&category_name=".$hero_category); ?>
+      <?php
+        if ($custom_fields['embed_hero']) { echo $custom_fields['embed_hero'][0]; } else {
+      ?>
+      <?php echo wp_list_bookmarks("categorize=0&title_li=&orderby=rating&category_name=".$hero_category); } ?>
     </ul>
   </div><!--/#hero-->
 
