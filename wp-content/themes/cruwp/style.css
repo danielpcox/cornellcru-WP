@@ -994,6 +994,11 @@ BODY {
 
 /* ############# END RefTagger #################*/
 
+/* cool hack to hide the controls if there's only one hero in the carousel */
+ol li:first-child:last-child {
+  display:none;
+}
+
 
 /* Salvaged from the piano-black style.css: */
 
