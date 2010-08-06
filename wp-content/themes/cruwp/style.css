@@ -607,6 +607,7 @@ BODY {
   background: url(images/sidebar-active.gif);
 }
 #sidebar + #main-cont { margin-right: 221px; }
+#sidebar + #blog { margin-right: 221px; } /* hack because blog had some functionality i wanted, but it wouldn't do this one thing */
 #blog {
   margin: 40px;
   padding: 0 0 10px;
