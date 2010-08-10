@@ -1,3 +1,5 @@
 wp-config.php
 .htaccess
 wp-content/uploads/
+*.swp
+*~
