@@ -23,9 +23,7 @@
       <h1><?php the_title(); ?></h1>
       <div id="posts">
             <div class="post">
-              <ul class="meta">
-                <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
-              </ul>
+              <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<ul class="meta"><li class="post-edit">', '</li></ul>' ); ?>
               <?php the_content(); ?>
             </div><!--/#posts-->
       </div>
