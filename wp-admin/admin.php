@@ -152,7 +152,7 @@ if ( isset($plugin_page) ) {
 		if ( file_exists(WPMU_PLUGIN_DIR . "/$plugin_page") )
 			include(WPMU_PLUGIN_DIR . "/$plugin_page");
 		else
-			include(ABSPATH . PLUGINDIR . "/$plugin_page");
+			include(WP_PLUGIN_DIR . "/$plugin_page");
 	}
 
 	include(ABSPATH . 'wp-admin/admin-footer.php');
@@ -200,6 +200,16 @@ if ( isset($plugin_page) ) {
 	exit();
 } else {
 	do_action("load-$pagenow");
+	// Backwards compatibility with old load-page-new.php, load-page.php,   
+	// and load-categories.php actions.  
+	if ( $typenow == 'page' ) {  
+		if ( $pagenow == 'post-new.php' )  
+			do_action( 'load-page-new.php' );  
+		elseif ( $pagenow == 'post.php' )  
+			do_action( 'load-page.php' );  
+	}  elseif ( $taxnow == 'category' && $pagenow == 'edit-tags.php' ) {
+		do_action( 'load-categories.php' );
+	}
 }
 
 if ( !empty($_REQUEST['action']) )

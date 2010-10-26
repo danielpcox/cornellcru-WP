@@ -1,0 +1,327 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Wartungsmodus 1.5.0 ro\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: jtoth <relijoc@googlemail.com>\n"
+"Language-Team: jtoth\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Romanian\n"
+"X-Poedit-Country: ROMANIA\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: !wartungsmodus.php:119
+msgid "Settings"
+msgstr "Setări"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:212
+msgid "Save"
+msgstr "Memorează"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:238
+#: !wartungsmodus.php:273
+msgid "Updated"
+msgstr "Actualizat"
+
+# @ wartungsmodus
+#: site.php:83
+msgid "Admin-Login"
+msgstr "Login admin"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:382
+msgid "Plugin by:"
+msgstr "Plugin:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:384
+#: !wartungsmodus.php:387
+#: !wartungsmodus.php:390
+#: !wartungsmodus.php:393
+#: !wartungsmodus.php:396
+#: !wartungsmodus.php:399
+#: !wartungsmodus.php:402
+#: !wartungsmodus.php:405
+#: !wartungsmodus.php:408
+#: !wartungsmodus.php:411
+msgid "Design by:"
+msgstr "Design:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:153
+msgid "Plugin Settings"
+msgstr "Setări plugin"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:140
+#, php-format
+msgid "Plugin %s settings <strong>updated</strong>."
+msgstr "Setări plugin <strong>memorate</strong>."
+
+# @ wartungsmodus
+#: site.php:7
+#: site.php:77
+msgid "Maintenance Mode"
+msgstr "Stare de mentenanţă"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:178
+msgid "Link:"
+msgstr "Link:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:183
+msgid "Theme:"
+msgstr "Temă:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:186
+msgid "Simple Text"
+msgstr "Text simplu"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:187
+msgid "The Truck"
+msgstr "The Truck"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:164
+msgid "Value:"
+msgstr "Valoare:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:166
+msgid "Unit:"
+msgstr "Unitate timp:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:168
+msgid "second"
+msgstr "secundă"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:169
+msgid "minute"
+msgstr "minut"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:170
+msgid "hour"
+msgstr "oră"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:171
+msgid "day"
+msgstr "zi"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:172
+msgid "week"
+msgstr "săptămână"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:173
+msgid "month"
+msgstr "lună"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:174
+msgid "year"
+msgstr "an"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:147
+#: !wartungsmodus.php:158
+#: !wartungsmodus.php:180
+msgid "False"
+msgstr "Nu"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:148
+#: !wartungsmodus.php:159
+#: !wartungsmodus.php:181
+msgid "True"
+msgstr "Da"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:327
+#: site.php:39
+#: site.php:44
+msgid "seconds"
+msgstr "secunde"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:331
+#: site.php:39
+#: site.php:44
+msgid "minutes"
+msgstr "minute"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:335
+#: site.php:39
+#: site.php:44
+msgid "hours"
+msgstr "ore"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:339
+#: site.php:39
+#: site.php:44
+msgid "days"
+msgstr "zile"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:343
+msgid "weeks"
+msgstr "săptămâni"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:347
+msgid "moths"
+msgstr "luni"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:351
+msgid "years"
+msgstr "ani"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:141
+#, php-format
+msgid "Plugin %s active status <strong>updated</strong>."
+msgstr "Stare activare plugin <strong>memorată</strong>."
+
+# @ wartungsmodus
+#: !wartungsmodus.php:143
+msgid "Plugin Activate"
+msgstr "Activează plugin"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:185
+msgid "Own Style"
+msgstr "Design propriu"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:188
+msgid "The Sun"
+msgstr "The Sun"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:189
+msgid "The FF Error"
+msgstr "The FF Error"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:190
+msgid "Monster"
+msgstr "Monster"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:198
+msgid "Own Style URL (incl. http://):"
+msgstr "URL design propriu (inkl. http://)"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:202
+msgid "Text:"
+msgstr "Text:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:311
+msgid "Coution: Maintenance mode is <strong>active</strong>!"
+msgstr "Atenţie: Starea de mentenanţă este <strong>aktivată</strong>!"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:150
+msgid "Update"
+msgstr "Actualizează"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:191
+msgid "Chastely"
+msgstr "Chastely"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:192
+msgid "Only Typo"
+msgstr "Only Typo"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:193
+msgid "Paint"
+msgstr "Paint"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:194
+msgid "Animate (Flash, only german)"
+msgstr "Animate (Flash, numai în limba germană)"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:311
+msgid "Deactivate or change Settings"
+msgstr "Deactivează sau modifică setări "
+
+# @ wartungsmodus
+#: !wartungsmodus.php:156
+msgid "Countdown:"
+msgstr "Countdown:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:163
+msgid "Activate countdown for using this. Use value and unit or use the countdown and set the date."
+msgstr "Activează funcţia Countdown pentru această utilizare. Introdu o valoare şi o unitate de timp sau alege o dată pentru Countdown."
+
+# @ wartungsmodus
+#: !wartungsmodus.php:195
+msgid "Damask"
+msgstr "Damask"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:196
+msgid "Lego"
+msgstr "Lego"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:206
+msgid "Excludes:"
+msgstr "Excluderi:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:209
+msgid "Exlude pages, posts or archives from the maintenance mode. Add the Slug of page or post as a comma-separated list.<br />Example: "
+msgstr "Exclude pagini, articole sau arhive din starea de mentenanţă. Adaugă forma titlului unei pagini sau al unui articol (slug) ca listă separată prin virgule.<br />Beispiel: "
+
+# @ wartungsmodus
+#: site.php:37
+msgid "The due date was before"
+msgstr "Termenul a fost acum"
+
+# @ wartungsmodus
+#: site.php:39
+#: site.php:44
+msgid "and"
+msgstr "şi"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:161
+#: !wartungsmodus.php:162
+msgid "Click for datepicker"
+msgstr "Clic pentru alegerea datei"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:161
+msgid "Date:"
+msgstr "Data:"
+
+# @ wartungsmodus
+#: !wartungsmodus.php:202
+#, php-format
+msgid "(Use the first %s for the time value or countdown and second %s for the unit of the time, HTML is possible)"
+msgstr "(Foloseşte primul %s pentru valoarea timpului şi al doilea %s pentru unitatea de timp, HTML este posibil)"
+

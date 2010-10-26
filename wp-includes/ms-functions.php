@@ -209,7 +209,7 @@ function add_user_to_blog( $blog_id, $user_id, $role ) {
 
 	$user = new WP_User($user_id);
 
-	if ( empty($user) || !$user->ID )
+	if ( empty( $user->ID ) )
 		return new WP_Error('user_does_not_exist', __('That user does not exist.'));
 
 	if ( !get_user_meta($user_id, 'primary_blog', true) ) {
@@ -253,6 +253,9 @@ function remove_user_from_blog($user_id, $blog_id = '', $reassign = '') {
 
 	// wp_revoke_user($user_id);
 	$user = new WP_User($user_id);
+	if ( empty( $user->ID ) )
+		return new WP_Error('user_does_not_exist', __('That user does not exist.'));
+
 	$user->remove_all_caps();
 
 	$blogs = get_blogs_of_user($user_id);
@@ -372,8 +375,9 @@ function wpmu_admin_redirect_add_updated_param( $url = '' ) {
 }
 
 function is_blog_user( $blog_id = 0 ) {
-	global $current_user, $wpdb;
-
+	global $wpdb;
+ 
+	$current_user = wp_get_current_user();
 	if ( !$blog_id )
 		$blog_id = $wpdb->blogid;
 
@@ -652,7 +656,7 @@ function wpmu_signup_blog_notification($domain, $path, $title, $user, $user_emai
 	$message_headers = "From: \"{$from_name}\" <{$admin_email}>\n" . "Content-Type: text/plain; charset=\"" . get_option('blog_charset') . "\"\n";
 	$message = sprintf( apply_filters( 'wpmu_signup_blog_notification_email', __( "To activate your blog, please click the following link:\n\n%s\n\nAfter you activate, you will receive *another email* with your login.\n\nAfter you activate, you can visit your site here:\n\n%s" ) ), $activate_url, esc_url( "http://{$domain}{$path}" ), $key );
 	// TODO: Don't hard code activation link.
-	$subject = sprintf( apply_filters( 'wpmu_signup_blog_notification_subject', __( '[%1s] Activate %2s' ) ), $from_name, esc_url( 'http://' . $domain . $path ) );
+	$subject = sprintf( apply_filters( 'wpmu_signup_blog_notification_subject', __( '[%1$s] Activate %2$s' ) ), $from_name, esc_url( 'http://' . $domain . $path ) );
 	wp_mail($user_email, $subject, $message, $message_headers);
 	return true;
 }
@@ -669,7 +673,7 @@ function wpmu_signup_user_notification($user, $user_email, $key, $meta = '') {
 	$message_headers = "From: \"{$from_name}\" <{$admin_email}>\n" . "Content-Type: text/plain; charset=\"" . get_option('blog_charset') . "\"\n";
 	$message = sprintf( apply_filters( 'wpmu_signup_user_notification_email', __( "To activate your user, please click the following link:\n\n%s\n\nAfter you activate, you will receive *another email* with your login.\n\n" ) ), site_url( "wp-activate.php?key=$key" ), $key );
 	// TODO: Don't hard code activation link.
-	$subject = sprintf( __( apply_filters( 'wpmu_signup_user_notification_subject', '[%1s] Activate %2s' ) ), $from_name, $user);
+	$subject = sprintf( __( apply_filters( 'wpmu_signup_user_notification_subject', '[%1$s] Activate %2$s' ) ), $from_name, $user);
 	wp_mail($user_email, $subject, $message, $message_headers);
 	return true;
 }
@@ -1319,17 +1323,13 @@ function fix_phpmailer_messageid( $phpmailer ) {
 
 function is_user_spammy( $username = 0 ) {
 	if ( $username == 0 ) {
-		global $current_user;
-		$user_id = $current_user->ID;
+		$user_id = get_current_user_id();
 	} else {
 		$user_id = get_user_id_from_string( $username );
 	}
 	$u = new WP_User( $user_id );
 
-	if ( $u->spam == 1 )
-		return true;
-
-	return false;
+	return ( isset( $u->spam ) && $u->spam == 1 );
 }
 
 function update_blog_public( $old_value, $value ) {
@@ -1360,8 +1360,9 @@ function get_dashboard_blog() {
 }
 
 function is_user_option_local( $key, $user_id = 0, $blog_id = 0 ) {
-	global $current_user, $wpdb;
+	global $wpdb;
 
+	$current_user = wp_get_current_user();
 	if ( $user_id == 0 )
 		$user_id = $current_user->ID;
 	if ( $blog_id == 0 )

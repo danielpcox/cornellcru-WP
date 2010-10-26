@@ -1,0 +1,545 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: User Role Editor 2.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-09-17 21:40+0700\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Vladimir <vladimir@shinephp.com>\n"
+"Language-Team: ShinePHP.com <vladimir@shinephp.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: English\n"
+"X-Poedit-Country: RUSSIAN FEDERATION\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-Basepath: .\n"
+"X-Poedit-SearchPath-0: ..\n"
+
+#: ../ure-options.php:112
+msgid "Backup record is created for the current role capabilities"
+msgstr "Backup creato per le capacità di ruoli attuali."
+
+#: ../ure-options.php:121
+msgid "Role"
+msgstr "ruolo"
+
+#: ../ure-options.php:121
+msgid "is updated successfully"
+msgstr "è stato aggiornato con successo"
+
+#: ../ure-options.php:165
+msgid "About this Plugin:"
+msgstr "informazioni su questo plugin"
+
+#: ../ure-options.php:166
+msgid "Author's website"
+msgstr "sito dell'autore"
+
+#: ../ure-options.php:167
+msgid "Plugin webpage"
+msgstr "pagina del plugin"
+
+#: ../ure-options.php:168
+#: ../user-role-editor.php:206
+msgid "Changelog"
+msgstr "change log"
+
+#: ../ure-options.php:169
+msgid "FAQ"
+msgstr "domande frequenti"
+
+#: ../ure-options.php:170
+msgid "Donate"
+msgstr "fai una donazione"
+
+#: ../ure-options.php:172
+msgid "Greetings:"
+msgstr "Saluti:"
+
+#: ../ure-options.php:173
+msgid "It's me, the author"
+msgstr "Sono io, l'autore"
+
+#: ../ure-options.php:174
+msgid "For the help with Belorussian translation"
+msgstr "Per l'aiuto nella traduzione bielorussa"
+
+#: ../ure-options.php:175
+msgid "For the help with Brasilian translation"
+msgstr ""
+
+#: ../ure-options.php:176
+msgid "For the help with Chinese translation"
+msgstr "per l'aiuto nella traduzione chinese"
+
+#: ../ure-options.php:177
+msgid "For the help with Dutch translation"
+msgstr "Per l'aiuto nella traduzione Dutch"
+
+#: ../ure-options.php:178
+msgid "For the help with French translation"
+msgstr "Per l'aiuto nella traduzione francese"
+
+#: ../ure-options.php:179
+msgid "For the help with German translation"
+msgstr "Per l'aiuto nella traduzione tedesca"
+
+#: ../ure-options.php:180
+msgid "For the help with Hungarian translation"
+msgstr "per l'aiuto nella traduzione Hungarian"
+
+#: ../ure-options.php:181
+msgid "For the help with Italian translation"
+msgstr "per l'aiuto nella traduzione italiano"
+
+#: ../ure-options.php:182
+msgid "For the help with Japanese translation"
+msgstr "per l'aiuto nella traduzione giapponese"
+
+#: ../ure-options.php:183
+msgid "For the help with Persian translation"
+msgstr ""
+
+#: ../ure-options.php:184
+msgid "For the help with Polish translation"
+msgstr "per l'aiuto nella traduzione polacco"
+
+#: ../ure-options.php:185
+msgid "For the help with Spanish translation"
+msgstr "per l'aiuto nella traduzione spagnola"
+
+#: ../ure-options.php:186
+msgid "For the code to hide administrator role"
+msgstr "per il codice per nascondere il ruolo amministratore"
+
+#: ../ure-options.php:187
+msgid "Do you wish to see your name with link to your site here? You are welcome! Your help with translation and new ideas are very appreciated."
+msgstr "Vuoi trovare qui il tuo nome e il link al tuo sito? Sono apprezzati aiuti nelle traduzioni e nuove idee."
+
+#: ../ure-options.php:203
+msgid "Role Name can not be empty!"
+msgstr "Il nome di un ruolo non può essere vuoto."
+
+#: ../ure-options.php:207
+msgid "Role Name must contain latin characters and digits only!"
+msgstr "Il nome di un ruolo può contenere solo lettere e numeri."
+
+#: ../ure-options.php:212
+#: ../ure-options.php:331
+msgid "Delete Role"
+msgstr "elimina ruolo"
+
+#: ../ure-options.php:214
+msgid "Change Default Role"
+msgstr "cambia ruolo di default"
+
+#: ../ure-options.php:216
+#: ../ure-options.php:299
+msgid "Restore Roles from backup copy"
+msgstr "recupera ruoli da copia backup"
+
+#: ../ure-options.php:218
+msgid "Please confirm to continue"
+msgstr "Conferma per continuare"
+
+#: ../ure-options.php:243
+#, php-format
+msgid "Role \"%s\" update: please confirm to continue"
+msgstr "Aggiornamento del ruolo %s : conferma per continuare"
+
+#: ../ure-options.php:251
+msgid "Select Role and change its capabilities list"
+msgstr "Seleziona ruolo e modifica la lista delle sue capacità"
+
+#: ../ure-options.php:255
+msgid "Select Role:"
+msgstr "Seleziona ruolo"
+
+#: ../ure-options.php:297
+msgid "Update"
+msgstr "Aggiorna"
+
+#: ../ure-options.php:297
+msgid "Save Changes"
+msgstr "Salva modifiche"
+
+#: ../ure-options.php:298
+msgid "Cancel"
+msgstr "Annulla"
+
+#: ../ure-options.php:298
+msgid "Cancel not saved changes"
+msgstr "Annulla modifiche non salvate"
+
+#: ../ure-options.php:299
+msgid "Reset"
+msgstr "Ripristina"
+
+#: ../ure-options.php:310
+msgid "Show capabilities in human readable form"
+msgstr "Mostra capacità in formato leggibile"
+
+#: ../ure-options.php:321
+msgid "Add New Role"
+msgstr "Aggiungi nuovo ruolo"
+
+#: ../ure-options.php:326
+msgid "Add"
+msgstr "Aggiungi"
+
+#: ../ure-options.php:326
+msgid "Add New User Role"
+msgstr "Aggiungi nuovo ruolo utente"
+
+#: ../ure-options.php:336
+msgid "Delete"
+msgstr "Elimina"
+
+#: ../ure-options.php:336
+msgid "Delete User Role"
+msgstr "Elimina ruolo utente"
+
+#: ../ure-options.php:341
+msgid "Default Role for New User"
+msgstr "Ruolo predefinito per nuovo utente"
+
+#: ../ure-options.php:346
+msgid "Change"
+msgstr "Cambia"
+
+#: ../ure-options.php:346
+msgid "Set as Default User Role"
+msgstr "Imposta come ruolo predefinito"
+
+#: ../user-role-editor.php:38
+msgid "User Role Editor requires WordPress 2.8 or newer."
+msgstr "User Role Editor richiede WordPress 2.8 o superiori."
+
+#: ../user-role-editor.php:38
+msgid "Please update!"
+msgstr "Prego aggiornare!"
+
+#: ../user-role-editor.php:63
+msgid "User Role Editor"
+msgstr "User Role Editor"
+
+#: ../user-role-editor.php:196
+msgid "Settings"
+msgstr "Impostazioni"
+
+#: ../ure-lib.php:52
+msgid "Error is occur. Please check the log file."
+msgstr "Si è verificato un errore. Controllare il log."
+
+#: ../ure-lib.php:108
+msgid "Database operation error. Check log file."
+msgstr "Errore nel database. Controllare il log."
+
+#: ../ure-lib.php:130
+msgid "Roles capabilities are restored from the backup data"
+msgstr "le capacità dei ruoli vengono recuperate dal backup."
+
+#: ../ure-lib.php:132
+msgid "No backup data. It is created automatically before the first role data update."
+msgstr "Nessun backup. Il primo backup viene creato automaticamente dopo il primo aggiornamento dei ruoli."
+
+#: ../ure-lib.php:173
+msgid "Error: Role name must contain latin characters and digits only!"
+msgstr "Errore: il nome del ruolo deve contenere solo lettere e numeri."
+
+#: ../ure-lib.php:181
+msgid "Roles list reading error is encountered"
+msgstr "Si è verificato un errore nella lettura della lista dei ruoli."
+
+#: ../ure-lib.php:187
+msgid "Error is encountered during new role create operation"
+msgstr "Si è verificato un errore nella creazione di un nuovo ruolo"
+
+#: ../ure-lib.php:189
+#, php-format
+msgid "Role %s is created successfully"
+msgstr "Il ruolo %s è stato creato con successo."
+
+#: ../ure-lib.php:273
+msgid "Error encountered during role delete operation"
+msgstr "Si è verificato un errore nella cancellazione del ruolo."
+
+#: ../ure-lib.php:275
+#, php-format
+msgid "Role %s is deleted successfully"
+msgstr "Ruolo %s cancellato con successo."
+
+#: ../ure-lib.php:293
+msgid "Error encountered during default role change operation"
+msgstr "Si è verificato un errore nella modifica del ruolo di default."
+
+#: ../ure-lib.php:299
+#, php-format
+msgid "Default role for new users is set to %s successfully"
+msgstr "Il nuovo ruolo di default per i nuovi utenti è stato impostato con successo su %s"
+
+#: ../ure-lib.php:353
+msgid "Editor"
+msgstr "editore"
+
+#: ../ure-lib.php:354
+msgid "Author"
+msgstr "autore"
+
+#: ../ure-lib.php:355
+msgid "Contributor"
+msgstr "collaboratore"
+
+#: ../ure-lib.php:356
+msgid "Subscriber"
+msgstr "sottoscrittore"
+
+#: ../ure-lib.php:358
+msgid "Switch themes"
+msgstr "cambia temi"
+
+#: ../ure-lib.php:359
+msgid "Edit themes"
+msgstr "modifica temi"
+
+#: ../ure-lib.php:360
+msgid "Activate plugins"
+msgstr "attiva plugin"
+
+#: ../ure-lib.php:361
+msgid "Edit plugins"
+msgstr "modifica plugin"
+
+#: ../ure-lib.php:362
+msgid "Edit users"
+msgstr "modifica utenti"
+
+#: ../ure-lib.php:363
+msgid "Edit files"
+msgstr "modifica file"
+
+#: ../ure-lib.php:364
+msgid "Manage options"
+msgstr "gestisci opzioni"
+
+#: ../ure-lib.php:365
+msgid "Moderate comments"
+msgstr "modera commenti"
+
+#: ../ure-lib.php:366
+msgid "Manage categories"
+msgstr "gestisci categorie"
+
+#: ../ure-lib.php:367
+msgid "Manage links"
+msgstr "gestisci link"
+
+#: ../ure-lib.php:368
+msgid "Upload files"
+msgstr "carica file"
+
+#: ../ure-lib.php:369
+msgid "Import"
+msgstr "importa"
+
+#: ../ure-lib.php:370
+msgid "Unfiltered html"
+msgstr "html non filtrato"
+
+#: ../ure-lib.php:371
+msgid "Edit posts"
+msgstr "modifica articoli"
+
+#: ../ure-lib.php:372
+msgid "Edit others posts"
+msgstr "modifica articoli di altri"
+
+#: ../ure-lib.php:373
+msgid "Edit published posts"
+msgstr "modifica articoli pubblicati"
+
+#: ../ure-lib.php:374
+msgid "Publish posts"
+msgstr "pubblica post"
+
+#: ../ure-lib.php:375
+msgid "Edit pages"
+msgstr "modifica pagine"
+
+#: ../ure-lib.php:376
+msgid "Read"
+msgstr "leggi"
+
+#: ../ure-lib.php:377
+msgid "Level 10"
+msgstr "livello 10"
+
+#: ../ure-lib.php:378
+msgid "Level 9"
+msgstr "livello 9"
+
+#: ../ure-lib.php:379
+msgid "Level 8"
+msgstr "livello 8"
+
+#: ../ure-lib.php:380
+msgid "Level 7"
+msgstr "livello 7"
+
+#: ../ure-lib.php:381
+msgid "Level 6"
+msgstr "livello 6"
+
+#: ../ure-lib.php:382
+msgid "Level 5"
+msgstr "livello 5"
+
+#: ../ure-lib.php:383
+msgid "Level 4"
+msgstr "livello 4"
+
+#: ../ure-lib.php:384
+msgid "Level 3"
+msgstr "livello 3"
+
+#: ../ure-lib.php:385
+msgid "Level 2"
+msgstr "livello 2"
+
+#: ../ure-lib.php:386
+msgid "Level 1"
+msgstr "livello 1"
+
+#: ../ure-lib.php:387
+msgid "Level 0"
+msgstr "livello 0"
+
+#: ../ure-lib.php:388
+msgid "Edit others pages"
+msgstr "modifica pagine di altri"
+
+#: ../ure-lib.php:389
+msgid "Edit published pages"
+msgstr "modifica pagine pubblicate"
+
+#: ../ure-lib.php:390
+msgid "Publish pages"
+msgstr "pubblica pagine"
+
+#: ../ure-lib.php:391
+msgid "Delete pages"
+msgstr "cancella pagine"
+
+#: ../ure-lib.php:392
+msgid "Delete others pages"
+msgstr "cancella pagine di altri"
+
+#: ../ure-lib.php:393
+msgid "Delete published pages"
+msgstr "cancella pagine pubblicate"
+
+#: ../ure-lib.php:394
+msgid "Delete posts"
+msgstr "cancella articoli"
+
+#: ../ure-lib.php:395
+msgid "Delete others posts"
+msgstr "cancella articoli di altri"
+
+#: ../ure-lib.php:396
+msgid "Delete published posts"
+msgstr "cancella articoli pubblicati"
+
+#: ../ure-lib.php:397
+msgid "Delete private posts"
+msgstr "cancella articoli privati"
+
+#: ../ure-lib.php:398
+msgid "Edit private posts"
+msgstr "modifica articoli privati"
+
+#: ../ure-lib.php:399
+msgid "Read private posts"
+msgstr "leggi post privati"
+
+#: ../ure-lib.php:400
+msgid "Delete private pages"
+msgstr "cancella pagine private"
+
+#: ../ure-lib.php:401
+msgid "Edit private pages"
+msgstr "modifica pagine private"
+
+#: ../ure-lib.php:402
+msgid "Read private pages"
+msgstr "leggi pagine private"
+
+#: ../ure-lib.php:403
+msgid "Delete users"
+msgstr "cancella utenti"
+
+#: ../ure-lib.php:404
+msgid "Create users"
+msgstr "crea utenti"
+
+#: ../ure-lib.php:405
+msgid "Unfiltered upload"
+msgstr "upload non filtrato"
+
+#: ../ure-lib.php:406
+msgid "Edit dashboard"
+msgstr "modifica bacheca"
+
+#: ../ure-lib.php:407
+msgid "Update plugins"
+msgstr "aggiorna plugin"
+
+#: ../ure-lib.php:408
+msgid "Delete plugins"
+msgstr "cancella plugin"
+
+#: ../ure-lib.php:409
+msgid "Install plugins"
+msgstr "installa plugin"
+
+#: ../ure-lib.php:410
+msgid "Update themes"
+msgstr "aggiorna temi"
+
+#: ../ure-lib.php:411
+msgid "Install themes"
+msgstr "installa temi"
+
+#: ../ure-lib.php:412
+msgid "Update core"
+msgstr ""
+
+#: ../ure-lib.php:413
+msgid "List users"
+msgstr ""
+
+#: ../ure-lib.php:414
+msgid "Remove users"
+msgstr ""
+
+#: ../ure-lib.php:415
+msgid "Add users"
+msgstr ""
+
+#: ../ure-lib.php:416
+msgid "Promote users"
+msgstr ""
+
+#: ../ure-lib.php:417
+msgid "Edit theme options"
+msgstr ""
+
+#: ../ure-lib.php:418
+msgid "Delete themes"
+msgstr ""
+
+#: ../ure-lib.php:419
+msgid "Export"
+msgstr ""
+

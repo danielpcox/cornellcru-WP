@@ -2077,6 +2077,12 @@ function wp_get_single_post($postid = 0, $mode = OBJECT) {
 
 	$post = get_post($postid, $mode);
 
+	if ( 
+		( OBJECT == $mode && empty( $post->ID ) ) ||
+		( OBJECT != $mode && empty( $post['ID'] ) )
+	)
+		return ( OBJECT == $mode ? null : array() );
+
 	// Set categories and tags
 	if ( $mode == OBJECT ) {
 		$post->post_category = array();
@@ -2418,7 +2424,7 @@ function wp_update_post($postarr = array()) {
 		$post_cats = $post['post_category'];
 
 	// Drafts shouldn't be assigned a date unless explicitly done so by the user
-	if ( in_array($post['post_status'], array('draft', 'pending', 'auto-draft')) && empty($postarr['edit_date']) &&
+	if ( isset( $post['post_status'] ) && in_array($post['post_status'], array('draft', 'pending', 'auto-draft')) && empty($postarr['edit_date']) &&
 			 ('0000-00-00 00:00:00' == $post['post_date_gmt']) )
 		$clear_date = true;
 	else
@@ -2531,7 +2537,7 @@ function wp_unique_post_slug( $slug, $post_ID, $post_status, $post_type, $post_p
 	if ( ! is_array( $feeds ) )
 		$feeds = array();
 
-	$hierarchical_post_types = apply_filters( 'hierarchical_post_types', array( 'page' ) );
+	$hierarchical_post_types = get_post_types( array('hierarchical' => true) );
 	if ( 'attachment' == $post_type ) {
 		// Attachment slugs must be unique across all types.
 		$check_sql = "SELECT post_name FROM $wpdb->posts WHERE post_name = %s AND ID != %d LIMIT 1";

@@ -104,7 +104,7 @@ switch ( $_GET['action'] ) {
 			$move_users = array();
 			foreach ( (array)$users as $user ) {
 				$user_meta_value = unserialize( $user->meta_value );
-				if ( is_array( $user_meta_value ) && array_pop( array_keys( $user_meta_value ) ) == 'subscriber' )
+				if ( is_array( $user_meta_value ) && array_pop( $var_by_ref = array_keys( $user_meta_value ) ) == 'subscriber' )
 					$move_users[] = $user->user_id;
 			}
 			if ( false == empty( $move_users ) ) {
@@ -118,7 +118,7 @@ switch ( $_GET['action'] ) {
 		update_site_option( 'dashboard_blog', $dashboard_blog_id );
 
 		$options = array( 'registrationnotification', 'registration', 'add_new_users', 'menu_items', 'mu_media_buttons', 'upload_space_check_disabled', 'blog_upload_space', 'upload_filetypes', 'site_name', 'first_post', 'first_page', 'first_comment', 'first_comment_url', 'first_comment_author', 'welcome_email', 'welcome_user_email', 'fileupload_maxk', 'admin_notice_feed', 'global_terms_enabled' );
-		$checked_options = array( 'mu_media_buttons' => array(), 'menu_items' => array(), 'registrationnotification' => 'no', 'upload_space_check_disabled' => 1 );
+		$checked_options = array( 'mu_media_buttons' => array(), 'menu_items' => array(), 'registrationnotification' => 'no', 'upload_space_check_disabled' => 1, 'add_new_users' => 0 );
 		foreach ( $checked_options as $option_name => $option_unchecked_value ) {
 			if ( ! isset( $_POST[$option_name] ) )
 				$_POST[$option_name] = $option_unchecked_value;
@@ -226,8 +226,9 @@ switch ( $_GET['action'] ) {
 		if ( is_array( $_POST['option'] ) ) {
 			$c = 1;
 			$count = count( $_POST['option'] );
+			$skip_options = array( 'allowedthemes' ); // Don't update these options since they are handled elsewhere in the form.
 			foreach ( (array) $_POST['option'] as $key => $val ) {
-				if ( $key === 0 || is_array( $val ) )
+				if ( $key === 0 || is_array( $val ) || in_array($key, $skip_options) )
 					continue; // Avoids "0 is a protected WP option and may not be modified" error when edit blog options
 				if ( $c == $count )
 					update_option( $key, stripslashes( $val ) );
@@ -264,7 +265,7 @@ switch ( $_GET['action'] ) {
 			reset( $newroles );
 			foreach ( (array) $newroles as $userid => $role ) {
 				$user = new WP_User( $userid );
-				if ( ! $user )
+				if ( empty( $user->ID ) )
 					continue;
 				$user->for_blog( $id );
 				$user->set_role( $role );
@@ -286,14 +287,14 @@ switch ( $_GET['action'] ) {
 				unset( $_POST['role'] );
 				$_POST['role'] = $newroles[ $userid ];
 				if ( $pass != '' ) {
-					$cap = $wpdb->get_var( "SELECT meta_value FROM {$wpdb->usermeta} WHERE user_id = '{$userid}' AND meta_key = '{$blog_prefix}capabilities' AND meta_value = 'a:0:{}'" );
+					$cap = $wpdb->get_var( $wpdb->prepare( "SELECT meta_value FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key = '{$blog_prefix}capabilities' AND meta_value = 'a:0:{}'", $userid ) );
 					$userdata = get_userdata($userid);
 					$_POST['pass1'] = $_POST['pass2'] = $pass;
 					$_POST['email'] = $userdata->user_email;
 					$_POST['rich_editing'] = $userdata->rich_editing;
 					edit_user( $userid );
 					if ( $cap == null )
-						$wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE user_id = '{$userid}' AND meta_key = '{$blog_prefix}capabilities' AND meta_value = 'a:0:{}'" );
+						$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key = '{$blog_prefix}capabilities' AND meta_value = 'a:0:{}'", $userid ) );
 				}
 			}
 			unset( $_POST['role'] );

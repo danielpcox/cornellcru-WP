@@ -1023,7 +1023,7 @@ function get_comments_popup_template() {
 
 	// Backward compat code will be removed in a future release
 	if ('' == $template)
-		$template = WPINC . '/theme-compat/comments-popup.php';
+		$template = ABSPATH . WPINC . '/theme-compat/comments-popup.php';
 
 	return apply_filters('comments_popup_template', $template);
 }
@@ -1629,7 +1629,7 @@ function add_theme_support( $feature ) {
  */
 function remove_theme_support( $feature ) {
 	// Blacklist: for internal registrations not used directly by themes.
-	if ( in_array( $feature, array( 'custom-background', 'custom-header', 'editor-style', 'widgets' ) ) )
+	if ( in_array( $feature, array( 'custom-background', 'custom-header', 'editor-style', 'widgets', 'menus' ) ) )
 		return false;
 
 	global $_wp_theme_features;

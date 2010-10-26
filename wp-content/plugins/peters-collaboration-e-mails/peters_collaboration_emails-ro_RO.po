@@ -1,0 +1,377 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: peters_collaboration_emails.php\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-09-02 11:40-0800\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Peter <peter@keung.biz>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-Basepath: .\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: peters_collaboration_emails.php:177
+#, php-format
+msgid "There is a new post to review, written by %s."
+msgstr "A apărut un nou articol de revizuit, scris de către %s."
+
+#: peters_collaboration_emails.php:180
+#, php-format
+msgid "Accompanying note from %s:"
+msgstr "Notă de acompaniere de la %s:"
+
+#: peters_collaboration_emails.php:183
+msgid "Review and publish it here: "
+msgstr "Revizuieşte-l şi publică-l aici: "
+
+#: peters_collaboration_emails.php:186
+msgid "pending"
+msgstr "în aşteptare"
+
+#: peters_collaboration_emails.php:203
+#: peters_collaboration_emails.php:232
+#: peters_collaboration_emails.php:262
+#: peters_collaboration_emails.php:294
+#, php-format
+msgid "Hi %s!"
+msgstr "Salut %s!"
+
+#: peters_collaboration_emails.php:204
+#: peters_collaboration_emails.php:233
+msgid "Your post has been approved"
+msgstr "Articolul tău a fost aprobat"
+
+#: peters_collaboration_emails.php:205
+#: peters_collaboration_emails.php:234
+#: peters_collaboration_emails.php:264
+msgid "by"
+msgstr "de către"
+
+#: peters_collaboration_emails.php:206
+msgid "and is now published."
+msgstr "şi acum este publicat."
+
+#: peters_collaboration_emails.php:209
+#: peters_collaboration_emails.php:239
+#: peters_collaboration_emails.php:268
+msgid "Accompanying note:"
+msgstr "Notă de acompaniere:"
+
+#: peters_collaboration_emails.php:212
+#: peters_collaboration_emails.php:296
+msgid "See it here:"
+msgstr "Poţi să-l vezi aici:"
+
+#: peters_collaboration_emails.php:215
+msgid "published"
+msgstr "publicat"
+
+#: peters_collaboration_emails.php:235
+#, php-format
+msgid "and is scheduled to be published on %s UTC %s."
+msgstr "şi este programat pentru publicare pe data de %s UTC %s."
+
+#: peters_collaboration_emails.php:244
+msgid "approved and scheduled"
+msgstr "aprobat şi programat"
+
+#: peters_collaboration_emails.php:263
+msgid "Your post has been reverted back to draft status"
+msgstr "Articolul tău a fost adus la statutul de ciornă"
+
+#: peters_collaboration_emails.php:272
+msgid "Edit it again here:"
+msgstr "Editează-l din nou aici:"
+
+#: peters_collaboration_emails.php:275
+msgid "back to draft"
+msgstr "înapoi la statutul de ciornă"
+
+#: peters_collaboration_emails.php:295
+msgid "Your post is now live."
+msgstr "Articolul tău este acum publicat."
+
+#: peters_collaboration_emails.php:299
+msgid "is now live"
+msgstr "este acum publicat"
+
+#: peters_collaboration_emails.php:361
+msgid "Admin address"
+msgstr "Adrese administratori"
+
+#: peters_collaboration_emails.php:363
+msgid "Other"
+msgstr "Alta"
+
+#: peters_collaboration_emails.php:380
+#: peters_collaboration_emails.php:396
+msgid "**** ERROR: Invalid moderator user ID ****"
+msgstr "**** EROARE: ID-ul moderatorului nu este valid ****"
+
+#: peters_collaboration_emails.php:406
+msgid "**** ERROR: Invalid moderator e-mail address submitted ****"
+msgstr "**** EROARE: Adresa de e-mail a moderatorului nu este validă ****"
+
+#: peters_collaboration_emails.php:416
+msgid "**** ERROR: Invalid e-mail address submitted ****"
+msgstr "**** EROARE: Adresa de e-mail nu este validă ****"
+
+#: peters_collaboration_emails.php:459
+msgid "Default moderators updated."
+msgstr "Moderatorii default au fost actualizaţi."
+
+#: peters_collaboration_emails.php:463
+msgid "You must have at least one default mod."
+msgstr "Trebuie să aveţi cel puţin un moderator."
+
+#: peters_collaboration_emails.php:502
+#, php-format
+msgid "**** ERROR: Group with ID of %d does not exist ****"
+msgstr "**** EROARE: Nu există nici un grup cu ID-ul de %d ****"
+
+#: peters_collaboration_emails.php:524
+#, php-format
+msgid "Moderators for the group %s updated."
+msgstr "Moderatorii pentru grupul %s au fost actualizaţi."
+
+#: peters_collaboration_emails.php:528
+#, php-format
+msgid "You must have at least one default mod for the group \"%s\"."
+msgstr "Trebuie să aveţi cel puţin un moderator default pentru grupul \"%s\"."
+
+#: peters_collaboration_emails.php:563
+msgid "**** ERROR: Invalid new group contributor user ID ****"
+msgstr "**** EROARE: ID-ul de utilizator al noului contribuitor de grup nu este valid ****"
+
+#: peters_collaboration_emails.php:574
+msgid "**** ERROR: Invalid new group moderator user ID ****"
+msgstr "**** EROARE: ID-ul de utilizator al noului moderator de grup nu este valid ****"
+
+#: peters_collaboration_emails.php:586
+msgid "**** ERROR: Invalid new group moderator submitted ****"
+msgstr "**** ERROR: Noul moderator de grup nu este valid ****"
+
+#: peters_collaboration_emails.php:596
+msgid "New group created."
+msgstr "Noul grup a fost creeat."
+
+#: peters_collaboration_emails.php:599
+msgid "**** ERROR: Unknown query error when adding a collaborator to the new group ****"
+msgstr "**** EROARE: A avut loc o eroare necunoscută de query atunci când s-a încercat adăugarea unul colaborator la noul grup ****"
+
+#: peters_collaboration_emails.php:605
+msgid "**** ERROR: Unknown query error when creating new group ****"
+msgstr "**** EROARE: A avut loc o eroare necunoscută de query atunci când s-a încercat crearea unui nou grup ****"
+
+#: peters_collaboration_emails.php:612
+msgid "**** ERROR: Not all necessary group information was submitted to add a group ****"
+msgstr "**** EROARE: Nu au fost completate toate informaţiile necesare pentru adăugarea unui grup ****"
+
+#: peters_collaboration_emails.php:634
+#: peters_collaboration_emails.php:944
+msgid "That group does not exist."
+msgstr "Acest grup nu există."
+
+#: peters_collaboration_emails.php:648
+msgid "**** ERROR: Insufficient group name or contributor information ****"
+msgstr "**** EROARE: Nu există un nume pentru grup sau nu sunt suficiente informaţii despre contribuitori ****"
+
+#: peters_collaboration_emails.php:649
+msgid "**** Make sure that there is at least one contributor. ****"
+msgstr "**** Asiguraţi-vă că există măcar un contribuitor. ****"
+
+#: peters_collaboration_emails.php:680
+msgid "**** ERROR: Invalid contributor user ID ****"
+msgstr "**** EROARE: ID-ul de user al contribuitorului nu este valid ****"
+
+#: peters_collaboration_emails.php:703
+msgid "Collaborators updated."
+msgstr "Colaboratorii au fost actualizaţi."
+
+#: peters_collaboration_emails.php:708
+msgid "Group name updated."
+msgstr "Numele grupului a fost actualizat."
+
+#: peters_collaboration_emails.php:733
+msgid "**** ERROR: That group does not exist ****"
+msgstr "**** EROARE: Acest grup nu există ****"
+
+#: peters_collaboration_emails.php:751
+#, php-format
+msgid "Group %s successfully deleted."
+msgstr "Grupul %s a fost adăugat cu succes."
+
+#: peters_collaboration_emails.php:754
+msgid "**** ERROR: Database problem in removing the group. ****"
+msgstr "**** ERROR: A avut loc o problemă cu baza de date în timpul eliminării grupului. ****"
+
+#: peters_collaboration_emails.php:794
+#, php-format
+msgid "**** ERROR: Category with ID of %d does not exist ****"
+msgstr "**** EROARE: Nu există nici o categorie cu ID-ul de %d ****"
+
+#: peters_collaboration_emails.php:819
+#, php-format
+msgid "Moderators for the category \"%s\" updated."
+msgstr "Moderatorii pentru categoria \"%s\" au fost actualizaţi."
+
+#: peters_collaboration_emails.php:823
+#, php-format
+msgid "You must have at least one default mod for the category \"%s\"."
+msgstr "Trebuie să aveţi cel puţin un moderator default pentru categoria \"%s\"."
+
+#: peters_collaboration_emails.php:857
+msgid "**** ERROR: Invalid category ID ****"
+msgstr "**** EROARE: ID-ul categoriei nu este valid ****"
+
+#: peters_collaboration_emails.php:868
+msgid "**** ERROR: Invalid new category moderator user ID ****"
+msgstr "**** EROARE: ID-ul de utilizator al moderatorului pentru noua categorie nu este valid ****"
+
+#: peters_collaboration_emails.php:880
+msgid "**** ERROR: Invalid new category moderator submitted ****"
+msgstr "**** EROARE: A fost ales un nou modeator de categorie care nu este valid ****"
+
+#: peters_collaboration_emails.php:893
+#, php-format
+msgid "New moderator added for the %s category."
+msgstr "Noul moderator a fost adăugat pentru categoria %s."
+
+#: peters_collaboration_emails.php:896
+msgid "**** ERROR: Unknown query error when adding a new category moderator ****"
+msgstr "**** EROARE: A avut loc o eroare necunoscută de query atunci când s-a încercat adăugarea unui nou moderator de categorie ****"
+
+#: peters_collaboration_emails.php:903
+msgid "**** ERROR: No moderator was submitted for the category ****"
+msgstr "**** ERROR: Nu a fost ales nici un moderator pentru categorie ****"
+
+#: peters_collaboration_emails.php:973
+msgid "Manage group:"
+msgstr "Administrare grup:"
+
+#: peters_collaboration_emails.php:975
+msgid "Back to the main collaboration config menu"
+msgstr "Înapoi la meniul principal de configurare a colaborării"
+
+#: peters_collaboration_emails.php:977
+#: peters_collaboration_emails.php:1204
+msgid "Group name:"
+msgstr "Numele grupului:"
+
+#: peters_collaboration_emails.php:978
+msgid "Contributors in this group:"
+msgstr "Contribuitori în acest grup:"
+
+#: peters_collaboration_emails.php:982
+#: peters_collaboration_emails.php:1308
+#: peters_collaboration_emails.php:1322
+#: peters_collaboration_emails.php:1328
+#: peters_collaboration_emails.php:1342
+#: peters_collaboration_emails.php:1348
+msgid "Update"
+msgstr "Actualizare"
+
+#: peters_collaboration_emails.php:986
+msgid "Delete this group"
+msgstr "Şterge acest grup"
+
+#: peters_collaboration_emails.php:1020
+#, php-format
+msgid "Are you sure you want to remove the moderators for the <strong>%s</strong> category?"
+msgstr "Eşti sigur că vrei să elimini moderatorii pentru categoria <strong>%s</strong>?"
+
+#: peters_collaboration_emails.php:1022
+msgid "Yes"
+msgstr "Da"
+
+#: peters_collaboration_emails.php:1026
+msgid "No, go back"
+msgstr "Nu, mergi înapoi"
+
+#: peters_collaboration_emails.php:1094
+#: peters_collaboration_emails.php:1177
+#: peters_collaboration_emails.php:1262
+msgid "General admin"
+msgstr "Administrator general"
+
+#: peters_collaboration_emails.php:1106
+#: peters_collaboration_emails.php:1189
+#: peters_collaboration_emails.php:1273
+msgid "Add:"
+msgstr "Adaugă:"
+
+#: peters_collaboration_emails.php:1205
+msgid "Add contributor:"
+msgstr "Adaugă contribuitor:"
+
+#: peters_collaboration_emails.php:1212
+#: peters_collaboration_emails.php:1292
+msgid "Add moderator:"
+msgstr "Adaugă moderator:"
+
+#: peters_collaboration_emails.php:1275
+#: peters_collaboration_emails.php:1295
+msgid "E-mail:"
+msgstr "E-mail:"
+
+#: peters_collaboration_emails.php:1288
+msgid "Category:"
+msgstr "Categorie:"
+
+#: peters_collaboration_emails.php:1299
+msgid "Manage collaboration e-mails"
+msgstr "Administrare email-uri de colaborare"
+
+#: peters_collaboration_emails.php:1300
+msgid "Set the moderators who should be e-mailed whenever Contributor users submit pending posts."
+msgstr "Alege moderatorii care ar trebui să primească un e-mail de fiecare dată când un contribuitor trimite un articol la revizuit."
+
+#: peters_collaboration_emails.php:1303
+msgid "Default moderators"
+msgstr "Moderatori default"
+
+#: peters_collaboration_emails.php:1305
+msgid "These users will be e-mailed if none of the rules below match. Note that they must be either editors or administrators."
+msgstr "Aceşti moderatori vor primi un e-mail dacă nici una dintre regulile de mai jos se potrivesc. Ţineţi cont de faptul că ei trebuie să fie sau editori sau administratori."
+
+#: peters_collaboration_emails.php:1311
+msgid "Moderators by group"
+msgstr "Moderatorii pe grupuri"
+
+#: peters_collaboration_emails.php:1313
+#: peters_collaboration_emails.php:1333
+msgid "Existing rules"
+msgstr "Reguli existente"
+
+#: peters_collaboration_emails.php:1316
+msgid "Group"
+msgstr "Grup"
+
+#: peters_collaboration_emails.php:1317
+#: peters_collaboration_emails.php:1337
+msgid "Rules"
+msgstr "Reguli"
+
+#: peters_collaboration_emails.php:1325
+msgid "Add a group"
+msgstr "Adaugă grup"
+
+#: peters_collaboration_emails.php:1331
+msgid "Moderators by category"
+msgstr "Moderatorii pe categorii"
+
+#: peters_collaboration_emails.php:1336
+msgid "Category"
+msgstr "Categorie"
+
+#: peters_collaboration_emails.php:1345
+msgid "Add category-specific moderators"
+msgstr "Adaugă moderatori pentru o categorie anume"
+
+#: peters_collaboration_emails.php:1406
+msgid "Collaboration e-mails"
+msgstr "Mesaje e-mail de colaborare"
+

@@ -19,6 +19,9 @@ if ( !taxonomy_exists($taxonomy) )
 
 $tax = get_taxonomy($taxonomy);
 
+if ( ! current_user_can($tax->cap->manage_terms) )
+	wp_die(__('Cheatin&#8217; uh?'));
+
 $title = $tax->labels->name;
 
 if ( empty($post_type) || !in_array( $post_type, get_post_types( array('public' => true) ) ) )
@@ -120,6 +123,9 @@ case 'edit':
 
 	require_once ('admin-header.php');
 	$tag_ID = (int) $_GET['tag_ID'];
+
+	if ( !current_user_can($tax->cap->edit_terms) )
+		wp_die( __('You are not allowed to edit this item.') );
 
 	$tag = get_term($tag_ID, $taxonomy, OBJECT, 'edit');
 	include('./edit-tag-form.php');
@@ -382,6 +388,7 @@ if ( current_user_can($tax->cap->edit_terms) ) {
 <input type="hidden" name="action" value="add-tag" />
 <input type="hidden" name="screen" value="<?php echo esc_attr($current_screen->id); ?>" />
 <input type="hidden" name="taxonomy" value="<?php echo esc_attr($taxonomy); ?>" />
+<input type="hidden" name="post_type" value="<?php echo esc_attr($post_type); ?>" />
 <?php wp_nonce_field('add-tag'); ?>
 
 <div class="form-field form-required">

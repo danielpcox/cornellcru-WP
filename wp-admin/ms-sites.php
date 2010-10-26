@@ -107,6 +107,9 @@ switch ( $action ) {
 		$blog_prefix = $wpdb->get_blog_prefix( $id );
 		$options = $wpdb->get_results( "SELECT * FROM {$blog_prefix}options WHERE option_name NOT LIKE '\_%' AND option_name NOT LIKE '%user_roles'" );
 		$details = get_blog_details( $id );
+		if ( $details->site_id != $wpdb->siteid )
+			wp_die( __( 'You do not have permission to access this page.' ) );
+
 		$editblog_roles = get_blog_option( $id, "{$blog_prefix}user_roles" );
 		$is_main_site = is_main_site( $id );
 		?>
@@ -197,7 +200,7 @@ switch ( $action ) {
 							?>
 								<tr class="form-field">
 									<th scope="row"><?php echo ucwords( str_replace( "_", " ", $option->option_name ) ) ?></th>
-									<td><textarea class="<?php echo $class; ?>" rows="5" cols="40" name="option[<?php echo esc_attr( $option->option_name ) ?>]" id="<?php echo esc_attr( $option->option_name ) ?>"<?php disabled( $disabled ) ?>><?php wp_htmledit_pre( $option->option_value ) ?></textarea></td>
+									<td><textarea class="<?php echo $class; ?>" rows="5" cols="40" name="option[<?php echo esc_attr( $option->option_name ) ?>]" id="<?php echo esc_attr( $option->option_name ) ?>"<?php disabled( $disabled ) ?>><?php echo wp_htmledit_pre( $option->option_value ) ?></textarea></td>
 								</tr>
 							<?php
 							} else {

@@ -1,0 +1,30 @@
+[03-Oct-2010 18:08:09] PHP Fatal error:  Class 'Walker' not found in /home/cornellc/public_html/wp-includes/nav-menu-template.php on line 17
+[03-Oct-2010 18:08:16] PHP Fatal error:  Call to undefined function  is_multisite() in /home/cornellc/public_html/wp-includes/wp-db.php on line 505
+[03-Oct-2010 18:09:00] PHP Fatal error:  Call to undefined function  add_action() in /home/cornellc/public_html/wp-includes/general-template.php on line 1273
+[03-Oct-2010 18:09:11] PHP Fatal error:  Call to undefined function  wp_embed_register_handler() in /home/cornellc/public_html/wp-includes/default-embeds.php on line 33
+[03-Oct-2010 18:09:13] PHP Fatal error:  Call to undefined function  add_filter() in /home/cornellc/public_html/wp-includes/default-filters.php on line 17
+[03-Oct-2010 18:09:23] PHP Fatal error:  Class 'WP_Widget' not found in /home/cornellc/public_html/wp-includes/default-widgets.php on line 15
+[03-Oct-2010 18:10:14] PHP Fatal error:  Call to undefined function  add_filter() in /home/cornellc/public_html/wp-includes/shortcodes.php on line 296
+[03-Oct-2010 18:10:34] PHP Fatal error:  Call to undefined function  feed_content_type() in /home/cornellc/public_html/wp-includes/feed-rss2.php on line 8
+[03-Oct-2010 18:10:40] PHP Fatal error:  Call to undefined function  feed_content_type() in /home/cornellc/public_html/wp-includes/feed-rdf.php on line 8
+[03-Oct-2010 18:10:43] PHP Fatal error:  Call to undefined function  add_action() in /home/cornellc/public_html/wp-includes/taxonomy.php on line 65
+[03-Oct-2010 18:10:44] PHP Fatal error:  Call to undefined function  feed_content_type() in /home/cornellc/public_html/wp-includes/feed-atom.php on line 8
+[03-Oct-2010 18:10:48] PHP Fatal error:  Call to undefined function  add_action() in /home/cornellc/public_html/wp-includes/kses.php on line 1361
+[03-Oct-2010 18:11:29] PHP Warning:  require_once(ABSPATHWPINC/class-simplepie.php) [<a href='function.require-once'>function.require-once</a>]: failed to open stream: No such file or directory in /home/cornellc/public_html/wp-includes/class-feed.php on line 4
+[03-Oct-2010 18:11:29] PHP Fatal error:  require_once() [<a href='function.require'>function.require</a>]: Failed opening required 'ABSPATHWPINC/class-simplepie.php' (include_path='.:/usr/lib/php:/usr/local/lib/php') in /home/cornellc/public_html/wp-includes/class-feed.php on line 4
+[03-Oct-2010 18:11:42] PHP Fatal error:  Call to undefined function  is_admin() in /home/cornellc/public_html/wp-includes/vars.php on line 16
+[03-Oct-2010 18:11:46] PHP Fatal error:  Call to undefined function  add_action() in /home/cornellc/public_html/wp-includes/theme.php on line 1137
+[03-Oct-2010 18:11:55] PHP Fatal error:  Call to undefined function  add_action() in /home/cornellc/public_html/wp-includes/canonical.php on line 411
+[03-Oct-2010 18:12:39] PHP Fatal error:  Call to undefined function  _deprecated_file() in /home/cornellc/public_html/wp-includes/class-snoopy.php on line 6
+[03-Oct-2010 18:12:51] PHP Warning:  require(ABSPATHWPINC/class.wp-dependencies.php) [<a href='function.require'>function.require</a>]: failed to open stream: No such file or directory in /home/cornellc/public_html/wp-includes/script-loader.php on line 25
+[03-Oct-2010 18:12:51] PHP Warning:  require(ABSPATHWPINC/class.wp-dependencies.php) [<a href='function.require'>function.require</a>]: failed to open stream: No such file or directory in /home/cornellc/public_html/wp-includes/script-loader.php on line 25
+[03-Oct-2010 18:12:51] PHP Fatal error:  require() [<a href='function.require'>function.require</a>]: Failed opening required 'ABSPATHWPINC/class.wp-dependencies.php' (include_path='.:/usr/lib/php:/usr/local/lib/php') in /home/cornellc/public_html/wp-includes/script-loader.php on line 25
+[03-Oct-2010 18:13:00] PHP Fatal error:  Call to undefined function  _deprecated_file() in /home/cornellc/public_html/wp-includes/rss.php on line 18
+[03-Oct-2010 18:13:13] PHP Fatal error:  Class 'WP_Dependencies' not found in /home/cornellc/public_html/wp-includes/class.wp-styles.php on line 19
+[03-Oct-2010 18:13:52] PHP Fatal error:  Call to undefined function  _deprecated_file() in /home/cornellc/public_html/wp-includes/rss-functions.php on line 8
+[03-Oct-2010 18:13:54] PHP Fatal error:  Call to undefined function  feed_content_type() in /home/cornellc/public_html/wp-includes/feed-rss.php on line 8
+[03-Oct-2010 18:14:00] PHP Fatal error:  Call to undefined function  add_action() in /home/cornellc/public_html/wp-includes/post.php on line 139
+[03-Oct-2010 18:14:05] PHP Fatal error:  Call to undefined function  is_robots() in /home/cornellc/public_html/wp-includes/template-loader.php on line 10
+[03-Oct-2010 18:14:08] PHP Fatal error:  Call to undefined function  add_filter() in /home/cornellc/public_html/wp-includes/user.php on line 70
+[03-Oct-2010 18:14:26] PHP Fatal error:  Call to undefined function  add_filter() in /home/cornellc/public_html/wp-includes/ms-default-filters.php on line 17
+[03-Oct-2010 18:14:27] PHP Fatal error:  Call to undefined function  add_action() in /home/cornellc/public_html/wp-includes/ms-default-constants.php on line 138

@@ -376,7 +376,8 @@ function get_default_post_to_edit( $post_type = 'post', $create_in_db = false ) 
 		$old_posts = $wpdb->get_col( "SELECT ID FROM $wpdb->posts WHERE post_status = 'auto-draft' AND DATE_SUB( NOW(), INTERVAL 7 DAY ) > post_date" );
 		foreach ( (array) $old_posts as $delete )
 			wp_delete_post( $delete, true ); // Force delete
-		$post = get_post( wp_insert_post( array( 'post_title' => __( 'Auto Draft' ), 'post_type' => $post_type, 'post_status' => 'auto-draft' ) ) );
+		$post_id = wp_insert_post( array( 'post_title' => __( 'Auto Draft' ), 'post_type' => $post_type, 'post_status' => 'auto-draft' ) );
+		$post = get_post( $post_id );
 	} else {
 		$post->ID = 0;
 		$post->post_author = '';
@@ -893,9 +894,10 @@ function wp_edit_posts_query( $q = false ) {
 	$per_page = 'edit_' . $post_type . '_per_page';
 	$posts_per_page = (int) get_user_option( $per_page );
 	if ( empty( $posts_per_page ) || $posts_per_page < 1 )
-		$posts_per_page = 15;
-	$posts_per_page = apply_filters( $per_page, $posts_per_page );
+		$posts_per_page = 20;
 
+	$posts_per_page = apply_filters( $per_page, $posts_per_page );
+	$posts_per_page = apply_filters( 'edit_posts_per_page', $posts_per_page, $post_type );
 
 	$query = compact('post_type', 'post_status', 'perm', 'order', 'orderby', 'posts_per_page');
 
@@ -1170,8 +1172,6 @@ function _wp_post_thumbnail_html( $thumbnail_id = NULL ) {
  * @return bool|int False: not locked or locked by current user. Int: user ID of user with lock.
  */
 function wp_check_post_lock( $post_id ) {
-	global $current_user;
-
 	if ( !$post = get_post( $post_id ) )
 		return false;
 
@@ -1180,7 +1180,7 @@ function wp_check_post_lock( $post_id ) {
 
 	$time_window = apply_filters( 'wp_check_post_lock_window', AUTOSAVE_INTERVAL * 2 );
 
-	if ( $lock && $lock > time() - $time_window && $last != $current_user->ID )
+	if ( $lock && $lock > time() - $time_window && $last != get_current_user_id() )
 		return $last;
 	return false;
 }
@@ -1194,10 +1194,9 @@ function wp_check_post_lock( $post_id ) {
  * @return bool Returns false if the post doesn't exist of there is no current user
  */
 function wp_set_post_lock( $post_id ) {
-	global $current_user;
 	if ( !$post = get_post( $post_id ) )
 		return false;
-	if ( !$current_user || !$current_user->ID )
+	if ( 0 == get_current_user_id() )
 		return false;
 
 	$now = time();
@@ -1252,8 +1251,7 @@ function wp_create_post_autosave( $post_id ) {
 	if ( $old_autosave = wp_get_post_autosave( $post_id ) ) {
 		$new_autosave = _wp_post_revision_fields( $_POST, true );
 		$new_autosave['ID'] = $old_autosave->ID;
-		$current_user = wp_get_current_user();
-		$new_autosave['post_author'] = $current_user->ID;
+		$new_autosave['post_author'] = get_current_user_id();
 		return wp_update_post( $new_autosave );
 	}
 

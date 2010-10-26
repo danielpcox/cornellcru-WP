@@ -552,7 +552,7 @@ case 'add-link-cat' : // From Blogroll -> Categories
 	break;
 case 'add-tag' : // From Manage->Tags
 	check_ajax_referer( 'add-tag' );
-
+	$post_type = !empty($_POST['post_type']) ? $_POST['post_type'] : 'post';
 	$taxonomy = !empty($_POST['taxonomy']) ? $_POST['taxonomy'] : 'post_tag';
 	$tax = get_taxonomy($taxonomy);
 
@@ -893,7 +893,7 @@ case 'add-meta' :
 			'supplemental' => array('postid' => $pid)
 		) );
 	} else { // Update?
-		$mid = (int) array_pop(array_keys($_POST['meta']));
+		$mid = (int) array_pop( $var_by_ref = array_keys($_POST['meta']) );
 		$key = $_POST['meta'][$mid]['key'];
 		$value = $_POST['meta'][$mid]['value'];
 		if ( '' == trim($key) )
@@ -956,7 +956,6 @@ case 'autosave' : // The name of this action is hardcoded in edit_post()
 	define( 'DOING_AUTOSAVE', true );
 
 	$nonce_age = check_ajax_referer( 'autosave', 'autosavenonce' );
-	global $current_user;
 
 	$_POST['post_category'] = explode(",", $_POST['catslist']);
 	if ( $_POST['post_type'] == 'page' || empty($_POST['post_category']) )
@@ -1145,7 +1144,7 @@ case 'menu-locations-save':
 	check_ajax_referer( 'add-menu_item', 'menu-settings-column-nonce' );
 	if ( ! isset( $_POST['menu-locations'] ) )
 		die('0');
-	set_theme_mod( 'nav_menu_locations', $_POST['menu-locations'] );
+	set_theme_mod( 'nav_menu_locations', array_map( 'absint', $_POST['menu-locations'] ) );
 	die('1');
 	break;
 case 'meta-box-order':
@@ -1232,14 +1231,15 @@ case 'inline-save':
 	// update the post
 	edit_post();
 
-	$post = array();
-	if ( 'page' == $_POST['post_type'] ) {
+	if ( in_array( $_POST['post_type'], get_post_types( array( 'show_ui' => true ) ) ) ) {
+		$post = array();
 		$post[] = get_post($_POST['post_ID']);
-		page_rows($post);
-	} elseif ( 'post' == $_POST['post_type'] || in_array($_POST['post_type'], get_post_types( array('public' => true) ) ) ) {
-		$mode = $_POST['post_view'];
-		$post[] = get_post($_POST['post_ID']);
-		post_rows($post);
+		if ( is_post_type_hierarchical( $_POST['post_type'] ) ) {
+			page_rows( $post );
+		} else {
+			$mode = $_POST['post_view'];
+			post_rows( $post );
+		}
 	}
 
 	exit;
