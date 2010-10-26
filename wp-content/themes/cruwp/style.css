@@ -441,6 +441,7 @@ BODY {
   border-width: 1px 0;
   list-style: none;
   padding: 10px 0;
+  width:100%;
 }
 #call-to-action LI:first-child A { margin-left: 40px; }
 #call-to-action LI A { margin-left: 18px; }
