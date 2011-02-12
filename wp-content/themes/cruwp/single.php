@@ -30,6 +30,10 @@
       <div id="posts">
             <div class="post">
               <?php the_content(); ?>
+			  <?php previous_post_link(); ?>
+				<div class=alignright>
+				<?php next_post_link(); ?>
+				</div>
             </div><!--/#posts-->
       </div>
 
