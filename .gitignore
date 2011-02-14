@@ -3,3 +3,4 @@ wp-config.php
 wp-content/uploads/
 *.swp
 *~
+*.swo
