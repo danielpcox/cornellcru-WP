@@ -23,7 +23,7 @@
       <h1><?php the_title(); ?></h1>
       <ul class="meta">
         <li class="date"><?php the_time(__('F jS, Y', 'cruwp')) ?></li>
-        <li class="author"><?php _e('by ','cruwp'); ?><?php the_author(); ?></li>
+		<li class="author"><?php _e('by ','cruwp'); ?><?php the_author_posts_link(); ?></li>
         <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
       </ul><!--/.meta-->
 
