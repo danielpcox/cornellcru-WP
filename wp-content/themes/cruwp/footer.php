@@ -5,7 +5,7 @@
 <?php endif; ?>
 
 <div id="footer">
-  <span id="copy">&copy; Copyright 2010</span><!--/#copy-->
+  <span id="copy">&copy; Copyright <?php $date = date('Y'); echo "$date"; ?></span><!--/#copy-->
   <br />
   <span id="name">Cornell Campus Crusade for Christ</span><!--/#name-->
   <?php wp_footer(); ?>
