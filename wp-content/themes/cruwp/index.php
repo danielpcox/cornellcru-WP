@@ -85,7 +85,7 @@
 
 </div><!--/#blog-->
 
-<?php if (function_exists('wp_pagenavi')) { wp_pagenavi(); } else { include('navigation.php'); } ?>
+<?php  if (function_exists('wp_pagenavi')) { wp_pagenavi(); } else { include('navigation.php'); } ?>
 
 <!-- We're gonna have to totally redo the pagination styling for wordpress
 <ul id="pagination">
