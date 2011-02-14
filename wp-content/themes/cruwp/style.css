@@ -612,6 +612,12 @@ BODY {
 .alignleft {
     float:left;
 }
+
+/* to close a ton of space at the top of a page when you're logged in */
+div.post p {
+    display:inline-block;
+}
+
 /* ############# END /appended by Daniel #################*/
 
 /* ############# RefTagger #################*/
