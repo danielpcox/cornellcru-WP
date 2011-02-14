@@ -25,8 +25,7 @@
           <h2><a href="<?php the_permalink() ?>"><?php the_title(); ?></a></h2>
           <ul class="meta">
             <li class="date"><?php the_time(__('F jS, Y', 'cruwp')) ?></li>
-            <?php if ($options['author']) : ?><li class="author"><?php _e('by ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?><!-- TODO : enable author link? -->
-            <!--<?php if ($options['author']) : ?><li class="author"><?php _e('by ','cruwp'); ?><?php the_author(); ?></li><?php endif; ?>-->
+            <?php if ($options['author']) : ?><li class="author"><?php _e('by ','cruwp'); ?><?php the_author_posts_link(); ?></li><?php endif; ?>
             <!--<li class="comments"><?php comments_popup_link(__('Write comment', 'cruwp'), __('1 comment', 'cruwp'), __('% comments', 'cruwp')); ?></li>--><!-- TODO : enable comments -->
             <?php edit_post_link(__('[ EDIT ]', 'cruwp'), '<li class="post-edit">', '</li>' ); ?>
           </ul><!--/.meta-->
@@ -46,7 +45,7 @@
 
 </div><!--/#blog-->
 
-<?php if (function_exists('wp_pagenavi')) { wp_pagenavi(); } else { include('navigation.php'); } ?>
+<?php  if (function_exists('wp_pagenavi')) { wp_pagenavi(); } else { include('navigation.php'); } ?>
 
 <!-- We're gonna have to totally redo the pagination styling for wordpress
 <ul id="pagination">
