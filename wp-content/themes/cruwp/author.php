@@ -50,5 +50,8 @@
     </ul>
 </div> 
 </div>
+
+<?php  if (function_exists('wp_pagenavi')) { wp_pagenavi(); } else { include('navigation.php'); } ?>
+
 <!-- <?php get_sidebar(); ?> -->
 <?php get_footer(); ?>
