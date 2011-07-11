@@ -30,7 +30,7 @@ function wp_set_current_user($id, $name = '') {
 
 	// As of WP 2.5, wp_set_current_user fires once (with user_id 0) before global $wp_roles is set, 
 	// then again with $wp_roles and user_id set
-	if ( ! $id && ! $name && is_admin() )
+	if ( ! $id && ! $name && is_admin() && isset($current_user) )
 		return $current_user;
 
 	//scoper_version_check();

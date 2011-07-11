@@ -9,30 +9,20 @@ class ScoperAncestry {
 			return array();
 		
 		$children = get_option("{$taxonomy}_children_rs");
-		
+
 		if ( is_array($children) )
 			return $children;
-					
-		global $scoper;
-		if ( ! $tx = $scoper->taxonomies->get($taxonomy) )
-			return $option_value;
-		
-		if ( empty($tx->source->cols->parent) || empty($tx->source->cols->id) )
-			return $option_value;
-			
-		$col_id = $tx->source->cols->id;	
-		$col_parent = $tx->source->cols->parent;
-		
+
 		$children = array();
 		
-		$terms = $scoper->get_terms($taxonomy, UNFILTERED_RS);
+		$terms = $GLOBALS['scoper']->get_terms($taxonomy, UNFILTERED_RS);
 		
 		foreach ( $terms as $term )
-			if ( $term->$col_parent )
-				$children[$term->$col_parent][] = $term->$col_id;
+			if ( $term->parent )
+				$children[$term->parent][] = $term->term_id;
 	
 		update_option("{$taxonomy}_children_rs", $children);
-				
+
 		return $children;
 	}
 	
@@ -71,7 +61,14 @@ class ScoperAncestry {
 		$ancestors = array();
 		
 		global $wpdb;
-		if ( $pages = scoper_get_results("SELECT ID, post_parent FROM $wpdb->posts WHERE post_type != 'revision'") ) {
+		
+		if ( awp_ver( '3.0' ) ) {
+			$post_types = get_post_types( array( 'hierarchical' => true, 'public' => true ) );
+			$where = "WHERE post_type IN ('" . implode( "','", $post_types ) . "') AND post_status != 'auto-draft'";
+		} else
+			$where = "WHERE post_type != 'revision' AND post_type != 'post' AND post_status != 'auto-draft'";
+
+		if ( $pages = scoper_get_results("SELECT ID, post_parent FROM $wpdb->posts $where") ) {
 			$parents = array();
 			foreach ( $pages as $page )
 				if ( $page->post_parent )
@@ -95,25 +92,19 @@ class ScoperAncestry {
 		if ( is_array($ancestors) )
 			return $ancestors;
 	
-		global $scoper;
-	
-		$tx = $scoper->taxonomies->get($taxonomy);	
-		$col_id = $tx->source->cols->id;	
-		$col_parent = $tx->source->cols->parent;
-		
-		$terms = $scoper->get_terms($taxonomy, UNFILTERED_RS);
-	
 		$ancestors = array();
+			
+		$terms = $GLOBALS['scoper']->get_terms($taxonomy, UNFILTERED_RS);
 	
 		if ( $terms ) {
 			$parents = array();
 			
 			foreach ( $terms as $term )
-				if ( $term->$col_parent )
-					$parents[$term->$col_id] = $term->$col_parent;
+				if ( $term->parent )
+					$parents[$term->term_id] = $term->parent;
 	
 			foreach ( $terms as $term ) {
-				$term_id = $term->$col_id;
+				$term_id = $term->term_id;
 				$ancestors[$term_id] = ScoperAncestry::_walk_ancestors($term_id, array(), $parents);
 				if ( empty( $ancestors[$term_id] ) )
 					unset( $ancestors[$term_id] );

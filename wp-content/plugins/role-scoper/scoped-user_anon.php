@@ -7,7 +7,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
  * role-scoper.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  * NOTE: this skeleton edition of WP_Scoped_User is loaded for anonymous users to reduce mem usage
  *
@@ -27,20 +27,11 @@ class WP_Scoped_User extends WP_User { // Special skeleton class for ANONYMOUS U
 	var $is_administrator;				//  cut down on unnecessary filtering by assuming that if a user can activate plugins, they can do anything
 	var $is_module_administrator = array();
 	
-	function WP_Scoped_User($id = 0, $name = '', $args = '') {
+	function WP_Scoped_User($id = 0, $name = '', $args = array()) {
 		$this->WP_User($id, $name);
 		
 		// initialize blog_roles arrays
-		//$this->assigned_blog_roles[ANY_CONTENT_DATE_RS] = array();
 		$this->blog_roles[ANY_CONTENT_DATE_RS] = array();
-		
-		global $scoper;
-		if ( empty($scoper) || empty($scoper->role_defs) ) {
-			require_once('role-scoper_main.php');
-
-			$temp = new Scoper();
-			$scoper =& $temp;
-		}
 	
 		if ( defined('DEFINE_GROUPS_RS') && defined( 'SCOPER_ANON_METAGROUP' ) )
 			$this->groups = $this->_get_usergroups();
@@ -70,7 +61,11 @@ class WP_Scoped_User extends WP_User { // Special skeleton class for ANONYMOUS U
 		return wpp_cache_set($cache_id, $entry, $cache_flag);
 	}
 		
-	function get_groups_for_user( $user_id, $args = '' ) {
+	function cache_force_set( $entry, $cache_flag, $append_blog_suffix = true ) {
+		return $this->cache_set( $entry, $cache_flag, $append_blog_suffix, true );
+	}
+	
+	function get_groups_for_user( $user_id, $args = array() ) {
 		if ( ! defined( 'SCOPER_ANON_METAGROUP' ) )
 			return array();
 		
@@ -99,7 +94,7 @@ class WP_Scoped_User extends WP_User { // Special skeleton class for ANONYMOUS U
 	}
 	
 	// return group_id as array keys
-	function _get_usergroups($args = '') {
+	function _get_usergroups($args = array()) {
 		return WP_Scoped_User::get_groups_for_user( -1 );
 	}
 	
@@ -126,24 +121,4 @@ class WP_Scoped_User extends WP_User { // Special skeleton class for ANONYMOUS U
 	
 } // end class WP_Scoped_User
 }
-
-
-if ( ! function_exists('is_administrator_rs') ) {
-function is_administrator_rs( $src_or_tx = '' ) {
-	return false;
-}
-
-function is_option_administrator_rs() {
-	return false;
-}
-
-function is_user_administrator_rs() {
-	return false;
-} 
-
-function is_content_administrator_rs() {
-	return false;
-} 
-} //endif function exists
-
 ?>

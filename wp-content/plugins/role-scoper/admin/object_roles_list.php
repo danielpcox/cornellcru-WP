@@ -2,7 +2,7 @@
 if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die( 'This page cannot be called directly.' );
 	
-function scoper_object_roles_list( $viewing_user, $args = '' ) {
+function scoper_object_roles_list( $viewing_user, $args = array() ) {
 
 $html = '';
 	
@@ -58,16 +58,13 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 	
 		$disable_role_admin = false;
 		if ( $require_blogwide_editor ) {
-			$required_cap = ( 'page' == $object_type ) ? 'edit_others_pages' : 'edit_others_posts';
-
-			global $current_user;
-			if ( empty( $current_user->allcaps[$required_cap] ) )
+			if ( ! $scoper->user_can_edit_blogwide( 'post', $object_type, array( 'require_others_cap' => true ) ) )
 				$disable_role_admin = true;
 		}
 		
-		if ( ! empty($src->cols->type) && ! empty($otype->val) ) {
+		if ( ! empty($src->cols->type) && ! empty($otype->name) ) {
 			$col_type = $src->cols->type;
-			$otype_clause = "AND $src->table.$col_type = '$otype->val'";
+			$otype_clause = "AND $src->table.$col_type = '$otype->name'";
 		} elseif ( $otype_count < 2 )
 			$otype_clause = '';
 		else
@@ -75,8 +72,7 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 		
 		$col_id = $src->cols->id;
 		$col_name = $src->cols->name;
-		$SCOPER_ROLE_TYPE = SCOPER_ROLE_TYPE;
-		
+
 		$ug_clause_for_user_being_viewed = ( $viewing_user ) ? $viewing_user->get_user_clause('uro') : '';
 		
 		// TODO: replace join with uro subselect
@@ -87,11 +83,13 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 		$join = " INNER JOIN $wpdb->user2role2object_rs AS uro"
 			. " ON uro.obj_or_term_id = $src->table.$col_id"
 			. " AND uro.src_or_tx_name = '$src_name'"
-			. " AND uro.scope = 'object' AND uro.role_type = '$SCOPER_ROLE_TYPE'";
+			. " AND uro.scope = 'object' AND uro.role_type = 'rs'";
 		
 		$duration_clause = ( $enforce_duration_limits ) ? scoper_get_duration_clause( "{$src->table}.{$src->cols->date}" ) : '';
-			
-		$where = " WHERE 1=1 $otype_clause $duration_clause $ug_clause_for_user_being_viewed";
+
+		$status_clause = ( 'post' == $src_name ) ? "AND post_status != 'auto-draft'" : '';	 // TODO: version update script to delete post roles on auto-drafts (stored via default roles)
+		
+		$where = " WHERE 1=1 $status_clause $otype_clause $duration_clause $ug_clause_for_user_being_viewed";
 		$orderby = " ORDER BY $src->table.$col_name ASC, uro.role_name ASC";
 		
 		$qry .= $join . $where . $orderby;
@@ -101,7 +99,11 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 		if ( ! is_user_administrator_rs() ) {  // no need to filter admins - just query the assignments	
 		
 			// only list role assignments which the logged-in user can administer
-			if ( isset($src->reqd_caps[OP_ADMIN_RS]) ) {
+			$args['required_operation'] = OP_EDIT_RS;
+
+			// Possible TODO: re-implement OP_ADMIN distinction with admin-specific capabilities			
+			/*
+			if ( cr_get_reqd_caps( $src_name, OP_ADMIN_RS, $object_type ) {
 				$args['required_operation'] = OP_ADMIN_RS;
 			} else {
 				$reqd_caps = array();
@@ -112,6 +114,7 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 				}
 				$args['force_reqd_caps'] = $reqd_caps;
 			}
+			*/
 			
 			$qry = "SELECT $src->table.$col_id FROM $src->table WHERE 1=1";
 			
@@ -160,7 +163,7 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 						$objnames[ $row->$col_id ] = $row->$col_name;
 				}
 				
-				$role_handle = SCOPER_ROLE_TYPE . '_' . $row->role_name;
+				$role_handle = 'rs_' . $row->role_name;
 				
 				if ( $row->date_limited )
 					$duration_key = serialize( array( 'start_date_gmt' => $row->start_date_gmt, 'end_date_gmt' => $row->end_date_gmt ) );
@@ -195,18 +198,16 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 				$title = "title='$title_roles'";
 			
 			if ( ! $disable_role_admin && ( is_user_administrator_rs() || $cu_admin_results ) ) {
-				if ( ( $src_name != $object_type ) && ( 'post' != $object_type ) ) {
-					$roles_page = "rs-roles-{$object_type}_{$src_name}";
-				} else {
-					$roles_page = "rs-roles-$object_type";
-				}
+				//if ( ( $src_name != $object_type ) && ( 'post' != $object_type ) ) {  // menu links currently assume unique object type names
+				//	$roles_page = "rs-roles-{$object_type}_{$src_name}";
+				//} else {
+					$roles_page = "rs-{$object_type}-roles";
+				//}
 				
 				$url = "admin.php?page=$roles_page";
-				//$html .= "<h4><a name='$object_type' href='$url'><strong>" . sprintf( _ x('%1$s Roles%2$s:', 'Post/Page Roles', 'scoper'), $otype->display_name, '</strong></a><span style="font-weight:normal">' . $date_caption) . "</span></h4>";
-				$html .= "<h4><a name='$object_type' href='$url'><strong>" . sprintf( __('%1$s Roles%2$s:', 'scoper'), $otype->display_name, '</strong></a><span style="font-weight:normal">' . $date_caption) . "</span></h4>";
+				$html .= "<h4><a name='$object_type' href='$url'><strong>" . sprintf( __('%1$s Roles%2$s:', 'scoper'), $otype->labels->singular_name, '</strong></a><span style="font-weight:normal">' . $date_caption) . "</span></h4>";
 			} else
-				$html .= "<h4><strong>" . sprintf( __('%1$s Roles%2$s:', 'scoper'), $otype->display_name, $date_caption) . "</strong></h4>";
-				//$html .= "<h4><strong>" . sprintf( _ x('%1$s Roles%2$s:', 'Post/Page Roles', 'scoper'), $otype->display_name, $date_caption) . "</strong></h4>";
+				$html .= "<h4><strong>" . sprintf( __('%1$s Roles%2$s:', 'scoper'), $otype->labels->singular_name, $date_caption) . "</strong></h4>";
 			
 			$html .=
 			"<ul class='rs-termlist'><li>"
@@ -218,13 +219,14 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 			. "	<th>" . __awp('Name') . "</th>"
 			. "	<th>" . __('Role Assignments', 'scoper') . "</th>"
 			. "</tr>"
-			. "</thead>"
-			. "<tbody id='roles-{$role_codes[$role_handle]}'>";
+			. "</thead>";
+			
+			$id_clause = ( isset( $role_codes[$role_handle] ) ) ? "id='roles-{$role_codes[$role_handle]}'" : '';
+			$html .= "<tbody $id_clause>";
 			
 			$style = ' class="rs-backwhite"';
 	
-			//$title_item = sprintf(_ x('edit %s', 'post/page/category/etc.', 'scoper'), agp_strtolower($otype->display_name) );
-			$title_item = sprintf( __('edit %s', 'scoper'), agp_strtolower($otype->display_name) );
+			$title_item = sprintf( __('edit %s', 'scoper'), agp_strtolower( $otype->labels->singular_name ) );
 			
 			foreach ( $object_roles[$duration_key] as $obj_id => $roles ) {
 				$object_name = esc_attr($objnames[$obj_id]);
@@ -240,18 +242,20 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 				} else
 					$html .= "<td>$obj_id</td>";
 					
+				$name = ( ! empty($objnames[$obj_id]) ) ? $objnames[$obj_id] : __( '(untitled)', 'scoper' );
+					
 				// link from object name to our "Edit Object Role Assignment" interface
 				$link_this_role = ( ! isset($link_roles) || isset($link_roles[$obj_id]) );
 				
 				if ( $link_this_role ) {
 					if ( 'group' == $object_type )
-						$rs_edit_url = $src_edit_url;
+						$rs_edit_url = sprintf($src->edit_url, $obj_id);
 					else
 						$rs_edit_url = "admin.php?page=rs-object_role_edit&amp;src_name=$src_name&amp;object_type=$object_type&amp;object_id=$obj_id&amp;object_name=$object_name";
 					
-					$html .= "\n\t<td><a {$title}{$limit_style}class='{$link_class}{$limit_class}' href='$rs_edit_url'>{$objnames[$obj_id]}</a></td>";
+					$html .= "\n\t<td><a {$title}{$limit_style}class='{$link_class}{$limit_class}' href='$rs_edit_url'>$name</a></td>";
 				} else
-					$html .= "\n\t<td>{$objnames[$obj_id]}</td>";
+					$html .= "\n\t<td>$name</td>";
 				
 				$html .= "<td>";
 				

@@ -3,7 +3,7 @@
 if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die( 'This page cannot be called directly.' );
 
-global $scoper;
+global $scoper, $scoper_admin;
 
 if ( isset($_POST['rs_submit']) ) {
 	$src_name = $_POST['src_name'];
@@ -17,13 +17,15 @@ if ( isset($_POST['rs_submit']) ) {
 	$object_id = isset($_GET['object_id']) ? $_GET['object_id'] : '';
 }
 
-if ( ! $is_administrator && ! $scoper->admin->user_can_admin_object($src_name, $object_type, $object_id) )
+if ( ! $is_administrator && ! $scoper_admin->user_can_admin_object($src_name, $object_type, $object_id) )
 	wp_die( __('You do not have permission to assign roles for this object.', 'scoper') );
 
 // ==== Process Submission =====
 $err = 0;
 if ( isset($_POST['rs_submit'] ) ) {
-	$scoper->filters_admin->mnt_save_object($src_name, '', $object_id);
+	global $scoper_admin_filters;
+
+	$scoper_admin_filters->mnt_save_object($src_name, '', $object_id);
 
 	echo '<div id="message" class="updated fade"><p>';
 	_e('Object Roles Updated.', 'scoper');
@@ -31,9 +33,13 @@ if ( isset($_POST['rs_submit'] ) ) {
 }
 ?>
 
+<?php
+$item_label = $scoper->data_sources->member_property($src_name, 'object_types', $object_type, 'labels', 'singular_name');
+?>
+
 <div class="wrap agp-width97">
 <h2><?php
-printf(__('Assign Roles for %1$s "%2$s"', 'scoper'), $display_name, $object_name);
+printf(__('Assign Roles for %1$s "%2$s"', 'scoper'), $item_label, $object_name);
 ?></h2>
 
 <form action="" method="post" name="role_assign" id="role_assign">
@@ -42,9 +48,6 @@ printf(__('Assign Roles for %1$s "%2$s"', 'scoper'), $display_name, $object_name
 <input type="hidden" name="object_name" value="<?php echo $object_name ?>" />
 <input type="hidden" name="object_id" value="<?php echo (int) $object_id ?>" />
 
-<?php
-$display_name = $scoper->data_sources->member_property($src_name, 'object_types', $object_type, 'display_name');
-?>
 <ul class='rs-list_horiz'>
 <li style='float:right;margin: 1em 0.25em 0.25em 0.25em;'><span class="submit" style="border:none;">
 <input type="submit" name="rs_submit" class="button-primary" value="<?php _e('Update &raquo;', 'scoper');?>" />

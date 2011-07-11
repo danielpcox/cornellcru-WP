@@ -6,8 +6,8 @@ Author URI: http://sw-guide.de/
 Donate link: http://sw-guide.de/donation/
 Tags: maintenance, mode, admin, administration, unavailable, offline, construction
 Requires at least: 2.7
-Tested up to: 3.0-RC1
-Stable tag: 5.2
+Tested up to: 3.0.1
+Stable tag: 5.4
 
 Adds a splash page to your blog that lets visitors know your blog is down for maintenance.  
 
@@ -40,6 +40,15 @@ Please visit [the official website](http://sw-guide.de/wordpress/plugins/mainten
 4. Plugin options, part 2
 
 == Changelog ==
+
+= 5.4 [2010-10-25] =
+* Bug fix: Blank white screen when using Super Cache plugin
+* Bug fix: Syntax error regarding add_action('admin_notices'...
+* New feature: possibility to exclude the home page
+
+= 5.3 [2010-10-19] =
+* Bug fix: broke compatibility with the pluggable architecture, thanks to [radiok](http://radiok.info/blog/the-case-of-maintenance-mode/ "radiok").
+
 
 = 5.2 [2010-06-03] =
 * Bug fix: Syntax error regarding add_action('admin_notices'..

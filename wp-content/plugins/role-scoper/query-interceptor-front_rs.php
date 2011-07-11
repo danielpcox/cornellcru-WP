@@ -13,16 +13,19 @@ class QueryInterceptorFront_RS {
 	// custom wrapper to clean up after get_previous_post_where, get_next_post_where nonstandard arg syntax 
 	// (uses alias p for post table, passes "WHERE post_type=...)
 	function flt_adjacent_post_where( $where ) {
-		global $wpdb, $scoper, $current_user;;
-		
+		global $wpdb, $query_interceptor, $current_user;
+
 		if ( ! empty($current_user->ID) )
 			$where = str_replace( " AND p.post_status = 'publish'", '', $where);
 	
 		// get_adjacent_post() function includes 'WHERE ' at beginning of $where
 		$where = str_replace( 'WHERE ', 'AND ', $where );
 
+		$post_type = cr_find_post_type();
+		
 		$args = array( 'source_alias' => 'p', 'skip_teaser' => true );	// skip_teaser arg ensures unreadable posts will not be linked
-		$where = 'WHERE 1=1 ' . $scoper->query_interceptor->flt_objects_where( $where, 'post', 'post', $args );
+		$where = 'WHERE 1=1 ' . $query_interceptor->flt_objects_where( $where, 'post', $post_type, $args );
+
 		return $where;
 	}
 	

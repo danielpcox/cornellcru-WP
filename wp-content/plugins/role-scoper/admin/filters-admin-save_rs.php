@@ -4,14 +4,56 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die();
 	
 	
+	// As of WP 3.0, "{$taxonomy}_pre" filter is not applied if none of its terms were selected
+	// * force the filter for all associated taxonomies regardless of term selection
+	// * apply default term(s) if defined
+	function scoper_force_custom_taxonomy_filters( $post_id, $post ) {
+
+		$post_type_obj = get_post_type_object( $post->post_type );
+
+		foreach( $post_type_obj->taxonomies as $taxonomy ) {
+			// if terms were selected, WP core already applied the filter and there is no need to apply default terms
+			if ( in_array( $taxonomy, array( 'category', 'post_tag' ) ) || did_action( "pre_post_{$taxonomy}" ) )
+				continue;
+
+			if ( $taxonomy_obj = get_taxonomy($taxonomy) ) {
+				if ( ! empty($_POST['tax_input'][$taxonomy]) && is_array($_POST['tax_input'][$taxonomy]) && ( reset($_POST['tax_input'][$taxonomy]) || ( count($_POST['tax_input'][$taxonomy]) > 1 ) ) )  // complication because (as of 3.0) WP always includes a zero-valued first array element
+					$tags = $_POST['tax_input'][$taxonomy];
+				elseif ( 'auto-draft' != $post->post_status )
+					$tags = (array) get_option("default_{$taxonomy}");
+				else
+					$tags = array();
+	
+				if ( $tags ) {
+					if ( ! empty($_POST['tax_input']) && is_array($_POST['tax_input'][$taxonomy]) ) // array = hierarchical, string = non-hierarchical.
+						$tags = array_filter($tags);
+	
+					if ( current_user_can( $taxonomy_obj->cap->assign_terms ) ) {
+						$tags = apply_filters("pre_post_{$taxonomy}", $tags);
+						$tags = apply_filters("{$taxonomy}_pre", $tags);
+	
+						wp_set_post_terms( $post_id, $tags, $taxonomy );
+					}
+				}
+			}
+		}
+	}
+	
+	
 	// called by ScoperAdminFilters::mnt_save_object
 	// This handler is meant to fire whenever an object is inserted or updated.
 	// If the client does use such a hook, we will force it by calling internally from mnt_create and mnt_edit
 	function scoper_mnt_save_object($src_name, $args, $object_id, $object = '') {
-		global $scoper;
+		global $scoper, $scoper_admin;
+
+		// operations in this function only apply to main post save action, not revision save
+		if ( 'post' == $src_name ) {
+			if ( is_object($object) && ! empty( $object->post_type ) && ( ( 'revision' == $object->post_type ) || ( 'auto-draft' == $object->post_status ) ) )
+				return;
+		}
 
 		static $saved_objects;
-		
+
 		if ( ! isset($saved_objects) )
 			$saved_objects = array();
 
@@ -19,13 +61,17 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 			return;
 
 		$defaults = array( 'object_type' => '' );
-		$args = array_intersect_key( $defaults, (array) $args );
+		$args = array_merge( $defaults, (array) $args );
 		extract($args);
 			
-		$is_new_object = false;
-		
+		if ( 'post' == $src_name ) {		
+			global $scoper_admin_filters;
+			$is_new_object = empty( $scoper_admin_filters->logged_post_update[$object_id] ) && ( empty($scoper_admin_filters->last_post_status[$object_id]) || ( 'new' == $scoper_admin_filters->last_post_status[$object_id] ) || ( 'auto-draft' == $scoper_admin_filters->last_post_status[$object_id] ) );
+		} else
+			$is_new_object = true;  // for other data sources, we have to assume object is new unless it has a role or restriction stored already.
+
 		if ( empty($object_type) )
-			$object_type = scoper_determine_object_type($src_name, $object_id, $object);
+			$object_type = cr_find_object_type( $src_name, $object_id );
 
 		$saved_objects[$src_name][$object_id] = 1;
 
@@ -38,57 +84,24 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	
 		// Determine whether this object is new (first time this RS filter has run for it, though the object may already be inserted into db)
 		if ( 'post' == $src_name ) {
-			$last_parent = ( $object_id > 0 ) ? get_post_meta($object_id, '_scoper_last_parent', true) : '';
-				
-			$is_new_object = ! is_numeric($last_parent);
-				
-			if ( isset($set_parent) && ($set_parent != $last_parent) && ($set_parent || $last_parent) )
-				update_post_meta($obj_or_term_id, '_scoper_last_parent', (int) $set_parent);
+			$post_type_obj = get_post_type_object( $object_type );	
 			
-			/* // This ugly workaround should not be necessary now
-			$time = agp_time_gmt();
-	
-			if ( $is_new_object ) {
-				update_post_meta($obj_or_term_id, '_scoper_creation_date', $time);
-			} else {
-				if ( $creation_date = get_post_meta($object_id, '_scoper_creation_date', true) )
-					if ( $time - $creation_date < 1 )
-						$is_new_object = true;
-			}
-			*/
+			$last_parent = ( $object_id > 0 ) ? get_post_meta($object_id, '_scoper_last_parent', true) : '';
+			
+			if ( is_numeric($last_parent) ) // not technically necessary, but an easy safeguard to avoid re-inheriting parent roles
+				$is_new_object = false;
+
+			if ( isset($set_parent) && ($set_parent != $last_parent) && ($set_parent || $last_parent) )
+				update_post_meta($object_id, '_scoper_last_parent', (int) $set_parent);
 			
 		} else {
 			// for other data sources, we have to assume object is new unless it has a role or restriction stored already.
-			$is_new_object = true;
-			
-			$qry = "SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE scope = 'object' AND src_or_tx_name = '$src_name' AND obj_or_term_id = '$object_id'";
-			if ( $assignment_ids = scoper_get_col($qry) )
-				$is_new_object = false;
-			else {	
-				$qry = "SELECT requirement_id FROM $wpdb->role_scope_rs WHERE topic = 'object' AND src_or_tx_name = '$src_name' AND obj_or_term_id = '$object_id'";
-				if ( $requirement_ids = scoper_get_col($qry) )
-					$is_new_object = false;
-			}
-			
-			if ( $col_parent ) {
-				if ( ! $is_new_object ) {
-					$last_parents = get_option( "scoper_last_parents_{$src_name}");
-					if ( ! is_array($last_parents) )
-						$last_parents = array();
-					
-					if ( isset( $last_parents[$object_id] ) )
-						$last_parent = $last_parents[$object_id];
-				}
-			
-				if ( isset($set_parent) && ($set_parent != $last_parent) && ($set_parent || $last_parent) ) {
-					$last_parents[$object_id] = $set_parent;
-					update_option( "scoper_last_parents_{$src_name}", $last_parents);
-				}
-			}
+			require_once( 'filters-admin-save-custom_rs.php' );
+			$is_new_object = ScoperCustomAdminFiltersSave::log_object_save( $src_name, $object_id, $is_new_object, $col_parent, $set_parent );
 		}
 	
 		// used here and in UI display to enumerate role definitions
-		$role_defs = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $src_name, $object_type);
+		$role_defs = $scoper->role_defs->get_matching('rs', $src_name, $object_type);
 		$role_handles = array_keys($role_defs);
 		
 
@@ -98,16 +111,15 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 		else {
 			$roles_customized = false;
 			if ( ! $is_new_object )
-				if ( $custom_role_objects = get_option( "scoper_custom_{$src_name}" ) )
+				if ( $custom_role_objects = (array) get_option( "scoper_custom_{$src_name}" ) )
 					$roles_customized = isset( $custom_role_objects[$object_id] );
-				
-			if ( ! is_array($custom_role_objects) )
-				$custom_role_objects = array();
 		}
 		
 		$new_role_settings = false;
 		$new_restriction_settings = false;
 		
+		$use_csv_entry = array( constant('ROLE_BASIS_USER') => scoper_get_option( 'user_role_assignment_csv' ) );
+
 		// Were roles / restrictions custom-edited just now?
 		if ( ! defined('XMLRPC_REQUEST') ) {
 			// Now determine if roles/restrictions have changed since the edit form load
@@ -119,11 +131,14 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 					continue;
 
 				// did user change roles?
-				$compare_vars = array( 
-				"{$role_code}u" => "last_{$role_code}u", 
-				"{$role_code}g" => "last_{$role_code}g"
-				);
-				
+
+				if ( $use_csv_entry[ROLE_BASIS_USER] && ( ! empty( $_POST[ "{$role_code}u_csv" ] ) || ! empty( $_POST[ "p_{$role_code}u_csv" ] ) ) ) {
+					$new_role_settings = true;
+				} 
+
+				// even if CSV entry is enabled, user removal is via checkbox
+				$compare_vars = array( "{$role_code}u" => "last_{$role_code}u", "{$role_code}g" => "last_{$role_code}g" );
+
 				if ( $col_parent ) {
 					$compare_vars ["p_{$role_code}u"] = "last_p_{$role_code}u";
 					$compare_vars ["p_{$role_code}g"] = "last_p_{$role_code}g";
@@ -143,9 +158,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 				}
 				
 				// did user change restrictions?
-				$compare_vars = array(
-				"objscope_{$role_code}" => "last_objscope_{$role_code}"
-				);
+				$compare_vars = array( "objscope_{$role_code}" => "last_objscope_{$role_code}" );
 				
 				if ( $col_parent )
 					$compare_vars ["objscope_children_{$role_code}"] = "last_objscope_children_{$role_code}";
@@ -155,8 +168,8 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 					$last_val = ( isset($_POST[$var_last]) ) ? $_POST[$var_last] : 0;
 					
 					if ( $val != $last_val ) {
-						$new_role_settings = true;
-						$new_restriction_settings = true;
+						$new_role_settings = true;			// NOTE: We won't re-inherit roles/restrictions following parent change if roles OR restrictions have been manually set
+						$new_restriction_settings = true;	// track manual restriction changes separately due to file filtering implications
 						break;
 					}
 				}
@@ -166,6 +179,8 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 			}
 		
 			if ( $new_role_settings && ! $roles_customized ) {
+				$roles_customized = true;
+				
 				if ( 'post' == $src_name )
 					update_post_meta($object_id, '_scoper_custom', true);
 				else {
@@ -175,21 +190,22 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 			}
 		} // endif user-modified roles/restrictions weren't already saved
 
-		// Inherit parent roles / restrictions, but only for new objects, 
-		// or if a new parent is set and roles haven't been manually edited for this object
-		if ( ! $roles_customized && ! $new_role_settings && ( $is_new_object || ( isset($set_parent) && ($set_parent != $last_parent) ) ) ) {
-			// apply default roles for new object
-			if ( $is_new_object ) {
-				scoper_inherit_parent_roles($object_id, OBJECT_SCOPE_RS, $src_name, 0, $object_type);
-			} else {
+		// apply default roles for new object
+		if ( $is_new_object && ! $roles_customized ) {  // NOTE: this means we won't apply default roles if any roles have been manually assigned to the new object
+			scoper_inherit_parent_roles($object_id, OBJECT_SCOPE_RS, $src_name, 0, $object_type);
+		}
+		
+		// Inherit parent roles / restrictions, but only if a new parent is set and roles haven't been manually edited for this object
+		if ( isset($set_parent) && ( $set_parent != $last_parent ) && ! $roles_customized ) {
+			// clear previously propagated role assignments
+			if ( ! $is_new_object ) {
 				$args = array( 'inherited_only' => true, 'clear_propagated' => true );
 				ScoperAdminLib::clear_restrictions(OBJECT_SCOPE_RS, $src_name, $object_id, $args);
 				ScoperAdminLib::clear_roles(OBJECT_SCOPE_RS, $src_name, $object_id, $args);
 			}
-			
-			// apply propagating roles,restrictions from specific parent
-			if ( ! empty($set_parent) ) {
-				//d_echo( 'inherit parent roles' );
+
+			// apply propagating roles, restrictions from selected parent
+			if ( $set_parent ) {
 				scoper_inherit_parent_roles($object_id, OBJECT_SCOPE_RS, $src_name, $set_parent, $object_type);
 				scoper_inherit_parent_restrictions($object_id, OBJECT_SCOPE_RS, $src_name, $set_parent, $object_type);
 			}
@@ -204,7 +220,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 			( ( 'admin' != $require_blogwide_editor ) || is_user_administrator_rs() ) &&
 			( ( 'admin_content' != $require_blogwide_editor ) || is_content_administrator_rs() ) 
 			) {
-				if ( $object_type && $scoper->admin->user_can_admin_object($src_name, $object_type, $object_id) ) {
+				if ( $object_type && $scoper_admin->user_can_admin_object($src_name, $object_type, $object_id) ) {
 					// store any object role (read/write/admin access group) selections
 					$role_bases = array();
 					if ( GROUP_ROLES_RS )
@@ -227,42 +243,25 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 						if ( ! isset($_POST["last_objscope_{$role_code}"]) )
 							continue;
 
-						$role_ops = $scoper->role_defs->get_role_ops($role_handle);
-				
-						// user can't view or edit role assignments unless they have all rolecaps
-						// however, if this is a new post, allow read role to be assigned even if contributor doesn't have read_private cap blog-wide
-						if ( ! is_user_administrator_rs() && ( ! $is_new_object || $role_ops != array( 'read' => 1 ) ) ) {
-							$reqd_caps = $scoper->role_defs->role_caps[$role_handle];
-							if ( ! awp_user_can(array_keys($reqd_caps), $object_id) )
-								continue;
-		
-							// a user must have a blog-wide edit cap to modify editing role assignments (even if they have Editor role assigned for some current object)
-							if ( isset($role_ops[OP_EDIT_RS]) || isset($role_ops[OP_ASSOCIATE_RS]) ) 
-								if ( $require_blogwide_editor ) {
-									$required_cap = ( 'page' == $object_type ) ? 'edit_others_pages' : 'edit_others_posts';
-									
-									global $current_user;
-									if ( empty( $current_user->allcaps[$required_cap] ) )
-										continue;
-								}
-						}
-		
 						foreach ( $role_bases as $role_basis ) {
 							$id_prefix = $role_code . substr($role_basis, 0, 1);
 							
 							$for_entity_agent_ids = (isset( $_POST[$id_prefix]) ) ? $_POST[$id_prefix] : array();
 							$for_children_agent_ids = ( isset($_POST["p_$id_prefix"]) ) ? $_POST["p_$id_prefix"] : array();
 							
+							// NOTE: restrict_roles, assign_roles functions validate current user roles before modifying assignments
 	
 							// handle csv-entered agent names
-							$csv_id = "{$id_prefix}_csv";
-							
-							if ( $csv_for_item = ScoperAdminLib::agent_ids_from_csv( $csv_id, $role_basis ) )
-								$for_entity_agent_ids = array_merge($for_entity_agent_ids, $csv_for_item);
-							
-							if ( $csv_for_children = ScoperAdminLib::agent_ids_from_csv( "p_$csv_id", $role_basis ) )
-								$for_children_agent_ids = array_merge($for_children_agent_ids, $csv_for_children);
+							if ( ! empty( $use_csv_entry[$role_basis] ) ) {
+								$csv_id = "{$id_prefix}_csv";
 								
+								if ( $csv_for_item = ScoperAdminLib::agent_ids_from_csv( $csv_id, $role_basis ) )
+									$for_entity_agent_ids = array_merge($for_entity_agent_ids, $csv_for_item);
+	
+								if ( $csv_for_children = ScoperAdminLib::agent_ids_from_csv( "p_$csv_id", $role_basis ) )
+									$for_children_agent_ids = array_merge($for_children_agent_ids, $csv_for_children);
+							}
+
 							$set_roles[$role_basis][$role_handle] = array();
 		
 							if ( $for_both_agent_ids = array_intersect($for_entity_agent_ids, $for_children_agent_ids) )
@@ -305,36 +304,54 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 		} //endif roles were manually edited by user (and not autosave)
 		
 		
-		if ( $new_restriction_settings )
-			scoper_flush_file_rules();
-		else { 
-			if ( isset( $scoper->filters_admin->last_post_status[$object_id] ) ) {
-				$new_status = ( isset($_POST['post_status']) ) ? $_POST['post_status'] : ''; // assume for now that XML-RPC will not modify post status
-
-				if ( $scoper->filters_admin->last_post_status[$object_id] != $new_status )
-					if ( ( 'private' == $new_status ) || ( 'private' == $scoper->filters_admin->last_post_status[$object_id] ) )
-						scoper_flush_file_rules();
-
-			} elseif ( isset($_POST['post_status']) && ( 'private' == $_POST['post_status'] ) )
-				scoper_flush_file_rules();
+		// if post status has changed to or from private (or is a new private post), flush htaccess file rules for file attachment filtering
+		if ( scoper_get_option( 'file_filtering' ) ) {
+			if ( $new_restriction_settings ) {
+				$maybe_flush_file_rules = true;
+			} else {
+				$maybe_flush_file_rules = false;
+		
+				global $scoper_admin_filters;
+				
+				if ( isset( $scoper_admin_filters->last_post_status[$object_id] ) ) {
+					$new_status = ( isset($_POST['post_status']) ) ? $_POST['post_status'] : ''; // assume for now that XML-RPC will not modify post status
+		
+					if ( $scoper_admin_filters->last_post_status[$object_id] != $new_status )
+						if ( ( 'private' == $new_status ) || ( 'private' == $scoper_admin_filters->last_post_status[$object_id] ) )
+							$maybe_flush_file_rules = true;
+		
+				} elseif ( isset($_POST['post_status']) && ( 'private' == $_POST['post_status'] ) )
+					$maybe_flush_file_rules = true;	
+			}
+			
+			if ( $maybe_flush_file_rules ) {
+				global $wpdb;
+				if ( scoper_get_var( "SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND post_parent = '$object_id' LIMIT 1" ) ) {   // no need to flush file rules unless this post has at least one attachment
+					scoper_flush_file_rules();
+				}
+			}
 		}
 		
-		if ( 'page' == $object_type ) {
-			delete_option('scoper_page_ancestors');
-			scoper_flush_cache_groups('get_pages');
+		if ( ( 'post' == $src_name ) && $post_type_obj->hierarchical ) {
+			$_post = get_post($object_id);
+			if ( 'auto-draft' != $_post->post_status ) {
+				delete_option('scoper_page_ancestors');
+				scoper_flush_cache_groups('get_pages');
+			}
 		}
-		
+				
 		// need this to make metabox captions update in first refresh following edit & save
-		if ( is_admin() && isset( $scoper->filters_admin_item_ui ) )
-			$scoper->filters_admin_item_ui->act_tweak_metaboxes();
-		
+		if ( is_admin() && isset( $GLOBALS['scoper_admin_filters_item_ui'] ) ) {
+			$GLOBALS['scoper_admin_filters_item_ui']->act_tweak_metaboxes();
+		}
+
 		// possible TODO: remove other conditional calls since we're doing it here on every save
 		scoper_flush_results_cache();	
 	}
 
 	
 	// Filtering of Page Parent selection.  
-	// This is a required after-the-fact operation for WP < 2.7 (due to inability to control inclusion of Main Page in UI dropdown)
+	// This was a required after-the-fact operation for WP < 2.7 (due to inability to control inclusion of Main Page in UI dropdown)
 	// For WP >= 2.7, it is an anti-hacking precaution
 	//
 	// There is currently no way to explictly restrict or grant Page Association rights to Main Page (root). Instead:
@@ -342,80 +359,62 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	//  * If an unqualified user tries to associate or un-associate a page with Main Page,
 	//	  revert page to previously stored parent if possible. Otherwise set status to "unpublished".
 	function scoper_flt_post_status ($status) {
-		if ( isset($_POST['post_type']) && ( $_POST['post_type'] == 'page' ) && ('autosave' != $_POST['action']) ) {
-			global $scoper, $current_user;
+		if ( ( 'async-upload.php' == $GLOBALS['pagenow'] ) || ( ! empty( $_POST['action'] ) && ( 'autosave' == $_POST['action'] ) ) )
+			return $status;
 
-			// overcome any denials of publishing rights which were not filterable by user_has_cap
-			if ( ('pending' == $status) && ( ('publish' == $_POST['post_status']) || ('Publish' == $_POST['original_publish'] ) ) )
-				if ( ! empty( $current_user->allcaps['publish_pages'] ) )
-					$status = 'publish';
+		if ( defined('XMLRPC_REQUEST') ) {
+			global $scoper_xmlrpc_post_status;
+			$scoper_xmlrpc_post_status = $status;
+		}
+
+		/*
+		// overcome any denials of publishing rights which were not filterable by user_has_cap	// TODO: confirm this is no longer necessary
+		if ( ('pending' == $status) && ( ('publish' == $_POST['post_status']) || ('Publish' == $_POST['original_publish'] ) ) )
+			if ( ! empty( $current_user->allcaps['publish_pages'] ) )
+				$status = 'publish';
+		*/
+
+		// user can't associate / un-associate a page with Main page unless they have edit_pages blog-wide
+		if ( ! empty( $_POST['post_ID'] ) ) {
+			$post_id = $_POST['post_ID'];
+			$post_type = $_POST['post_type'];
+			$selected_parent_id = isset($_POST['parent_id']) ? $_POST['parent_id'] : 0;
+		} elseif( ! empty($GLOBALS['post']) ) {
+			$post_id = $GLOBALS['post']->ID;
+			$post_type = $GLOBALS['post']->post_type;
+			$selected_parent_id = $GLOBALS['post']->post_parent;
+		} else
+			return $status;	
+		
+		$_post = get_post( $post_id );
+		
+		if ( $saved_status_object = get_post_status_object( $_post->post_status ) )
+			$already_published = ( $saved_status_object->public || $saved_status_object->private );
+		else
+			$already_published = false;
+		
+		// if neither the stored nor selected parent is Main, we have no beef with it
+		if ( ! empty($selected_parent_id) && ( ! empty($_post->post_parent ) || ! $already_published ) )
+			return $status;
 			
-			// user can't associate / un-associate a page with Main page unless they have edit_pages blog-wide
-			if ( isset($_POST['post_ID']) ) {
-				$post = $scoper->data_sources->get_object( 'post', $_POST['post_ID'] );
-				
-				// if neither the stored nor selected parent is Main, we have no beef with it		// is it actually saved (if just auto-saved draft, don't provide these exceptions)
-				if ( ! empty($_POST['parent_id']) && ( ! empty($post->post_parent) || ( ('publish' != $post->post_status) && ('private' != $post->post_status) ) ) )
-					return $status;
-				
-				$already_published = ( ('publish' == $post->post_status) || ('private' == $post->post_status) );
+		// if the page is and was associated with Main Page, don't mess
+		if ( empty($selected_parent_id) && empty($_post->post_parent) && $already_published )
+			return $status;
+		
+		global $scoper_admin_filters;
 
-				// if the page is and was associated with Main Page, don't mess
-				if ( empty($_POST['parent_id']) && empty( $post->post_parent ) && $already_published )
-					return $status;
-			} else
-				$already_published = false;
-			
-			
-			$top_pages_locked = scoper_get_option( 'lock_top_pages' );
-				
-			if ( is_content_administrator_rs() )
-				$can_associate_main = true;
-	
-			elseif ( '1' !== $top_pages_locked ) {
-				$reqd_caps = ( 'author' == $top_pages_locked ) ? array('publish_pages') : array('edit_others_pages');
-				$roles = $scoper->role_defs->qualify_roles($reqd_caps, '');
-
-				$can_associate_main = array_intersect_key($roles, $current_user->blog_roles[ANY_CONTENT_DATE_RS]);
-
-			} else	// only administrators can change top level structure
-				$can_associate_main = false;
-
-
-			if ( ! $can_associate_main ) {
-				// If post was previously published to another parent, allow subsequent page_parent filter to revert it
-				if ( $already_published ) {
-					if ( ! isset($scoper->revert_post_parent) )
-						$scoper->revert_post_parent = array();
-						
-					$scoper->revert_post_parent[ $_POST['post_ID'] ] = $post->post_parent;
+		if ( ! $scoper_admin_filters->user_can_associate_main( $post_type ) ) {
+			// If post was previously published to another parent, allow subsequent page_parent filter to revert it
+			if ( $already_published ) {
+				if ( ! isset($scoper_admin_filters->revert_post_parent) )
+					$scoper_admin_filters->revert_post_parent = array();
 					
-					// message display should not be necessary with legitimate WP 2.7+ usage, since the Main Page item is filtered out of UI dropdown as necessary
-					global $revisionary;
-					if ( ! awp_ver('2.7-dev') && ( ! defined( 'RVY_VERSION' ) || empty($revisionary->admin->impose_pending_rev) ) ) {
-						$src = $scoper->data_sources->get('post');
-						$src_edit_url = sprintf($src->edit_url, $_POST['post_ID']);
-						
-						if ( empty($post->post_parent) )
-							$msg = __('The page %s was saved, but the new Page Parent setting was discarded. You do not have permission to disassociate it from the Main Page.', 'scoper');
-						else
-							$msg = __('The Page Parent setting for %s was reverted to the previously stored value. You do not have permission to associate it with the Main Page.', 'scoper');
-						
-						$msg = sprintf($msg, '&quot;<a href="' . $src_edit_url . '">' . $_POST['post_title'] . '</a>&quot;');
-						update_option("scoper_notice_{$current_user->ID}", $msg );
-					}
-					
-				} elseif ( empty($_POST['parent_id']) && ( ('publish' == $_POST['post_status']) || ('private' == $_POST['post_status']) ) ) {
-					// This should only ever happen with WP < 2.7 or if the POST data is manually fudged
-					$status = 'draft';
-
-					global $current_user;
-					$src = $scoper->data_sources->get('post');
-					$src_edit_url = sprintf($src->edit_url, $_POST['post_ID']);
-
-					$msg = sprintf(__('The page %s cannot be published because you do not have permission to associate it with the Main Page. Please select a different Page Parent and try again.', 'scoper'), '&quot;<a href="' . $src_edit_url . '">' . $_POST['post_title'] . '</a>&quot;');
-					
-					update_option("scoper_notice_{$current_user->ID}", $msg );
+				$scoper_admin_filters->revert_post_parent[ $post_id ] = $_post->post_parent;
+				
+			} elseif ( empty($_POST['parent_id']) ) {  // This should only ever happen if the POST data is manually fudged
+				if ( $post_status_object = get_post_status_object( $status ) ) {
+					if ( $post_status_object->public || $post_status_object->private )
+						$status = 'draft';
 				}
 			}
 		}
@@ -426,58 +425,75 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	
 	// Enforce any page parent filtering which may have been dictated by the flt_post_status filter, which executes earlier.
 	function scoper_flt_page_parent ($parent_id) {
+		if ( ! empty( $_POST['post_ID'] ) )
+			if ( $parent_id == $_POST['post_ID'] )	// normal revision save
+				return $parent_id;
+		
 		if ( defined( 'RVY_VERSION' ) ) {
 			global $revisionary;
 			if ( ! empty($revisionary->admin->revision_save_in_progress) )
 				return $parent_id;
 		}
 		
-		global $scoper;
-				
-		if ( isset($_POST['post_ID']) && isset($scoper->revert_post_parent) && isset( $scoper->revert_post_parent[ $_POST['post_ID'] ] ) )
-			return $scoper->revert_post_parent[ $_POST['post_ID'] ];
+		global $scoper_admin_filters;
+		
+		// Did the post_status filter mark the post for parent reversion due to Main Page (un)association with insufficient blog role?
+		if ( isset($scoper_admin_filters->revert_post_parent) && isset( $scoper_admin_filters->revert_post_parent[ $_POST['post_ID'] ] ) )
+			return $scoper_admin_filters->revert_post_parent[ $_POST['post_ID'] ];
 
-		// Page parent will not be reverted due to Main Page (un)association with insufficient blog role
-		// ... but make sure the selected parent is valid.  Merely an anti-hacking precaution to deal with manually fudged POST data
-		if ( $parent_id && isset($_POST['post_ID']) && isset($_POST['post_type']) && ( 'page' == $_POST['post_type']) ) {
+		// Make sure the selected parent is valid.  Merely an anti-hacking precaution to deal with manually fudged POST data
+		if ( $parent_id && ! empty($_POST['post_type']) ) {
+			$post_type = $_POST['post_type'];
+
 			global $wpdb;
 			$args = array();
-			$args['alternate_reqd_caps'][0] = array('create_child_pages');
-		
-			$qry_parents = "SELECT ID FROM $wpdb->posts WHERE post_type = 'page'";
-			$qry_parents = apply_filters('objects_request_rs', $qry_parents, 'post', 'page', $args);
-			$valid_parents = scoper_get_col($qry_parents);
+			$args['alternate_reqd_caps'][0] = array("create_child_{$post_type}s");
+
+			if ( $descendant_ids = scoper_get_page_descendant_ids( $_POST['post_ID'] ) )
+				$exclusion_clause = "AND ID NOT IN('" . implode( "','", $descendant_ids ) . "')";
+			else
+				$exclusion_clause = '';
 			
+			$qry_parents = "SELECT ID FROM $wpdb->posts WHERE post_type = '$post_type' $exclusion_clause";
+			$qry_parents = apply_filters('objects_request_rs', $qry_parents, 'post', $post_type, $args);
+			$valid_parents = scoper_get_col($qry_parents);
+
 			if ( ! in_array($parent_id, $valid_parents) ) {
-				$post = $scoper->data_sources->get_object( 'post', $_POST['post_ID'] );
-				$parent_id = $post->post_parent;
+				if ( $post = get_post( $_POST['post_ID'] ) )
+					$parent_id = $post->post_parent;
 			}
 		}
 			
 		return $parent_id;
 	}
 	
-	
-	function scoper_flt_pre_object_terms ($selected_terms, $taxonomy, $args = '') {
-		// strip out fake term_id -1 (if applied)
-		if ( $selected_terms && is_array($selected_terms) )
-			$selected_terms = array_diff($selected_terms, array(-1, 0, '0', '-1'));
-			
-		// TODO: skip this for content admins?
-		if ( empty($selected_terms) ) {  // not sure who is changing empty $_POST['post_category'] array to an array with nullstring element, but we have to deal with that
-			global $scoper;
+	function scoper_get_page_descendant_ids($page_id, $pages = '' ) {
+		global $wpdb;
+		
+		if ( empty( $pages ) )
+			$pages = scoper_get_results( "SELECT ID, post_parent FROM $wpdb->posts WHERE post_parent > 0 AND post_type NOT IN ( 'revision', 'attachment' )" );	
 
-			if ( $tx = $scoper->taxonomies->get( $taxonomy ) ) {
-
-				if ( ! empty($tx->default_term_option ) ) {
-					// get_option call sometimes fails here. Todo: why?
-					global $wpdb;
-					$selected_terms = (array) maybe_unserialize( scoper_get_var( "SELECT option_value FROM $wpdb->options WHERE option_name = '$tx->default_term_option'" ) );
-					
-					//$selected_terms = (array) get_option( $tx->default_term_option );
+		$descendant_ids = array();
+		foreach ( (array) $pages as $page ) {
+			if ( $page->post_parent == $page_id ) {
+				$descendant_ids[] = $page->ID;
+				if ( $children = get_page_children($page->ID, $pages) ) {
+					foreach( $children as $_page )
+						$descendant_ids []= $_page->ID;
 				}
 			}
 		}
+		
+		return $descendant_ids;
+	}
+	
+	
+	function scoper_flt_pre_object_terms ($selected_terms, $taxonomy, $args = array()) {
+		//rs_errlog( "scoper_flt_pre_object_terms input: " . serialize($selected_terms) );
+		
+		// strip out fake term_id -1 (if applied)
+		if ( $selected_terms && is_array($selected_terms) )
+			$selected_terms = array_diff($selected_terms, array(-1, 0, '0', '-1', ''));  // not sure who is changing empty $_POST['post_category'] array to an array with nullstring element, but we have to deal with that
 
 		if ( is_content_administrator_rs() || defined('DISABLE_QUERYFILTERS_RS') )
 			return $selected_terms;
@@ -485,7 +501,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 
 		global $scoper, $current_user;
 			
-		if ( ! $src = $scoper->taxonomies->member_property($taxonomy, 'object_source') )
+		if ( ! $src_name = $scoper->taxonomies->member_property($taxonomy, 'object_source') )
 			return $selected_terms;
 		
 		if ( defined( 'RVY_VERSION' ) ) {
@@ -500,235 +516,54 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 		if ( ! is_array($selected_terms) )
 			$selected_terms = array();
 			
-
+		require_once('filters-admin-term-selection_rs.php');
 		$user_terms = array(); // will be returned by filter_terms_for_status
-		$selected_terms = scoper_filter_terms_for_status($taxonomy, $selected_terms, $user_terms);
 		
-		if ( $object_id = $scoper->data_sources->detect('id', $src) ) {
-			$selected_terms = scoper_reinstate_hidden_terms($taxonomy, $selected_terms);
+		$selected_terms = scoper_filter_terms_for_status($taxonomy, $selected_terms, $user_terms);
 			
-			/*
-			if ( ! $selected_terms = scoper_reinstate_hidden_terms($taxonomy, $selected_terms) ) {
-				if ( $orig_selected_terms )
-					return $orig_selected_terms;
+		if ( 'post' == $src_name ) { // TODO: abstract for other data sources
+			if ( $object_id = $scoper->data_sources->detect('id', $src_name) ) {
+				$stored_terms = wp_get_object_terms( $object_id, $taxonomy, array( 'fields' => 'ids' ) );
+
+				if ( $deselected_terms = array_diff( $stored_terms, $selected_terms ) ) {
+					if ( $unremovable_terms = array_diff( $deselected_terms, $user_terms ) )
+						$selected_terms = array_merge( $selected_terms, $unremovable_terms );
+				}
 			}
-			*/
 		}
 
+		//rs_errlog( "$taxonomy - user terms: " . serialize($user_terms) );
+		//rs_errlog( "selected terms: " . serialize($selected_terms) );
+		
 		if ( empty($selected_terms) ) {
-			// if array empty, insert default term (wp_create_post check is only subverted on updates)
-			if ( $option_name = $scoper->taxonomies->member_property($taxonomy, 'default_term_option') ) {
-				$default_terms = get_option($option_name);
-			} else
-				$default_terms = 0;
+			// For now, always check the DB for default terms.  TODO: only if the default_term_option property is set
+			if ( ! $default_term_option = $scoper->taxonomies->member_property( $taxonomy, 'default_term_option' ) )
+				$default_term_option = "default_{$taxonomy}";
 
+			// avoid recursive filtering.  Todo: use remove_filter so we can call get_option, supporting filtering by other plugins 
+			global $wpdb;
+			$default_terms = (array) maybe_unserialize( scoper_get_var( "SELECT option_value FROM $wpdb->options WHERE option_name = '$default_term_option'" ) );
+			//$selected_terms = (array) get_option( $tx->default_term_option );
+			
 			// but if the default term is not defined or is not in user's subset of usable terms, substitute first available
 			if ( $user_terms ) {
-				if ( ! is_array($default_terms) )
-					$default_terms = (array) $default_terms;
-			
 				$default_terms = array_intersect($default_terms, $user_terms);
-
-				if ( empty($default_terms) )
-					$default_terms = $user_terms[0];
-			}
-
-			$selected_terms = (array) $default_terms;
-		}
-
-		return $selected_terms;
-	}
-	
-	// Reinstate any object terms which the object already has, but were hidden from the user due to lack of edit caps
-	// (if a user does not have edit cap within some term, he can neither add nor remove them from an object)
-	function scoper_reinstate_hidden_terms($taxonomy, $object_terms) {
-		static $processed_post_ids;
-		
-		if ( ! isset( $processed_post_ids ) )
-			$processed_post_ids = array();
-			
-		if ( defined( 'DISABLE_QUERYFILTERS_RS' ) )
-			return $object_terms;
-		
-		// strip out any fake placeholder IDs which may have been applied
-		if ( $object_terms )
-			$object_terms = array_diff($object_terms, array(-1));
-			
-		global $scoper;
-			
-		if ( ! $src = $scoper->taxonomies->member_property($taxonomy, 'object_source') )
-			return $object_terms;
-			
-		if ( ! $object_id = $scoper->data_sources->get_from_http_post('id', $src) )
-			return $object_terms;
-		
-		if ( ! $object_type = $scoper->data_sources->detect('type', $src, $object_id) )
-			return $object_terms;
-		
-		$orig_object_terms = $object_terms;
-			
-		
-		if ( isset( $processed_post_ids[$object_id] ) )	// no need to do this more than once per post, doing so with Revisionary enabled causes autosave-inserted default category to be reinstated
-			return $object_terms;
-		else
-			$processed_post_ids[$object_id] = true;
-
-		// make sure _others caps are required only for objects current user doesn't own
-		$base_caps_only = false;
-		if ( ! empty($src->cols->owner) ) {
-			$col_owner = $src->cols->owner;
-			if ( $object = $scoper->data_sources->get_object($src->name, $object_id) ) {
 				
-				// don't reinstate terms which were only inserted by autosave
-				if ( empty( $object->post_modified_gmt ) )
-					return $object_terms;
-				
-				global $current_user;
-				if ( ! empty($object->$col_owner) && ( $object->$col_owner == $current_user->ID) )
-					$base_caps_only = true;
-			}
-		}
-			
-		$reqd_caps = array();
-		if ( ! empty($src->statuses) ) {
-			// determine object's previous status so we know what terms were hidden
-			if ( $stored_status = $scoper->data_sources->get_from_db('status', $src, $object_id) )
-				$reqd_caps = $scoper->cap_defs->get_matching($src->name, $object_type, OP_EDIT_RS, $stored_status, $base_caps_only);
-		}
-		
-		// if no status-specific caps are defined, or if this source doesn't define statuses...
-		if ( ! $reqd_caps )
-			if ( ! $reqd_caps = $scoper->cap_defs->get_matching($src->name, $object_type, OP_EDIT_RS, STATUS_ANY_RS, $base_caps_only) )
-				return $object_terms;
-				
-		$user_terms = $scoper->qualify_terms_daterange(array_keys($reqd_caps), $taxonomy);
-		
-		foreach ( array_keys($user_terms) as $date_key ) {
-			$date_clause = '';
-			
-			if ( $date_key && is_serialized($date_key) ) {
-				// Check stored post date against any role date limits associated whith this set of terms (if not stored, check current date)
-				
-				$content_date_limits = unserialize($date_key);
-				
-				$post_date_gmt = ( $object_id ) ? $scoper->data_sources->get_from_db('date', $src, $object_id) : 0;
-				
-				if ( ! $post_date_gmt )
-					$post_date_gmt = agp_time_gmt();
-
-				if ( ( $post_date_gmt < $content_date_limits->content_min_date_gmt ) || ( $post_date_gmt > $content_date_limits->content_max_date_gmt ) )
-					unset( $user_terms[$date_key] );
-			}
-		}
-		
-		$user_terms = agp_array_flatten( $user_terms );
-			
-		// this is a security precaution
-		$object_terms = array_intersect($object_terms, $user_terms);
-		
-		// current object terms which were hidden from user's admin UI must be retained
-		if ( $stored_object_terms = $scoper->get_terms($taxonomy, UNFILTERED_RS, COL_ID_RS, $object_id) ) {
-			$dropped_terms = array_diff($stored_object_terms, $object_terms);
-			
-			//terms which were dropped due to being filtered out of user UI should be reinstated
-			$object_terms = array_merge($object_terms, array_diff($dropped_terms, $user_terms) );
-			
-			return array_unique($object_terms);
-		} else
-			return $orig_object_terms;
-	}
-	
-	
-	// Removes terms for which the user has edit cap, but not edit_[status] cap
-	// If the removed terms are already stored to the post (by a user who does have edit_[status] cap), they will be reinstated by reinstate_hidden_terms
-	function scoper_filter_terms_for_status($taxonomy, $selected_terms, &$user_terms) {
-		if ( defined( 'DISABLE_QUERYFILTERS_RS' ) )
-			return $selected_terms;
-		
-		global $scoper;
-			
-		if ( ! $src = $scoper->taxonomies->member_property($taxonomy, 'object_source') )
-			return $selected_terms;
-
-		if ( ! isset($src->statuses) || (count($src->statuses) < 2) )
-			return $selected_terms;
-		
-		$object_id = $scoper->data_sources->detect('id', $src);
-
-		if ( ! $status = $scoper->data_sources->get_from_http_post('status', $src) )
-			if ( $object_id )
-				$status = $scoper->data_sources->get_from_db('status', $src, $object_id);
-		
-		if ( ! $object_type = $scoper->data_sources->detect('type', $src, $object_id) )
-			return $selected_terms;
-
-	
-		// make sure _others caps are required only for objects current user doesn't own
-		$base_caps_only = true;
-		if ( ! empty($src->cols->owner) ) {
-			$col_owner = $src->cols->owner;
-			if ( $object_id ) {
-				if ( $object = $scoper->data_sources->get_object($src->name, $object_id) ) {
-					global $current_user;
-					if ( ! empty($object->$col_owner) && ( $object->$col_owner != $current_user->ID) )
-						$base_caps_only = false;
-				}
-			}
-		}
-				
-		
-		if( ! isset( $src->reqd_caps[OP_EDIT_RS][$object_type][$status] ) )
-			return $selected_terms;
-		
-		$reqd_caps = $src->reqd_caps[OP_EDIT_RS][$object_type][$status];
-
-		if ( $base_caps_only ) {
-			foreach( $reqd_caps as $key => $cap_name ) {
-				if ( $cap_def = $scoper->cap_defs->get( $cap_name ) )
-					if ( ! empty($cap_def->base_cap ) ) {
-						unset( $reqd_caps[$key] );
-
-						if ( ! in_array($cap_def->base_cap, $reqd_caps) )
-							$reqd_caps[] = $cap_def->base_cap;
-						
-					} elseif ( ! empty($cap_def->owner_privilege) && ! empty($cap_def->status) )  // don't remove edit_posts / edit_pages
-						unset( $reqd_caps[$key] );			
-			}
-			
-			if ( empty( $reqd_caps ) )
-				return $selected_terms;
-		}
-		
-		// now using $src->reqd_caps array instead
-		//if ( $reqd_caps = $scoper->cap_defs->get_matching($src->name, $object_type, OP_EDIT_RS, $status, $base_caps_only) ) {
-			
-			$user_terms = $scoper->qualify_terms_daterange($reqd_caps, $taxonomy);
-			
-			foreach ( array_keys($user_terms) as $date_key ) {
-				$date_clause = '';
-				
-				if ( $date_key && is_serialized($date_key) ) {
-					// Check stored post date against any role date limits associated whith this set of terms (if not stored, check current date)
-					
-					$content_date_limits = unserialize($date_key);
-					
-					$post_date_gmt = ( $object_id ) ? $scoper->data_sources->get_from_db('date', $src, $object_id) : 0;
-					
-					if ( ! $post_date_gmt )
-						$post_date_gmt = agp_time_gmt();
-
-					if ( ( $post_date_gmt < $content_date_limits->content_min_date_gmt ) || ( $post_date_gmt > $content_date_limits->content_max_date_gmt ) )
-						unset( $user_terms[$date_key] );
+				if ( ! $default_terms ) {
+					//if ( $scoper->taxonomies->member_property( $taxonomy, 'requires_term' )  )
+						$default_terms = (array) $user_terms[0];
 				}
 			}
 			
-			$user_terms = agp_array_flatten( $user_terms );
-			$selected_terms = array_intersect($selected_terms, $user_terms);
-		//}
+			//rs_errlog( "default_terms: " . serialize($default_terms) );
 
+			$selected_terms = $default_terms;
+		}
+
+		//rs_errlog( "returning selected terms: " . serialize($selected_terms) );
 		return $selected_terms;
 	}
-	
+
 	
 	// This handler is meant to fire whenever a term is inserted or updated.
 	// If the client does use such a hook, we will force it by calling internally from mnt_create and mnt_edit
@@ -750,7 +585,6 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 		
 		if ( $col_parent = $scoper->taxonomies->member_property($taxonomy, 'source', 'cols', 'parent') ) {
 			$tx_src_name = $scoper->taxonomies->member_property($taxonomy, 'source', 'name');
-			
 			$set_parent = $scoper->data_sources->get_from_http_post('parent', $tx_src_name);
 		}
 
@@ -784,7 +618,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 		if ( ! $is_new_term )
 			if ( $custom_role_objects = get_option( "scoper_custom_{$taxonomy}" ) )
 				$roles_customized = isset( $custom_role_objects[$term_id] );
-			
+				
 		// Inherit parent roles / restrictions, but only for new terms, 
 		// or if a new parent is set and no roles have been manually assigned to this term
 		if ( $is_new_term || ( ! $roles_customized && ($set_parent != $last_parent) ) ) {
@@ -796,7 +630,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 				ScoperAdminLib::clear_restrictions(TERM_SCOPE_RS, $taxonomy, $term_id, $args);
 				ScoperAdminLib::clear_roles(TERM_SCOPE_RS, $taxonomy, $term_id, $args);
 			}
-			
+
 			// apply propagating roles,restrictions from specific parent
 			if ( $set_parent ) {
 				scoper_inherit_parent_roles($term_id, TERM_SCOPE_RS, $taxonomy, $set_parent);
@@ -805,35 +639,16 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 		} // endif new parent selection (or new object)
 		
 		scoper_term_cache_flush();
+		scoper_flush_roles_cache(TERM_SCOPE_RS, '', '', $taxonomy);
 		delete_option( "{$taxonomy}_children_rs" );
-		delete_option( "{$taxonomy}_ancestors_rs" );
 	}
 	
 	
-function scoper_get_parent_restrictions($obj_or_term_id, $scope, $src_or_tx_name, $parent_id, $object_type = '') {
-	global $wpdb, $scoper;
-	
-	$role_clause = '';
-		
-	if ( ! $parent_id && (OBJECT_SCOPE_RS == $scope) ) {
-		// for default restrictions, need to distinguish between otype-specific roles 
-		// (note: this only works w/ RS role type. Default object restrictions are disabled for WP role type because we'd be stuck setting all default restrictions to both post & page.)
-		$src = $scoper->data_sources->get($src_or_tx_name);
-		if ( ! empty($src->cols->type) ) {
-			if ( ! $object_type )
-				$object_type = scoper_determine_object_type($src_name, $object_id);
-				
-			if ( $object_type ) {
-				$role_type = SCOPER_ROLE_TYPE;
-				$role_defs = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $src_or_tx_name, $object_type);
-				if ( $role_names = scoper_role_handles_to_names( array_keys($role_defs) ) )
-					$role_clause = "AND role_type = '$role_type' AND role_name IN ('" . implode("', '", $role_names) . "')";
-			}
-		}
-	}
+function scoper_get_parent_restrictions($obj_or_term_id, $scope, $src_or_tx_name, $parent_id) {
+	global $wpdb;
 		
 	// Since this is a new object, propagate restrictions from parent (if any are marked for propagation)
-	$qry = "SELECT * FROM $wpdb->role_scope_rs WHERE topic = '$scope' AND require_for IN ('children', 'both') $role_clause AND src_or_tx_name = '$src_or_tx_name' AND obj_or_term_id = '$parent_id' ORDER BY role_type, role_name";
+	$qry = "SELECT * FROM $wpdb->role_scope_rs WHERE topic = '$scope' AND require_for IN ('children', 'both') AND src_or_tx_name = '$src_or_tx_name' AND obj_or_term_id = '$parent_id' ORDER BY role_type, role_name";
 	$results = scoper_get_results($qry);
 	return $results;
 }
@@ -848,7 +663,7 @@ function scoper_inherit_parent_restrictions($obj_or_term_id, $scope, $src_or_tx_
 		$role_assigner = init_role_assigner();
 
 		if ( OBJECT_SCOPE_RS == $scope )
-			$role_defs = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $src_or_tx_name, $object_type);
+			$role_defs = $scoper->role_defs->get_matching('rs', $src_or_tx_name, $object_type);
 		else
 			$role_defs = $scoper->role_defs->get_all();
 		
@@ -880,13 +695,12 @@ function scoper_get_parent_roles($obj_or_term_id, $scope, $src_or_tx_name, $pare
 		$src = $scoper->data_sources->get($src_or_tx_name);
 		if ( ! empty($src->cols->type) ) {
 			if ( ! $object_type )
-				$object_type = scoper_determine_object_type($src_name, $object_id);
+				$object_type = cr_find_object_type($src_name, $object_id);
 				
 			if ( $object_type ) {
-				$role_type = SCOPER_ROLE_TYPE;
-				$role_defs = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $src_or_tx_name, $object_type);
+				$role_defs = $scoper->role_defs->get_matching('rs', $src_or_tx_name, $object_type);
 				if ( $role_names = scoper_role_handles_to_names( array_keys($role_defs) ) )
-					$role_clause = "AND role_type = '$role_type' AND role_name IN ('" . implode("', '", $role_names) . "')";
+					$role_clause = "AND role_type = 'rs' AND role_name IN ('" . implode("', '", $role_names) . "')";
 			}
 		}
 	}
@@ -907,7 +721,7 @@ function scoper_inherit_parent_roles($obj_or_term_id, $scope, $src_or_tx_name, $
 		$role_assigner = init_role_assigner();
 		
 		if ( OBJECT_SCOPE_RS == $scope )
-			$role_defs = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $src_or_tx_name, $object_type);
+			$role_defs = $scoper->role_defs->get_matching('rs', $src_or_tx_name, $object_type);
 		else
 			$role_defs = $scoper->role_defs->get_all();
 			
@@ -942,8 +756,8 @@ function scoper_inherit_parent_roles($obj_or_term_id, $scope, $src_or_tx_name, $
 						if ( $row->obj_or_term_id )
 							$inherited_from[$ug_id] = $row->assignment_id;
 							
-						$role_duration_per_agent[$ug_id] = array( 'date_limited' => $row->date_limited, 'start_date_gmt' => $row->start_date_gmt, 'end_date_gmt' => $row->end_date_gmt );
-						$content_date_limits_per_agent[$ug_id] = array( 'content_date_limited' => $row->content_date_limited, 'content_min_date_gmt' => $row->content_min_date_gmt, 'content_max_date_gmt' => $row->content_max_date_gmt );
+						$role_duration_per_agent[$ug_id] = (object) array( 'date_limited' => $row->date_limited, 'start_date_gmt' => $row->start_date_gmt, 'end_date_gmt' => $row->end_date_gmt );
+						$content_date_limits_per_agent[$ug_id] = (object) array( 'content_date_limited' => $row->content_date_limited, 'content_min_date_gmt' => $row->content_min_date_gmt, 'content_max_date_gmt' => $row->content_max_date_gmt );
 					}
 				}
 				
@@ -954,6 +768,22 @@ function scoper_inherit_parent_roles($obj_or_term_id, $scope, $src_or_tx_name, $
 			}
 		}
 	}
+}
+
+function cr_get_posted_object_terms( $taxonomy ) {
+	if ( 'category' == $taxonomy ) {
+		if ( ! empty($_POST['post_category']) )
+			return $_POST['post_category'];
+			
+	} elseif( 'post_tag' == $taxonomy ) {
+		if ( ! empty($_POST['tags_input']) )
+			return $_POST['tags_input'];
+
+	} elseif( ! empty($_POST['tax_input'][$taxonomy]) ) {
+		return $_POST['tax_input'][$taxonomy];
+	}
+		
+	return array();
 }
 	
 ?>

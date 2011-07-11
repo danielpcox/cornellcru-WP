@@ -18,14 +18,13 @@ class ScoperUserEdit {
 	}	
 	
 
-	function has_edit_user_cap($wp_blogcaps, $orig_reqd_caps, $args) {
-		if ( isset( $wp_blogcaps['edit_users'] ) ) {
-			// prevent anyone from editing a user whose level is higher than their own
-			$levels = ScoperUserEdit::get_user_level( array( $args[1], $args[2] ) );
-			
-			// finally, compare would-be editor's level with target user's
-			if ( $levels[ $args[2] ] > $levels[ $args[1] ] )
-				unset( $wp_blogcaps['edit_users'] );
+	function has_edit_user_cap($wp_blogcaps, $orig_reqd_caps, $args) {		
+		// prevent anyone from editing or deleting a user whose level is higher than their own
+		$levels = ScoperUserEdit::get_user_level( array( $args[1], $args[2] ) );
+		
+		// finally, compare would-be editor's level with target user's
+		if ( $levels[ $args[2] ] > $levels[ $args[1] ] ) {
+			$wp_blogcaps = array_diff_key( $wp_blogcaps, array_fill_keys( array( 'edit_users', 'delete_users' ), true ) );
 		}
 				
 		return $wp_blogcaps;

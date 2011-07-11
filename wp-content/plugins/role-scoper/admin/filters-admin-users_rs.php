@@ -3,7 +3,7 @@
 if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die();
 
-if ( DEFINE_GROUPS_RS && ( awp_ver('2.8') || defined('scoper_users_custom_column') ) ) {
+if ( DEFINE_GROUPS_RS ) {
 	add_filter('manage_users_columns', array('ScoperAdminUsers', 'flt_users_columns'));
 	add_action('manage_users_custom_column', array('ScoperAdminUsers', 'flt_users_custom_column'), 99, 3); // filter late in case other plugin filters do not retain passed value
 }

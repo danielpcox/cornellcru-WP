@@ -3,7 +3,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die();
 
 // flush caches that are potentially affected by ANY role assignment
-function scoper_flush_results_cache( $role_bases = '', $user_ids = '' ) {
+function scoper_flush_results_cache( $role_bases = '', $user_ids = array() ) {
 	global $scoper_role_types;
 	
 	$wp_cache_flags = array();
@@ -26,8 +26,7 @@ function scoper_flush_results_cache( $role_bases = '', $user_ids = '' ) {
 		$role_bases []= ROLE_BASIS_USER_AND_GROUPS;
 	}
 	
-	if ( ! is_array($role_bases) )
-		$role_bases = (array) $role_bases;
+	$role_bases = (array) $role_bases;
 		
 	foreach ( $role_bases as $role_basis ) {
 		if ( ROLE_BASIS_GROUPS == $role_basis ) {
@@ -50,17 +49,16 @@ function scoper_flush_results_cache( $role_bases = '', $user_ids = '' ) {
 }
 
 // flush role assignment caches - separate caches for each role basis
-function scoper_flush_roles_cache( $scope, $role_bases = '', $user_ids = '', $taxonomies = '' ) {
-	global $scoper_role_types;
+function scoper_flush_roles_cache( $scope, $role_bases = '', $user_ids = array(), $taxonomies = '' ) {
+	$scoper_role_types = array('rs', 'wp', 'wp_cap');
 	
 	if ( OBJECT_SCOPE_RS == $scope )
 		foreach ($scoper_role_types as $role_type)
 			// this cache stores roles which have been applied for any user or group (currently only uses 'all' key)
 			wpp_cache_flush_group("{$role_type}_applied_object_roles");
 	
-	if ( $user_ids && ! is_array( $user_ids) )
-		$user_ids = array($user_ids);
-	
+	$user_ids = (array) $user_ids;
+
 	if ( empty($role_bases) ) {
 		$role_bases = array();
 		$role_bases []= ROLE_BASIS_USER;
@@ -68,8 +66,7 @@ function scoper_flush_roles_cache( $scope, $role_bases = '', $user_ids = '', $ta
 		$role_bases []= ROLE_BASIS_USER_AND_GROUPS;
 	}
 	
-	if ( ! is_array($role_bases) )
-		$role_bases = (array) $role_bases;
+	$role_bases = (array) $role_bases;
 		
 	foreach ( $role_bases as $role_basis ) {
 		if ( TERM_SCOPE_RS == $scope ) {
@@ -83,9 +80,8 @@ function scoper_flush_roles_cache( $scope, $role_bases = '', $user_ids = '', $ta
 					return;
 				}
 			}
-			
-			if ( ! is_array( $taxonomies) )
-				$taxonomies = array($taxonomies);
+
+			$taxonomies = (array) $taxonomies;
 	
 			if ( $user_ids ) {
 				foreach ($scoper_role_types as $role_type)

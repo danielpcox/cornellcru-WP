@@ -26,7 +26,7 @@ function scoper_limit_subscribe2_autosub( $query ) {
 
 		//rs_errlog("subscribe2 cat creation: $subscribe2_category_rs");
 
-		$post_roles = $scoper->role_defs->qualify_roles( 'read', SCOPER_ROLE_TYPE, 'post' );
+		$post_roles = $scoper->role_defs->qualify_roles( 'read', 'rs', 'post' );
 
 		// WP roles containing the 'activate plugins' capability are always honored regardless of object or term restritions
 		$admin_roles_wp = array();
@@ -69,7 +69,7 @@ function scoper_limit_subscribe2_autosub( $query ) {
 		// for our purposes, a role is only restricted if all its contained qualifying roles are also restricted
 		if ( $restricted_roles ) {
 			foreach ( array_keys($restricted_roles) as $role_handle ) {
-				if ( $contained_roles = $scoper->role_defs->get_contained_roles($role_handle, false, SCOPER_ROLE_TYPE) )
+				if ( $contained_roles = $scoper->role_defs->get_contained_roles($role_handle, false, 'rs') )
 					if ( $contained_roles = array_intersect_key( $contained_roles, $unrestricted_roles ) )
 						unset ( $restricted_roles[$role_handle] );
 			}
@@ -77,26 +77,22 @@ function scoper_limit_subscribe2_autosub( $query ) {
 			$unrestricted_roles = array_diff_key( $post_roles, $restricted_roles );
 		}
 		
-		// account for WP blog roles
-		if ( 'rs' == SCOPER_ROLE_TYPE ) {
-			$unrestricted_roles_wp = array();
-			$restricted_roles_wp = array();
-			
-			// Todo: modify qualify_roles to make passing of object_types equivalent to passing exclude_object_types, regarding handling of otype-ambiguous caps
-			if ( $post_roles_wp = $scoper->role_defs->qualify_roles( 'read', 'wp', '', array( 'exclude_object_types' => array('page') ) ) ) {
-				foreach ( array_keys($post_roles_wp) as $wp_role )
-					if ( $contains_rs_roles = $scoper->role_defs->get_contained_roles($wp_role, false, 'rs') ) {
-						if ( $contains_rs_roles = array_intersect_key($contains_rs_roles, $unrestricted_roles) )
-							$unrestricted_roles_wp = array_merge($unrestricted_roles_wp, array($wp_role => true) );
-					}
+		// account for WP blog roles		
+		$unrestricted_roles_wp = array();
+		$restricted_roles_wp = array();
 
-				$restricted_roles_wp = array_diff_key($post_roles_wp, $unrestricted_roles_wp);
-			}
-			
-			$unrestricted_roles_wp = array_merge($unrestricted_roles_wp, $admin_roles_wp);
-			$role_in_wp = implode( "', '", scoper_role_handles_to_names(array_keys($unrestricted_roles_wp)) );
-		} else
-			$unrestricted_roles = array_merge($unrestricted_roles, $admin_roles_wp);
+		if ( $post_roles_wp = $scoper->role_defs->qualify_roles( 'read', 'wp', 'post' ) ) {
+			foreach ( array_keys($post_roles_wp) as $wp_role )
+				if ( $contains_rs_roles = $scoper->role_defs->get_contained_roles($wp_role, false, 'rs') ) {
+					if ( $contains_rs_roles = array_intersect_key($contains_rs_roles, $unrestricted_roles) )
+						$unrestricted_roles_wp = array_merge($unrestricted_roles_wp, array($wp_role => true) );
+				}
+
+			$restricted_roles_wp = array_diff_key($post_roles_wp, $unrestricted_roles_wp);
+		}
+		
+		$unrestricted_roles_wp = array_merge($unrestricted_roles_wp, $admin_roles_wp);
+		$role_in_wp = implode( "', '", scoper_role_handles_to_names(array_keys($unrestricted_roles_wp)) );
 
 		/*
 		dump($post_roles);
@@ -106,8 +102,6 @@ function scoper_limit_subscribe2_autosub( $query ) {
 		dump($unrestricted_roles_wp);
 		*/
 
-		$role_type = SCOPER_ROLE_TYPE;
-		
 		// account for blog roles, where allowed
 		if ( $unrestricted_roles ) {
 			$wp_role_clause = ( ! empty($role_in_wp) ) ? "OR ( role_type = 'wp' AND scope = 'blog' AND role_name IN ('$role_in_wp') )" : '';
@@ -116,13 +110,13 @@ function scoper_limit_subscribe2_autosub( $query ) {
 			
 			$qry = "SELECT DISTINCT user_id FROM $wpdb->user2role2object_rs"
 				. " WHERE user_id > 0 AND ("
-				. " ( role_type = '$role_type' AND scope = 'blog' AND role_name IN ('$role_in') ) $wp_role_clause )";
+				. " ( role_type = 'rs' AND scope = 'blog' AND role_name IN ('$role_in') ) $wp_role_clause )";
 
 			$users = scoper_get_col( $qry );
 
 			$qry = "SELECT DISTINCT group_id FROM $wpdb->user2role2object_rs"
 				. " WHERE group_id > 0 AND ("
-				. " ( role_type = '$role_type' AND scope = 'blog' AND role_name IN ('$role_in') ) $wp_role_clause )";
+				. " ( role_type = 'rs' AND scope = 'blog' AND role_name IN ('$role_in') ) $wp_role_clause )";
 
 			if ( $groups = scoper_get_col( $qry ) ) {
 				foreach ( $groups as $group_id )
@@ -138,7 +132,7 @@ function scoper_limit_subscribe2_autosub( $query ) {
 		$role_in = implode( "', '", scoper_role_handles_to_names(array_keys($post_roles)) );
 		
 		$qry = "SELECT DISTINCT user_id FROM $wpdb->user2role2object_rs"
-			. " WHERE user_id > 0 AND role_type = '$role_type' AND scope = 'term' AND role_name IN ('$role_in')"
+			. " WHERE user_id > 0 AND role_type = 'rs' AND scope = 'term' AND role_name IN ('$role_in')"
 			. " AND assign_for IN ('entity', 'both')"
 			. " AND src_or_tx_name = 'category' AND obj_or_term_id = '$subscribe2_category_rs'";
 		
@@ -146,7 +140,7 @@ function scoper_limit_subscribe2_autosub( $query ) {
 		$users = array_merge( $users, $catrole_users );
 
 		$qry = "SELECT DISTINCT group_id FROM $wpdb->user2role2object_rs"
-			. " WHERE group_id > 0 AND role_type = '$role_type' AND scope = 'term' AND role_name IN ('$role_in')"
+			. " WHERE group_id > 0 AND role_type = 'rs' AND scope = 'term' AND role_name IN ('$role_in')"
 			. " AND assign_for IN ('entity', 'both')"
 			. " AND src_or_tx_name = 'category' AND obj_or_term_id = '$subscribe2_category_rs'";
 

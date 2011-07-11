@@ -2,15 +2,14 @@
 if ( ! function_exists( 'scoper_activate' ) ) {
 function scoper_activate() {
 	// set_current_user may have triggered DB setup already
-	global $scoper_db_setup_done;
-	if ( empty ($scoper_db_setup_done) ) {
+	if ( empty ($GLOBALS['scoper_db_setup_done']) ) {
 		require_once('db-setup_rs.php');
 		scoper_db_setup('');  // TODO: is it safe to call get_option here to pass in last DB version, avoiding unnecessary ALTER TABLE statement?
 	}
 	
 	require_once('admin/admin_lib_rs.php');
 	ScoperAdminLib::sync_wproles();
-	
+
 	scoper_flush_site_rules();
 	scoper_expire_file_rules();
 }
@@ -19,7 +18,7 @@ function scoper_activate() {
 if ( ! function_exists( 'scoper_deactivate' ) ) {
 function scoper_deactivate() {
 	if ( function_exists( 'wpp_cache_flush' ) )
-		wpp_cache_flush();
+		wpp_cache_flush_all_sites();
 	
 	delete_option('scoper_page_ancestors');
 	
@@ -32,8 +31,6 @@ function scoper_deactivate() {
 		}
 	}
 
-	delete_option( 'scoper_logged_custom_types' );
-	
 	require_once('role-scoper_init.php');
 	scoper_clear_site_rules();
 	scoper_clear_all_file_rules();

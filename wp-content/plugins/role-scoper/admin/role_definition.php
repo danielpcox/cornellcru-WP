@@ -12,12 +12,7 @@ echo "<div id='rs-roledefs' style='clear:both;margin:0;' class='rs-options agp_j
 if ( scoper_get_option('display_hints') ) {
 	echo '<div class="rs-optionhint">';
 	echo '<p style="margin-top:0">';
-	
-	if ( awp_ver( '3.0-dev' ) )
-		_e('These roles are defined by Role Scoper (and possibly other plugins) for your use in designating content-specific access or supplemental site-wide access.  Although the default capabilities are ideal for most installations, you may modify them at your discretion.', 'scoper');
-	else
-		_e('These roles are defined by Role Scoper (and possibly other plugins) for your use in designating content-specific access or supplemental blog-wide access.  Although the default capabilities are ideal for most installations, you may modify them at your discretion.', 'scoper');
-	
+	_e('These roles are defined by Role Scoper (and possibly other plugins) for your use in designating content-specific access or supplemental site-wide access.  Although the default capabilities are ideal for most installations, you may modify them at your discretion.', 'scoper');
 	echo '</p>';
 	
 	echo '<p>';
@@ -42,10 +37,10 @@ if ( empty( $args['customize_defaults'] ) ) {
 	$rs_role_defs = $scoper->role_defs;
 } else {
 	global $scoper_role_types;
-	$rs_role_defs = new WP_Scoped_Roles($scoper->cap_defs, $scoper_role_types);
-	
+	$rs_role_defs = new CR_Roles();
+
 	//$this->load_role_caps();
-	$rs_role_defs->role_caps = apply_filters('define_role_caps_rs', scoper_core_role_caps() );
+	$rs_role_defs->role_caps = apply_filters('define_role_caps_rs', cr_role_caps() );
 	
 	if ( $user_role_caps = scoper_get_option( 'user_role_caps', -1, true ) )
 		$rs_role_defs->add_role_caps( $user_role_caps );
@@ -53,14 +48,14 @@ if ( empty( $args['customize_defaults'] ) ) {
 	if ( $disabled_role_caps = scoper_get_option( 'disabled_role_caps', -1, true ) )
 		$rs_role_defs->remove_role_caps( $disabled_role_caps );
 	
-	$rs_role_defs->add_member_objects( scoper_core_role_defs() );
+	$rs_role_defs->add_member_objects( cr_role_defs() );
 
 	$rs_role_defs = apply_filters('define_roles_rs', $rs_role_defs);
 	$rs_role_defs->remove_invalid(); // currently don't allow additional custom-defined post, page or link roles
 
 	// To support merging in of WP role assignments, always note actual WP-defined roles 
 	// regardless of which role type we are scoping with.
-	$rs_role_defs->populate_with_wp_roles();
+	$scoper->log_wp_roles( $rs_role_defs );
 	$rs_role_defs->lock(); // prevent inadvertant improper API usage
 }
 
@@ -68,9 +63,14 @@ if ( empty( $args['customize_defaults'] ) ) {
 // object_type association of roles needs to be based on default role_caps, otherwise roles with all caps disabled will be excluded from UI
 // This also allows the default bolding to be based on custom default settings when role defs are defined per-blog in wp-mu
 global $scoper_role_types;
-$rs_default_role_defs = new WP_Scoped_Roles($scoper->cap_defs, $scoper_role_types);
+$rs_default_role_defs = new CR_Roles();
+$rs_default_role_defs->role_caps = apply_filters('define_role_caps_rs', cr_role_caps() );
+$rs_default_role_defs->add_member_objects( cr_role_defs() );
 
-$rs_default_role_defs->role_caps = apply_filters('define_role_caps_rs', scoper_core_role_caps() );
+$rs_default_cap_defs = new CR_Capabilities();
+$rs_default_cap_defs->add_member_objects( cr_cap_defs() );
+$rs_default_cap_defs = apply_filters('define_capabilities_rs', $rs_default_cap_defs);
+$scoper->log_cap_usage( $rs_default_role_defs, $rs_default_cap_defs );
 
 if ( IS_MU_RS && ! $args['customize_defaults'] && ! $args['sitewide'] ) {
 	if ( $user_role_caps = scoper_get_option( 'user_role_caps', -1, true ) )
@@ -80,39 +80,44 @@ if ( IS_MU_RS && ! $args['customize_defaults'] && ! $args['sitewide'] ) {
 		$rs_default_role_defs->remove_role_caps( $disabled_role_caps );
 }
 
-$rs_default_role_defs->add_member_objects( scoper_core_role_defs() );
-
 $rs_default_role_defs = apply_filters('define_roles_rs', $rs_default_role_defs);
 $rs_default_role_defs->remove_invalid();
 
+if ( has_filter( 'define_roles_rs' ) ) {
+	require_once( SCOPER_ABSPATH . '/extension-helper_rs.php' );
+	scoper_adjust_legacy_extension_cfg( $rs_default_role_defs, $rs_default_cap_defs );
+}
 
+$reviewed_roles = array();
 
 foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 	
-	$include_taxonomy_otypes = true;
+	$object_types = $src->object_types;
 
-	foreach ( $src->object_types as $object_type => $otype ) {
+	if ( 'post' == $src_name ) {
+		global $wp_taxonomies;
+		foreach ( $wp_taxonomies as $tx )
+			$object_types [$tx->name]= $tx; 	
+			
+		$use_post_types = scoper_get_option( 'use_post_types' );
+	}
+
+	foreach ( $object_types as $object_type => $otype ) {
+		if ( ( 'post' == $src_name ) && empty( $use_post_types[$object_type] ) )
+			continue;
+		
 		$otype_roles = array();
 		$otype_display_names = array();
 		
 		if ( $obj_roles = $rs_default_role_defs->get_matching( 'rs', $src_name, $object_type ) ) {
 			$otype_roles[$object_type] = $obj_roles;
-			$otype_display_names[$object_type] = $otype->display_name;
 		}
 		
-		if ( $include_taxonomy_otypes ) {
-			$uses_taxonomies = scoper_get_taxonomy_usage( $src_name, $object_type );
-			
-			foreach ( $uses_taxonomies as $taxonomy) {
-				$tx_display_name = $scoper->taxonomies->member_property($taxonomy, 'display_name');
-			
-				if ( $tx_roles = $rs_role_defs->get_matching( 'rs', $src_name, $taxonomy ) ) {
-					$otype_roles[$taxonomy] = $tx_roles;
-					$otype_display_names[$taxonomy] = $tx_display_name;
-				}
-			}	
-			$include_taxonomy_otypes = false;
-		}
+		if ( ! empty( $otype->labels->name ) )
+			$otype_display_names[$object_type] = $otype->labels->singular_name;
+		else
+			$otype_display_names[$object_type] = $otype->display_name;
+		
 		
 		if ( ! $otype_roles )
 			continue;
@@ -126,7 +131,7 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 <thead>
 <tr class="thead">
 	<th width="15%"><?php echo __awp('Role') ?></th>
-	<th><?php _e('Capabilities (defaults are bolded)', 'scoper');?></th>
+	<th><?php _e('Capabilities (abbreviated, defaults are bolded)', 'scoper');?></th>
 </tr>
 </thead>
 <tbody>
@@ -144,7 +149,11 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 			
 			global $wp_roles;
 
+			$style = '';
+			
 			foreach ( $roles as $rs_role_handle => $role_def ) {
+				$reviewed_roles []= $rs_role_handle;
+				
 				$style = ( ' class="alternate"' == $style ) ? '' : ' class="alternate"';
 
 				echo "\n\t"
@@ -167,6 +176,7 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 						
 						// only display "sync WP role" checkbox if the WP role has missing caps or extra caps
 						$otype_caps = $scoper->cap_defs->get_matching( $src_name, $object_type, '', STATUS_ANY_RS );
+						
 						$wp_defined_caps = array_intersect_key( $wp_roles->role_objects[ $wp_role_sync[$rs_role_handle] ]->capabilities, $otype_caps );
 						$wp_extra_caps = array_diff_key( $wp_defined_caps, $rs_role_defs->role_caps[$rs_role_handle] );
 							
@@ -198,12 +208,28 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 					$available_cap_names = $active_cap_names;
 				} else {
 					$disabled_role = '';
-					$available_caps = $rs_default_role_defs->cap_defs->get_matching($src_name, $object_type, '', STATUS_ANY_RS);
+					$available_caps = $rs_default_cap_defs->get_matching($src_name, $object_type, '', STATUS_ANY_RS);
+					
 					$available_cap_names = array_keys($available_caps);
 					sort($available_cap_names);
+					
+					$available_cap_names = array_merge( $available_cap_names, $active_cap_names );
 				}
 
+				// abbreviate type caps and reorder display
+				$show_cap_names = array();
 				foreach($available_cap_names as $cap_name) {
+					if ( strpos( $cap_name, "_{$object_type}s" ) ) {
+						$display = str_replace( "_{$object_type}s", '', $cap_name );
+						$display = sprintf( __( '%s...', 'scoper' ), $display );
+					} else
+						$display = $cap_name;
+						
+					$show_cap_names[$display] = $cap_name;
+				}
+				ksort( $show_cap_names );
+
+				foreach($show_cap_names as $display => $cap_name) {
 					$checked = ( in_array($cap_name, $active_cap_names) ) ? 'checked="checked"' : '';
 					$is_default = ! empty($rs_default_role_defs->role_caps[$rs_role_handle][$cap_name]);
 					$disabled_cap = $disabled_role || ( $is_default && ! empty($available_caps[$cap_name]->no_custom_remove) ) || ( ! $is_default && ! empty($available_caps[$cap_name]->no_custom_add) );
@@ -212,9 +238,9 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 					$style = ( $is_default ) ? "style='font-weight: bold'" : '';
 
 					$cap_safename = str_replace( ' ', '_', $cap_name );
-					
+
 					echo "<li><input type='checkbox' name='{$rs_role_handle}_caps[]' id='{$rs_role_handle}_{$cap_safename}' value='$cap_name' $checked $disabled />"
-						. "<label for='{$rs_role_handle}_{$cap_safename}' $style>" . str_replace( ' ', '&nbsp;', ucwords( str_replace('_', ' ', $cap_name) ) ) . '</label></li>';
+						. "<label for='{$rs_role_handle}_{$cap_safename}' title='$cap_name' $style>" . str_replace( ' ', '&nbsp;', ucwords( str_replace('_', ' ', $display) ) ) . '</label></li>';
 				}
 
 				echo '</ul></td></tr>';
@@ -226,6 +252,9 @@ foreach ( $scoper->data_sources->get_all() as $src_name => $src) {
 	} // end foreach object_type
 	
 } // end foreach data source
+
+$reviewed_roles = implode(',', array_unique( $reviewed_roles ) );
+echo "<input type='hidden' name='reviewed_roles' value='$reviewed_roles' />";
 
 echo '<span class="alignright">';
 echo '<label for="rs_role_resync"><input name="rs_role_resync" type="checkbox" id="rs_role_resync" value="1" />';

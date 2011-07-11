@@ -12,426 +12,433 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
  */
 class Scoper
 {
-	var $data_sources;			// object ref - WP_Scoped_Data_Sources
-	var $cap_defs;				// object ref - WP_Scoped_Capabilities
-	var $role_defs;				// object ref - WP_Scoped_Roles
-	var $taxonomies;			// object ref - WP_Scoped_Taxonomies
-	var $access_types;			// object ref - AGP_Config_Items
+	var $definitions;
+	var $access_types;
+	var $data_sources;
+	var $taxonomies;
+	var $cap_defs;
+	var $role_defs;
 	
-	var $admin;					// object ref - ScoperAdmin
-	var $filters_admin;			// object ref - ScoperAdminFilters
-	var $filters_admin_ui;		// object ref - ScoperAdminFiltersUI
-	var $filters_admin_item_ui; // object ref - ScoperAdminFiltersItemUI
-	var $cap_interceptor;		// object ref - CapInterceptor_RS
-	var $query_interceptor;		// object ref - QueryInterceptor_RS
-	var $users_interceptor;		// object ref - UsersInterceptor_RS
-	var $template_interceptor;	// object ref - TemplateInterceptor_RS
-	var $attachment_interceptor; // object ref - AttachmentInterceptor_RS
-	var $feed_interceptor;		// object ref - FeedInterceptor_RS
+	var $cap_interceptor;		// legacy API
 	
 	// === Temporary status variables ===
-	var $user_cache = array();	  //$user_cache[query] = results;
-	var $ignore_object_roles;
 	var $direct_file_access;
-	
-	// role usage tracking for template functions, Manage Posts/Pages custom columns
-	var $teaser_ids;
-	var $objscoped_ids;
-	var $termscoped_ids;
-	var $have_objrole_ids;
-	var $have_termrole_ids;
-	
-	// these properties used by Query_Interceptor; problems setting array properies an that object
-	var $last_request = array();
-	
-	var $listed_ids = array();  // $listed_ids[src_name][object_id] = array of colname=>value : general purpose memory cache
-								// If a 3rd party loads it with listing results for a scoper-defined otype, those will be used to buffer subsequent current_user_can/flt_user_has_cap queries
+	var $listed_ids = array();  // $listed_ids[src_name][object_id] = true : general purpose memory cache for non-post data sources; primary use is with has_cap filter to avoid a separate db query for each listed item 
 
 	var $default_restrictions = array();
-								
+
 	// minimal config retrieval to support pre-init usage by WP_Scoped_User before text domain is loaded
 	function Scoper() {
-		//log_mem_usage_rs( 'new Scoper' );
+		$this->definitions = array( 'data_sources' => 'Data_Sources', 'taxonomies' => 'Taxonomies', 'cap_defs' => 'Capabilities', 'role_defs' => 'Roles' );	
+		require_once( 'definitions_cr.php' );
 		
-		require_once('defaults_rs.php');
-		require_once('capabilities_rs.php');
-		require_once('roles_rs.php');
+		if ( defined( 'RVY_VERSION' ) )
+			$this->cap_interceptor = (object) array();	// legacy support for Revisionary < 1.1 which set flags on this object property
+	}
+
+	function any_custom_registrations() {
+		if ( ! awp_ver( '2.9' ) )
+			return array();
 		
-		//log_mem_usage_rs( 'initial Scoper require_once' );
-		
-		$this->cap_defs = new WP_Scoped_Capabilities();
-		$this->cap_defs = apply_filters('define_capabilities_rs', $this->cap_defs);
-		$this->cap_defs->add_member_objects( scoper_core_cap_defs() );  // core capdefs (and other core config) are not intended to be altered by other plugins
-		$this->cap_defs->lock(); // prevent inadvertant improper API usage
-		
-		//log_mem_usage_rs( 'cap_defs' );
-		
-		global $scoper_role_types;
-		$this->role_defs = new WP_Scoped_Roles($this->cap_defs, $scoper_role_types);
-		
-		//log_mem_usage_rs( 'roles' );
-		
-		if ( 'rs' == SCOPER_ROLE_TYPE ) {
-			$this->load_role_caps();
-			$this->role_defs->add_member_objects( scoper_core_role_defs() );
+		$any_custom['type'] = (bool) get_post_types( array( 'public' => true, '_builtin' => false ) );
+
+		if ( awp_ver( '3.0' ) )
+			$any_custom['taxonomy'] = (bool) get_taxonomies( array( 'public' => true, '_builtin' => false ) );
+		else
+			$any_custom['taxonomy'] = (bool) get_custom_taxonomies_rs();
 			
-			//log_mem_usage_rs( 'role_defs->add_member_objects' );
-
-			foreach ( $this->role_defs->get_all_keys() as $role_handle ) {
-				if ( ! empty($this->role_defs->members[$role_handle]->objscope_equivalents) ) {
-					foreach( $this->role_defs->members[$role_handle]->objscope_equivalents as $equiv_key => $equiv_role_handle ) {
-						
-						if ( scoper_get_option( "{$equiv_role_handle}_role_objscope" ) ) {	// If "Additional Object Role" option is set for this role, treat it as a regular direct-assigned Object Role
-
-							if ( isset($this->role_defs->members[$equiv_role_handle]->valid_scopes) )
-								$this->role_defs->members[$equiv_role_handle]->valid_scopes = array('blog' => 1, 'term' => 1, 'object' => 1);
-	
-							unset( $this->role_defs->members[$role_handle]->objscope_equivalents[$equiv_key] );
-					
-							if ( ! defined( 'DISABLE_OBJSCOPE_EQUIV_' . $role_handle ) )
-								define( 'DISABLE_OBJSCOPE_EQUIV_' . $role_handle, true );	// prevent Role Caption / Abbrev from being substituted from equivalent role
-						}
-					}
-				}
-				
-			}
-
-			$this->role_defs = apply_filters('define_roles_rs', $this->role_defs);
-			$this->role_defs->remove_invalid(); // currently don't allow additional custom-defined post, page or link roles
-		}
-				
-		// To support merging in of WP role assignments, always note actual WP-defined roles 
-		// regardless of which role type we are scoping with.
-		$this->role_defs->populate_with_wp_roles();
-		$this->role_defs->lock(); // prevent inadvertant improper API usage
-		
-		//log_mem_usage_rs( 'role_defs - WP roles' );
+		return $any_custom;
 	}
 	
-	function load_role_caps() {
-		$this->role_defs->role_caps = apply_filters('define_role_caps_rs', scoper_core_role_caps() );
-		
-		//if ( ! is_admin() || ! defined('SCOPER_REALM_ADMIN_RS') ) { // don't remove items if the "disabled" settings are being editied
-		if ( $user_role_caps = scoper_get_option('user_role_caps') )
-			$this->role_defs->add_role_caps( $user_role_caps );
-		
-		if ( $disabled_role_caps = scoper_get_option('disabled_role_caps') )
-			$this->role_defs->remove_role_caps( $disabled_role_caps );
-	}
-	
-	function init_users_interceptor() {
-		if ( ! isset($this->users_interceptor) ) {
-			require_once('users-interceptor_rs.php');
-			
-			//log_mem_usage_rs( 'require users-interceptor_rs' );
-			
-			$this->users_interceptor = new UsersInterceptor_RS();
-			
-			//log_mem_usage_rs( 'init Users Interceptor' );
-		}
-		
-		return $this->users_interceptor;
-	}
-	
-	// potential usage during plugin activate / deactivate ( filtered config data without loading filters )
-	function load_config() {	
-		//log_mem_usage_rs( 'Scoper load_config' );
-		
+	function load_config() {
 		require_once('lib/agapetry_config_items.php');
 		$this->access_types = new AGP_Config_Items();
-		$this->access_types->add_member_objects( scoper_core_access_types() );  // 'front' and 'admin' are the hardcoded access types
-		$this->access_types->lock(); // prevent inadvertant improper API usage
-
-		//log_mem_usage_rs( 'access types' );
+		$this->access_types->init( cr_access_types() );  // 'front' and 'admin' are the hardcoded access types
 		
+		// establish access type for this http request
 		$access_name = ( is_admin() || defined('XMLRPC_REQUEST') ) ? 'admin' : 'front';
+		$access_name = apply_filters( 'scoper_access_name', $access_name );		// others plugins can apply additional criteria for treating a particular URL with wp-admin or front-end filtering
 		if ( ! defined('CURRENT_ACCESS_NAME_RS') )
 			define('CURRENT_ACCESS_NAME_RS', $access_name);
 
-		if ( ! is_admin() || ! defined('SCOPER_REALM_ADMIN_RS') ) {		// don't remove items if the "disabled" settings are being editied
+		// disable RS filtering of access type(s) if specified in realm options 
+		if ( ! is_admin() || ! defined('SCOPER_REALM_ADMIN_RS') ) {		// don't remove items if the option is being editied
 			if ( $disabled_access_types = scoper_get_option('disabled_access_types') )
 				$this->access_types->remove_members_by_key($disabled_access_types, true);
+				
+			// If the detected access type (admin, front or custom) was "disabled", it is still detected, but we note that query filters should not be applied
+			if ( ! $this->access_types->is_member($access_name) )
+				define('DISABLE_QUERYFILTERS_RS', true);
 		}
-		
-		// If the detected access type (admin, front or custom) were "disabled",
-		// they are still detected, but we note that query filters should not be applied
-		if ( ! $this->access_types->is_member($access_name) )
-			define('DISABLE_QUERYFILTERS_RS', true);
 
-
-		global $current_user;
-		
-		if ( empty($current_user->assigned_blog_roles) ) {
-			foreach ($this->role_defs->get_anon_role_handles() as $role_handle) {
-				$current_user->assigned_blog_roles[ANY_CONTENT_DATE_RS][$role_handle] = true;
-				$current_user->blog_roles[ANY_CONTENT_DATE_RS][$role_handle] = true;
-			}
+		// populate data_sources, taxonomies, cap_defs, role_defs arrays
+		foreach( array_keys($this->definitions) as $topic )
+			$this->load_definition( $topic );	
+			
+		foreach( array_keys($this->definitions) as $topic )
+			$this->$topic->lock();
+			
+		// clean up after 3rd party plugins (such as Role Scoping for NGG) which don't set object type and src_name properties for roles
+		if ( has_filter( 'define_roles_rs' ) ) {
+			require_once( 'extension-helper_rs.php' );
+			scoper_adjust_legacy_extension_cfg( $this->role_defs, $this->cap_defs );
 		}
+
+		add_action( 'set_current_user', array( &$this, 'credit_blogroles' ) );
 		
-		require_once('data_sources_rs.php');
-		$this->data_sources = new WP_Scoped_Data_Sources();
-		$this->data_sources->add_member_objects( scoper_core_data_sources() );
-		$this->data_sources = apply_filters('define_data_sources_rs', $this->data_sources);
-		$this->data_sources->lock();			// prevent inadvertant improper API usage
-		
-		//log_mem_usage_rs( 'data sources' );
-		
-		require_once('taxonomies_rs.php');
-		//log_mem_usage_rs( 'require taxonomies' );
-		$this->taxonomies = new WP_Scoped_Taxonomies( $this->data_sources );
-		
-		$this->taxonomies->add_member_objects( scoper_core_taxonomies() );
-		$this->taxonomies = apply_filters('define_taxonomies_rs', $this->taxonomies);
-		$this->taxonomies->lock();
-		
-		//log_mem_usage_rs( 'new WP_Scoped_Taxonomies' );
-		
-		$this->role_defs->lock();
-		
+		$this->credit_blogroles();
+			
 		do_action('config_loaded_rs');
 	}
 	
-	function init() {
-		//log_mem_usage_rs( 'Scoper->init() start'  );
+	function credit_blogroles() {
+		// credit non-logged and "no role" users for any anonymous roles
+		global $current_user;
+		
+		if ( $current_user ) {
+			if ( empty($current_user->assigned_blog_roles) ) {
+				foreach ( $this->role_defs->filter_keys( -1, array( 'anon_user_blogrole' => true ) ) as $role_handle) {
+					$current_user->assigned_blog_roles[ANY_CONTENT_DATE_RS][$role_handle] = true;
+					$current_user->blog_roles[ANY_CONTENT_DATE_RS][$role_handle] = true;
+				}
+			}
+	
+			if ( isset($current_user->assigned_blog_roles) )
+				$this->refresh_blogroles();
+		}
+	}
+	
+	function refresh_blogroles() {
+		global $current_user;
+		
+		if ( empty($current_user) )
+			return;
+		
+		if ( method_exists( $current_user, 'merge_scoped_blogcaps' ) )  // workaround for fatal error on role-scoper.php bailout
+			$current_user->merge_scoped_blogcaps();
+		
+		if ( $current_user->ID ) {
+			foreach ( array_keys($current_user->assigned_blog_roles) as $date_key )
+				$current_user->blog_roles[$date_key] = $this->role_defs->add_contained_roles( $current_user->assigned_blog_roles[$date_key] );
+		}
+	}
+	
+	function load_definition( $topic ) {
+		$class_name = "CR_" . $this->definitions[$topic];
+		require_once( strtolower($this->definitions[$topic]) . '_rs.php' );
 
+		$filter_name = "define_" . strtolower($this->definitions[$topic]) . "_rs";
+		$this->$topic = apply_filters( $filter_name, new $class_name( call_user_func("cr_{$topic}") ) );
+
+		if ( 'role_defs' == $topic ) {
+			$this->role_defs->role_caps = apply_filters('define_role_caps_rs', cr_role_caps() );
+			
+			if ( $user_role_caps = scoper_get_option( 'user_role_caps' ) )
+				$this->role_defs->add_role_caps( $user_role_caps );
+
+			$this->log_cap_usage( $this->role_defs, $this->cap_defs );  // add any otype associations from new user_role_caps, but don't remove an otype association due to disabled_role_caps
+
+			if ( $disabled_role_caps = scoper_get_option( 'disabled_role_caps' ) )
+				$this->role_defs->remove_role_caps( $disabled_role_caps );
+
+			$this->role_defs->remove_invalid(); // currently don't allow additional custom-defined post, page or link roles
+
+			$this->customize_role_objscope();
+			
+			// To support merging in of WP role assignments, always note actual WP-defined roles 
+			// regardless of which role type we are scoping with.
+			$this->log_wp_roles( $this->role_defs );
+		}
+	}
+	
+	function log_cap_usage( &$role_defs, &$cap_defs ) {
+		foreach( $role_defs->members as $role_handle => $role_def ) {
+			
+			foreach( array_keys( $role_defs->role_caps[$role_handle] ) as $cap_name ) {
+				if ( empty( $cap_defs->members[$cap_name]->object_types ) || ! in_array( $role_def->object_type, $cap_defs->members[$cap_name]->object_types ) ) {
+					if ( 'post' == $role_def->src_name )
+						$cap_defs->members[$cap_name]->object_types[] = $role_def->object_type;
+						
+					elseif ( in_array( $role_def->src_name, array( 'link', 'group' ) ) )	// TODO: other data sources?
+						$cap_defs->members[$cap_name]->object_types[] = $role_def->src_name;
+				}
+			}
+		}	
+	}
+	
+	function customize_role_objscope() {
+		foreach ( $this->role_defs->get_all_keys() as $role_handle ) {
+			if ( ! empty($this->role_defs->members[$role_handle]->objscope_equivalents) ) {
+				foreach( $this->role_defs->members[$role_handle]->objscope_equivalents as $equiv_key => $equiv_role_handle ) {
+					
+					if ( scoper_get_option( "{$equiv_role_handle}_role_objscope" ) ) {	// If "Additional Object Role" option is set for this role, treat it as a regular direct-assigned Object Role
+
+						if ( isset($this->role_defs->members[$equiv_role_handle]->valid_scopes) )
+							$this->role_defs->members[$equiv_role_handle]->valid_scopes = array('blog' => 1, 'term' => 1, 'object' => 1);
+
+						unset( $this->role_defs->members[$role_handle]->objscope_equivalents[$equiv_key] );
+				
+						if ( ! defined( 'DISABLE_OBJSCOPE_EQUIV_' . $role_handle ) )
+							define( 'DISABLE_OBJSCOPE_EQUIV_' . $role_handle, true );	// prevent Role Caption / Abbrev from being substituted from equivalent role
+					}
+				}
+			}
+		}	
+	}
+	
+	function log_wp_roles( &$role_defs ) {
+		global $wp_roles;
+		if ( ! isset($wp_roles) )
+			$wp_roles = new WP_Roles();
+			
+		// populate WP roles least-role-first to match RS roles
+		$keys = array_keys($wp_roles->role_objects);
+		$keys = array_reverse($keys);
+
+		$cr_cap_names = $this->cap_defs->get_all_keys();
+		
+		$last_lock = $role_defs->locked;
+		$role_defs->locked = false;
+
+		foreach ( $keys as $role_name ) {
+			if ( ! empty( $wp_roles->role_objects[$role_name]->capabilities ) ) {
+				// remove any WP caps which are in array, but have value = false
+				if ( $caps = array_intersect( $wp_roles->role_objects[$role_name]->capabilities, array(true) ) )
+					$caps = array_intersect_key( $caps, array_flip($cr_cap_names) );  // we only care about WP caps that are RS-defined
+			} else
+				$caps = array();
+
+			$role_defs->add( $role_name, 'wordpress', '', '', 'wp' );
+
+			// temp hardcode for site-wide Nav Menu cap
+			if ( ! empty( $caps['edit_theme_options'] ) )
+				$caps['manage_nav_menus'] = true;
+
+			$role_defs->role_caps['wp_' . $role_name] = $caps;
+		}
+		
+		$role_defs->locked = $last_lock;
+	}
+	
+	
+	function init() {
 		scoper_version_check();
 		
 		if ( ! isset($this->data_sources) )
 			$this->load_config();
 		
 		$is_administrator = is_content_administrator_rs();
-
+		
 		if ( $doing_cron = defined('DOING_CRON') )
 			if ( ! defined('DISABLE_QUERYFILTERS_RS') )
 				define('DISABLE_QUERYFILTERS_RS', true);
-		
-		$direct_file_access = strpos($_SERVER['QUERY_STRING'], 'rs_rewrite');
-		$this->direct_file_access = $direct_file_access;
-		$frontend_admin = false;
-		
-		//log_mem_usage_rs( 'before new Scoper Admin' );
-		
-		if ( $is_admin = is_admin() ) {
-			$script_name = $_SERVER['SCRIPT_NAME'];
 
-			// ===== Admin filters (menu and other basics) which are (almost) always loaded 
-			require_once('admin/admin_rs.php');
-			
-			//log_mem_usage_rs( 'require admin_rs.php' );
-			
-			$this->admin = new ScoperAdmin();
+		if ( ! $this->direct_file_access = strpos($_SERVER['QUERY_STRING'], 'rs_rewrite') )
+			$this->add_main_filters();
 
-			//log_mem_usage_rs( 'new Scoper Admin done' );
-			
-			if ( ! strpos($script_name, 'p-admin/async-upload.php' ) ) {
-				if ( ! defined('DISABLE_QUERYFILTERS_RS') || $is_administrator ) {
-					require_once( 'admin/filters-admin-ui_rs.php' );
-					
-					//log_mem_usage_rs( 'require filters-admin-ui_rs.php' );
-					
-					$this->filters_admin_ui = new ScoperAdminFiltersUI();
-					
-					//log_mem_usage_rs( 'new Scoper Admin FiltersUI done' );
+		// ===== Special early exit if this is a plugin install script
+		if ( is_admin() ) {
+			if ( in_array( $GLOBALS['pagenow'], array( 'plugin-install.php', 'plugin-editor.php' ) ) ) {
+				// flush RS cache on activation of any plugin, in case we cached results based on its presence / absence
+				if ( ( ! empty($_POST) ) || ( ! empty($_REQUEST['action']) ) ) {
+					if ( ! empty($_POST['networkwide']) || ( 'plugin-editor.php' == $GLOBALS['pagenow'] ) )
+						wpp_cache_flush_all_sites();
+					else
+						wpp_cache_flush();
 				}
-			}
-			// =====
 
-			// ===== Script-specific Admin filters 
-			if ( strpos($script_name, 'p-admin/users.php') ) {
-				require_once( 'admin/filters-admin-users_rs.php' );
-				
-				//log_mem_usage_rs( 'require filters-admin-users' );
-
-			} elseif ( strpos($script_name, 'p-admin/edit.php') || strpos($script_name, 'p-admin/edit-pages.php') ) {
-				if ( ! defined('DISABLE_QUERYFILTERS_RS') || $is_administrator )
-					require_once( 'admin/filters-admin-ui-listing_rs.php' );
-					
-					//log_mem_usage_rs( 'required filters-admin-ui-listing_rs.php' );
-			}
-			// =====
-
-		} elseif ( ! $direct_file_access && ! $doing_cron && $this->is_front() ) {		
-			// ===== Front-end-only filters which are always loaded
-			if ( ! defined('DISABLE_QUERYFILTERS_RS') ) {
-				require_once('query-interceptor-front_rs.php');
-				
-				//log_mem_usage_rs( 'required query-interceptor-front_rs.php' );
-			}
-				
-			if ( ! $is_administrator ) {
-				require_once('qry-front_non-administrator_rs.php');
-
-				//log_mem_usage_rs( 'require qry-front_non-administrator_rs.php' );
-				
-				$this->feed_interceptor = new FeedInterceptor_RS(); // file already required in role-scoper.php
-				
-				//log_mem_usage_rs( 'new feed-interceptor' );
-			}
-
-			require_once('template-interceptor_rs.php');
-			$this->template_interceptor = new TemplateInterceptor_RS();
-
-			//log_mem_usage_rs( 'new template_interceptor' );
-			
-			$frontend_admin = ! scoper_get_option('no_frontend_admin'); // potential performance enhancement
-			// =====
-		}
-		
-		// ===== Filters which support automated role maintenance following content creation/update
-		// Require an explicitly set option to skip these for front end access, just in case other plugins modify content from the front end.
-		if ( ( $is_admin || defined('XMLRPC_REQUEST') || ( ( $frontend_admin || $doing_cron ) && ! $direct_file_access ) ) ) {
-			require_once( 'admin/cache_flush_rs.php' );
-			require_once( 'admin/filters-admin_rs.php' );
-
-			//log_mem_usage_rs( 'require filters-admin' );
-			
-			$this->filters_admin = new ScoperAdminFilters();
-			
-			//log_mem_usage_rs( 'new ScoperAdminFilters' );
-		}
-		// =====
-
-		if ( $is_admin ) {
-			// ===== Special early exit if this is a plugin install script
-			if ( strpos($script_name, 'p-admin/plugins.php') || strpos($script_name, 'p-admin/plugin-install.php') || strpos($script_name, 'p-admin/plugin-editor.php') ) {
-				// flush cache on activation of any plugin, in case we cached results based on its presence / absence
-				if ( ! empty($_POST) || ! empty($_REQUEST['action']) ) {
-					wpp_cache_flush();
-				}
-				
 				do_action( 'scoper_init' );
 				return; // no further filtering on WP plugin maintenance scripts
 			}
-			// =====
 		}
-
-
-		// ===== Filters which are always loaded (except on plugin scripts), for any access type
-		if ( ! $direct_file_access && ! $doing_cron ) {
-			include_once( 'hardway/wp-patches_agp.php' ); // simple patches for WP
-			
-			if ( $this->is_front() || strpos($script_name, 'p-admin/edit.php') || strpos($script_name, 'p-admin/edit-pages.php') ) {
-
-				require_once('query-interceptor-base_rs.php');
-			
-				//log_mem_usage_rs( 'require query-interceptor-base_rs' );
-			
-				$this->query_interceptor_base = new QueryInterceptorBase_RS();  // listing filter used for role status indication in edit posts/pages and on front end by template functions
-			
-				//log_mem_usage_rs( 'new QueryInterceptorBase_RS' );
-			}
-		}
-
-		require_once('attachment-interceptor_rs.php');
-		$this->attachment_interceptor = new AttachmentInterceptor_RS(); // .htaccess file is always there, so we always need to handle its rewrites
-		
-		//log_mem_usage_rs( 'new AttachmentInterceptor_RS' );
 		// =====
 
-
+		require_once('attachment-interceptor_rs.php');
+		$GLOBALS['attachment_interceptor'] = new AttachmentInterceptor_RS(); // .htaccess file is always there, so we always need to handle its rewrites
+				
 		// ===== Content Filters to limit/enable the current user
 		$disable_queryfilters = defined('DISABLE_QUERYFILTERS_RS');
-		
-		if ( $disable_queryfilters && ! $direct_file_access ) {
-			// need to always load filers for profile.php to support filtering of subscribe2 categories based on category read access
-			// (potential for other plugins to make similar use of profile.php)
-			$always_filter_uris = apply_filters('scoper_always_filter_uris', array( 'p-admin/profile.php' ) );
-			foreach ( $always_filter_uris as $uri_sub ) {
-				if ( strpos(urldecode($_SERVER['REQUEST_URI']), $uri_sub) ) {
-					$disable_queryfilters = false;
-					break;
-				}
+
+		if ( $disable_queryfilters ) {
+			// Some wp-admin pages need to list pages or categories based on front-end access.  Classic example is Subscribe2 categories checklist, included in Subscriber profile
+			// In that case, filtering will be applied even if wp-admin filtering is disabled.  API hook enables other plugins to defined their own "always filter" URIs.
+			$always_filter_uris = apply_filters( 'scoper_always_filter_uris', array( 'p-admin/profile.php' ) );
+
+			if ( in_array( $GLOBALS['pagenow'], $always_filter_uris ) || in_array( $GLOBALS['plugin_page_cr'], $always_filter_uris ) ) {
+				$disable_queryfilters = false;
+				break;
 			}
 		}
-
-		if ( awp_ver( '2.9' ) )
-			require_once('custom-types-helper_rs.php');
 		
+		// register a map_meta_cap filter to handle the type-specific meta caps we are forcing
+		require_once( 'meta_caps_rs.php' );	
+
 		if ( ! $disable_queryfilters ) {
-			if ( ! $is_administrator ) {
-				if ( $direct_file_access ) {
+			 if ( ! $is_administrator ) {
+				if ( $this->direct_file_access ) {
 					require_once('cap-interceptor-basic_rs.php');  // only need to support basic read_post / read_page check for direct file access
-					add_filter('user_has_cap', array('CapInterceptorBasic_RS', 'flt_user_has_cap'), 99, 3);
-					
-					//log_mem_usage_rs( 'new CapInterceptorBasic_RS' );
-					
+					$GLOBALS['cap_interceptor_basic'] = new CapInterceptorBasic_RS();
 				} else {
 					require_once('cap-interceptor_rs.php');
-					
-					$this->cap_interceptor = new CapInterceptor_RS();
-					
-					//log_mem_usage_rs( 'new CapInterceptor_RS' );
+					$GLOBALS['cap_interceptor'] = new CapInterceptor_RS();
 				}
 			}
-			
-			// (also use content filters on front end to FILTER IN private content which WP inappropriately hides from administrators)
-			if ( $this->is_front() || ! $is_administrator ) {
-				require_once('query-interceptor_rs.php');
-				
-				//log_mem_usage_rs( 'require query-interceptor_rs' );
-				
-				$this->query_interceptor = new QueryInterceptor_RS();
-			
-				//log_mem_usage_rs( 'new QueryInterceptor_RS' );
-			}
-			
-			
-			if ( ! $direct_file_access ) {
-				// port or low-level query filters to work around limitations in WP core API
-				require_once('hardway/hardway_rs.php'); // need get_pages() filtering to include private pages for some 3rd party plugin config UI (Simple Section Nav)
-				
-				//log_mem_usage_rs( 'required hardway_rs' );
-				
-				// buffering of taxonomy children is disabled with non-admin user logged in
-				// But that non-admin user may add cats.  Don't allow unfiltered admin to rely on an old copy of children
-				global $wp_taxonomies;
-				if ( ! empty($wp_taxonomies) ) {
-					foreach ( array_keys($wp_taxonomies) as $taxonomy )
-						add_filter ( "option_{$taxonomy}_children", create_function( '$option_value', "return rs_get_terms_children('$taxonomy', " . '$option_value );') );
-						//add_filter("option_{$taxonomy}_children", create_function( '', "return rs_get_terms_children('$taxonomy');") );
-				}
-			}
-		
-			if ( $is_admin || defined('XMLRPC_REQUEST') ) {
-                if ( ! strpos( urldecode($_SERVER['REQUEST_URI']), 'p-admin/plugin-editor.php' ) && ! strpos( urldecode($_SERVER['REQUEST_URI']), 'p-admin/plugins.php' ) ) {
-					// low-level filtering for miscellaneous admin operations which are not well supported by the WP API
-					$hardway_uris = array(
-					'p-admin/index.php',		'p-admin/revision.php',			'admin.php?page=rvy-revisions',
-					'p-admin/post.php', 		'p-admin/post-new.php', 		'p-admin/page.php', 		'p-admin/page-new.php', 
-					'p-admin/link-manager.php', 'p-admin/edit.php', 			'p-admin/edit-pages.php', 	'p-admin/edit-comments.php', 
-					'p-admin/categories.php', 	'p-admin/link-category.php', 	'p-admin/edit-link-categories.php', 'p-admin/upload.php',
-					'p-admin/edit-tags.php', 	'p-admin/profile.php',			'p-admin/link-add.php',	'p-admin/admin-ajax.php' );
-	
-					$hardway_uris = apply_filters('scoper_admin_hardway_uris', $hardway_uris);
 
-					$uri = urldecode($_SERVER['REQUEST_URI']);
-					foreach ( $hardway_uris as $uri_sub ) {	// index.php can only be detected by index.php, but 3rd party-defined hooks may include arguments only present in REQUEST_URI
-						if ( defined('XMLRPC_REQUEST') || strpos($script_name, $uri_sub) || strpos($uri, $uri_sub) ) {
-							require_once('hardway/hardway-admin_rs.php');
-							
-							//log_mem_usage_rs( 'required hardway-admin_rs' );
-							
-							break;
-						}
-					}
-            	}
-			} // endif is_admin or xmlrpc
-			
+			// (also use content filters on front end to FILTER IN private content which WP inappropriately hides from administrators)
+			if ( ( ! $is_administrator ) || $this->is_front() ) {
+				require_once('query-interceptor_rs.php');
+				$GLOBALS['query_interceptor'] = new QueryInterceptor_RS();
+			}
+
+			if ( ( ! $this->direct_file_access ) && ( ! $is_administrator || ! defined('XMLRPC_REQUEST') ) ) // don't tempt trouble by adding hardway filters on XMLRPC for logged administrator
+				$this->add_hardway_filters();
+
 		} // endif query filtering not disabled for this access type
 
-		if ( scoper_get_option( 'group_ajax' ) && ( isset( $_GET['rs_user_search'] ) || isset( $_GET['rs_group_search'] ) ) ) {
-			require_once( 'admin/user_query_rs.php' );
-			exit;	
-		} 
-
+		if ( is_admin() )
+			$this->add_admin_ui_filters( $is_administrator );
+		
 		do_action( 'scoper_init' );
-			
+		
 		// ===== end Content Filters
 		
 	} // end function init
 	
+	
+	// filters which are only needed for the wp-admin UI
+	function add_admin_ui_filters( $is_administrator ) {
+		global $pagenow;
+		
+		// ===== Admin filters (menu and other basics) which are (almost) always loaded 
+		require_once('admin/admin_rs.php');
+		$GLOBALS['scoper_admin'] = new ScoperAdmin();
+		
+		if ( 'async-upload.php' != $pagenow ) {
+			if ( ! defined('DISABLE_QUERYFILTERS_RS') || $is_administrator ) {
+				require_once( 'admin/filters-admin-ui_rs.php' );
+				$GLOBALS['scoper_admin_filters_ui'] = new ScoperAdminFiltersUI();
+			}
+		}
+		// =====
 
+		// ===== Script-specific Admin filters 
+		if ( 'users.php' == $pagenow ) {
+			require_once( 'admin/filters-admin-users_rs.php' );
+			
+		} elseif ( 'edit.php' == $pagenow ) {
+			if ( ! defined('DISABLE_QUERYFILTERS_RS') || $is_administrator )
+				require_once( 'admin/filters-admin-ui-listing_rs.php' );
 
+		} elseif ( in_array( $pagenow, array( 'edit-tags.php', 'edit-link-categories.php' ) ) ) {
+			if ( ! defined('DISABLE_QUERYFILTERS_RS') )
+				require_once( 'admin/filters-admin-terms_rs.php' );
+		}
+		// =====
+		
+		if ( scoper_get_option( 'group_ajax' ) && ( isset( $_GET['rs_user_search'] ) || isset( $_GET['rs_group_search'] ) ) ) {
+			require_once( 'admin/user_query_rs.php' );
+			exit;	
+		} 
+	}
+	
+	
+	function add_hardway_filters() {
+		// port or low-level query filters to work around limitations in WP core API
+		require_once('hardway/hardway_rs.php'); // need get_pages() filtering to include private pages for some 3rd party plugin config UI (Simple Section Nav)
+		
+		// buffering of taxonomy children is disabled with non-admin user logged in
+		// But that non-admin user may add cats.  Don't allow unfiltered admin to rely on an old copy of children
+		global $wp_taxonomies;
+		if ( ! empty($wp_taxonomies) ) {
+			foreach ( array_keys($wp_taxonomies) as $taxonomy )
+				add_filter ( "option_{$taxonomy}_children", create_function( '$option_value', "return rs_get_terms_children('$taxonomy', " . '$option_value );') );
+				//add_filter("option_{$taxonomy}_children", create_function( '', "return rs_get_terms_children('$taxonomy');") );
+		}
+
+		if ( is_admin() || defined('XMLRPC_REQUEST') ) {
+            global $pagenow;
+			
+			if ( ! in_array( $pagenow, array( 'plugin-editor.php', 'plugins.php' ) ) ) {
+	            global $plugin_page_cr;
+
+				// low-level filtering for miscellaneous admin operations which are not well supported by the WP API
+				$hardway_uris = array(
+				'index.php',		'revision.php',			'admin.php?page=rvy-revisions',
+				'post.php', 		'post-new.php', 		'edit.php', 
+				'upload.php', 		'edit-comments.php', 	'edit-tags.php',
+				'profile.php',		'admin-ajax.php',
+				'link-manager.php', 'link-add.php',			'link.php',		 
+				'edit-link-category.php', 	'edit-link-categories.php',
+				'media-upload.php',	'nav-menus.php'  
+				);
+
+				$hardway_uris = apply_filters( 'scoper_admin_hardway_uris', $hardway_uris );
+																															// support for rs-config-ngg <= 1.0
+				if ( defined('XMLRPC_REQUEST') || in_array( $pagenow, $hardway_uris ) || in_array( $plugin_page_cr, $hardway_uris ) || in_array( "p-admin/admin.php?page=$plugin_page_cr", $hardway_uris ) )
+					require_once( 'hardway/hardway-admin_rs.php' );
+        	}
+		} // endif is_admin or xmlrpc
+	}
+	
+	
+	// add filters which were skipped due to direct file access, but are now needed for the error page display
+	function add_main_filters() {
+		$is_admin = is_admin();
+		$is_administrator = is_content_administrator_rs();
+		$disable_queryfilters = defined('DISABLE_QUERYFILTERS_RS');
+		$frontend_admin = false;
+
+		if ( ! defined('DOING_CRON') ) {
+			if ( $this->is_front() ) {
+				if ( ! $disable_queryfilters )
+					require_once('query-interceptor-front_rs.php');
+	
+				if ( ! $is_administrator ) {
+					require_once('qry-front_non-administrator_rs.php');
+					$GLOBALS['feed_interceptor'] = new FeedInterceptor_RS(); // file already required in role-scoper.php
+				}
+	
+				require_once('template-interceptor_rs.php');
+				$GLOBALS['template_interceptor'] = new TemplateInterceptor_RS();
+	
+				$frontend_admin = ! scoper_get_option('no_frontend_admin'); // potential performance enhancement	
+			}
+				
+			// ===== Filters which are always loaded (except on plugin scripts), for any access type
+			include_once( 'hardway/wp-patches_agp.php' ); // simple patches for WP
+			
+			if ( $this->is_front() || ( 'edit.php' == $GLOBALS['pagenow'] ) ) {
+				require_once('query-interceptor-base_rs.php');
+				$GLOBALS['query_interceptor_base'] = new QueryInterceptorBase_RS();  // listing filter used for role status indication in edit posts/pages and on front end by template functions
+			}
+		}
+		
+		// ===== Filters which support automated role maintenance following content creation/update
+		// Require an explicitly set option to skip these for front end access, just in case other plugins modify content from the front end.
+		if ( ( $is_admin || defined('XMLRPC_REQUEST') || $frontend_admin || defined('DOING_CRON') ) ) {
+			require_once( 'admin/cache_flush_rs.php' );
+			require_once( 'admin/filters-admin_rs.php' );
+			$GLOBALS['scoper_admin_filters'] = new ScoperAdminFilters();
+			
+			if ( defined( 'RVY_VERSION' ) ) // Support Revisionary references to $scoper->filters_admin (TODO: eventually phase this out)
+				$this->filters_admin =& $GLOBALS['scoper_admin_filters'];
+		}
+		// =====
+	}
+	
+
+	function init_users_interceptor() {
+		if ( ! isset($GLOBALS['users_interceptor']) ) {
+			require_once('users-interceptor_rs.php');
+			$GLOBALS['users_interceptor'] = new UsersInterceptor_RS();
+
+			//log_mem_usage_rs( 'init Users Interceptor' );
+		}
+		
+		return $GLOBALS['users_interceptor'];
+	}
+	
+	
 	// Primarily for internal use. Drops some features of WP core get_terms while adding the following versatility:
 	// - supports any RS-defined taxonomy, with or without WP taxonomy schema
 	// - optionally return term_id OR term_taxonomy_id as single column
@@ -441,35 +448,28 @@ class Scoper
 	function get_terms($taxonomy, $filtering = true, $cols = COLS_ALL_RS, $object_id = 0, $args = array()) {
 		if ( ! $tx = $this->taxonomies->get($taxonomy) )
 			return array();
-		
+
 		global $wpdb;
 
-		$defaults = array( 'order_by' => '', 'use_object_roles' => false, 'access_name' => '' ); // IMPORTANT to default access_name to nullstring
+		$defaults = array( 'order_by' => '', 'use_object_roles' => false, 'operation' => '' ); // IMPORTANT to default operation to nullstring
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
 
-		if ( $filtering && is_administrator_rs($tx->source) )
-			$filtering = 0;
+		if (  is_administrator_rs( $this->taxonomies->member_property( $taxonomy, 'object_source' ) ) )
+			$filtering = false;
 
 		// try to pull it out of wpcache
 		$ckey = md5( $taxonomy . $cols . $object_id . serialize($args) . $order_by );
 		
 		if ( $filtering ) {
 			$src_name = $this->taxonomies->member_property($taxonomy, 'object_source', 'name');
-			
-			if ( ADMIN_TERMS_FILTER_RS === $filtering ) {
-				if ( $reqd_caps = $this->cap_defs->get_matching($src_name, $taxonomy, OP_ADMIN_RS) ) {
-					$args['reqd_caps_by_otype'] = array();
-					$args['reqd_caps_by_otype'][$src_name] = array_keys($reqd_caps);
-				}
-			} else {
-				$args['reqd_caps_by_otype'] = $this->get_terms_reqd_caps($src_name, $access_name);
-			}
 
-			$ckey = md5( $ckey . serialize($reqd_caps) ); ; // can vary based on request URI
+			$args['reqd_caps_by_otype'] = $this->get_terms_reqd_caps( $taxonomy, $operation, ADMIN_TERMS_FILTER_RS === $filtering );
+
+			$ckey = md5( $ckey . serialize($args['reqd_caps_by_otype']) ); ; // can vary based on request URI
 		
 			global $current_user;
-			$cache_flag = SCOPER_ROLE_TYPE . '_scoper_get_terms';
+			$cache_flag = 'rs_scoper_get_terms';
 			$cache = $current_user->cache_get($cache_flag);
 		} else {			
 			$cache_flag = "all_terms";
@@ -489,7 +489,7 @@ class Scoper
 		if ( ! $query_base )
 			return array();
 
-		$query = ( $filtering ) ? apply_filters('terms_request_rs', $query_base, $taxonomy, '', $args) : $query_base;
+		$query = ( $filtering ) ? apply_filters('terms_request_rs', $query_base, $taxonomy, $args) : $query_base;
 
 		// avoid sending alarms to SQL purists if this query was not modified by RS filter
 		if ( $query_base == $query )
@@ -505,7 +505,7 @@ class Scoper
 			// for COLS_ALL query, need to call core get_terms call in case another plugin is translating term names
 			if ( has_filter( 'get_terms', array('ScoperHardwayTaxonomy', 'flt_get_terms') ) ) {
 				remove_filter( 'get_terms', array('ScoperHardwayTaxonomy', 'flt_get_terms'), 1, 3 );
-				$all_terms = get_terms('category');
+				$all_terms = get_terms($taxonomy);
 				add_filter( 'get_terms', array('ScoperHardwayTaxonomy', 'flt_get_terms'), 1, 3 );
 
 				$term_names = scoper_get_property_array( $all_terms, 'term_id', 'name' );
@@ -518,10 +518,11 @@ class Scoper
 				
 			if ( ORDERBY_HIERARCHY_RS == $order_by ) {
 				require_once('admin/admin_lib_rs.php');
-				if ( $src = $this->taxonomies->member_property($taxonomy, 'source') ) {
+				
+				if ( $src = $this->data_sources->get( $tx->source ) ) {
 					if ( ! empty($src->cols->id) && ! empty($src->cols->parent) ) {
-						require_once( 'hardway/hardway-parent_rs.php');
-						$results = ScoperHardwayParent::order_by_hierarchy($results, $src->cols->id, $src->cols->parent);
+						require_once( 'admin/admin_lib-bulk-parent_rs.php');
+						$results = ScoperAdminBulkParent::order_by_hierarchy($results, $src->cols->id, $src->cols->parent);
 					}
 				}
 			}
@@ -531,27 +532,24 @@ class Scoper
 
 		if ( $results || empty( $_POST ) ) { // todo: why do we get an empty array for unfiltered request for object terms early in POST processing? (on submission of a new post by a contributor)
 			if ( $filtering )
-				$current_user->cache_set( $cache, $cache_flag );
+				$current_user->cache_force_set( $cache, $cache_flag );
 			else
-				wpp_cache_set( $cache_id, $cache, $cache_flag );	
+				wpp_cache_force_set( $cache_id, $cache, $cache_flag );	
 		}
 		
 		return $results;
 	}
 	
-	function get_default_restrictions($scope, $args = '') {
+	function get_default_restrictions($scope, $args = array()) {
 		$defaults = array( 'force_refresh' => false );
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
-		
+	
 		if ( isset($this->default_restrictions[$scope]) && ! $force_refresh )
 			return $this->default_restrictions[$scope];
 		
-		$role_type = SCOPER_ROLE_TYPE;
-			
 		if ( empty($force_refresh) ) {
-			$role_type = SCOPER_ROLE_TYPE;
-			$cache_flag = "{$role_type}_{$scope}_def_restrictions";
+			$cache_flag = "rs_{$scope}_def_restrictions";
 			$cache_id = md5('');	// maintain default id generation from previous versions
 
 			$default_strict = wpp_cache_get($cache_id, $cache_flag);
@@ -560,12 +558,12 @@ class Scoper
 		if ( $force_refresh || ! is_array($default_strict) ) {
 			global $wpdb;
 			
-			$qry = "SELECT src_or_tx_name, role_name FROM $wpdb->role_scope_rs WHERE role_type = '$role_type' AND topic = '$scope' AND max_scope = '$scope' AND obj_or_term_id = '0'";
+			$qry = "SELECT src_or_tx_name, role_name FROM $wpdb->role_scope_rs WHERE role_type = 'rs' AND topic = '$scope' AND max_scope = '$scope' AND obj_or_term_id = '0'";
 
 			$default_strict = array();
 			if ( $results = scoper_get_results($qry) ) {
 				foreach ( $results as $row ) {
-					$role_handle = scoper_get_role_handle($row->role_name, $role_type);
+					$role_handle = scoper_get_role_handle($row->role_name, 'rs');
 					$default_strict[$row->src_or_tx_name][$role_handle] = true;
 					
 					if (OBJECT_SCOPE_RS == $scope) {
@@ -590,23 +588,19 @@ class Scoper
 	//
 	// returns $arr['restrictions'][role_handle][obj_or_term_id] = array( 'assign_for' => $row->assign_for, 'inherited_from' => $row->inherited_from ),
 	//				['unrestrictions'][role_handle][obj_or_term_id] = array( 'assign_for' => $row->assign_for, 'inherited_from' => $row->inherited_from )
-	function get_restrictions($scope, $src_or_tx_name, $args = '') {
-		$SCOPER_ROLE_TYPE = SCOPER_ROLE_TYPE;
+	function get_restrictions($scope, $src_or_tx_name, $args = array()) {
 		$def_cols = COL_ID_RS;
 
 		// Note: propogating child restrictions are always directly assigned to the child term(s).
 		// Use include_child_restrictions to force inclusion of restrictions that are set for child items only,
 		// for direct admin of these restrictions and for propagation on term/object creation.
 		$defaults = array( 	'id' => 0,					'include_child_restrictions' => false,
-						 	'force_refresh' => false, 	'role_type' => $SCOPER_ROLE_TYPE, 
+						 	'force_refresh' => false, 
 						 	'cols' => $def_cols,		'return_array' => false );
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
 		
-		//if ( $return_array )
-		//	$force_refresh = true;	// wpcache contains require_for value only
-		
-		$cache_flag = "{$role_type}_{$scope}_restrictions_{$src_or_tx_name}";
+		$cache_flag = "rs_{$scope}_restrictions_{$src_or_tx_name}";
 		$cache_id = md5($src_or_tx_name . $cols . strval($return_array) . strval($include_child_restrictions) );
 
 		if ( ! $force_refresh ) {
@@ -672,7 +666,7 @@ class Scoper
 
 			$for_clause = ( $include_child_restrictions ) ? '' : "AND require_for IN ('entity', 'both')";
 			
-			$qry_base = "FROM $wpdb->role_scope_rs WHERE role_type = '$role_type' AND topic = '$scope' AND max_scope = '$max_scope' AND src_or_tx_name = '$src_or_tx_name' $for_clause $role_clause";
+			$qry_base = "FROM $wpdb->role_scope_rs WHERE role_type = 'rs' AND topic = '$scope' AND max_scope = '$max_scope' AND src_or_tx_name = '$src_or_tx_name' $for_clause $role_clause";
 			
 			if ( COL_COUNT_RS == $cols )
 				$qry = "SELECT role_name, count(obj_or_term_id) AS item_count, require_for $qry_base GROUP BY role_name";
@@ -681,7 +675,7 @@ class Scoper
 
 			if ( $results = scoper_get_results($qry) ) {
 				foreach( $results as $row) {
-					$role_handle = scoper_get_role_handle($row->role_name, $role_type);
+					$role_handle = scoper_get_role_handle($row->role_name, 'rs');
 					
 					if ( COL_COUNT_RS == $cols )
 						$items[$setting_type][$role_handle] = $row->item_count;
@@ -694,20 +688,20 @@ class Scoper
 			
 		} // end foreach default_strict_mode
 
-		wpp_cache_set($cache_id, $items, $cache_flag);
+		wpp_cache_force_set($cache_id, $items, $cache_flag);
 
 		if ( $id ) {
 			foreach ( $items as $setting_type => $roles )
 				foreach ( array_keys($roles) as $role_handle )
 					$items[$setting_type][$role_handle] = array_intersect_key( $items[$setting_type][$role_handle], array( $id => true ) );
 		}
-		
+
 		return $items;
 	}
 	
 	
 	// wrapper for back-compat with calling code expecting array without date limit dimension
-	function qualify_terms($reqd_caps, $taxonomy = 'category', $qualifying_roles = '', $args = '') {
+	function qualify_terms($reqd_caps, $taxonomy = 'category', $qualifying_roles = '', $args = array()) {
 		$terms = $this->qualify_terms_daterange( $reqd_caps, $taxonomy, $qualifying_roles, $args );
 		
 		if ( isset($terms['']) && is_array($terms['']) )
@@ -718,11 +712,9 @@ class Scoper
 
 	// $qualifying_roles = array[role_handle] = 1 : qualifying roles
 	// returns array of term_ids (terms which have at least one of the qualifying roles assigned)
-	function qualify_terms_daterange($reqd_caps, $taxonomy = 'category', $qualifying_roles = '', $args = '') {
-		$defaults = array( 'src_name' => '', 'object_type' => '',  'user' => '', 
-						   'return_id_type' => COL_ID_RS, 'use_blog_roles' => true, 
-							'alternate_roles' => '', 'override_roles' => '', 'object_type' => '', 'ignore_restrictions' => false );
-			
+	function qualify_terms_daterange($reqd_caps, $taxonomy = 'category', $qualifying_roles = '', $args = array()) {
+		$defaults = array( 'user' => '', 'return_id_type' => COL_ID_RS, 'use_blog_roles' => true, 'ignore_restrictions' => false );
+
 		if ( isset($args['qualifying_roles']) )
 			unset($args['qualifying_roles']);
 			
@@ -732,24 +724,9 @@ class Scoper
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
 
-		$SCOPER_ROLE_TYPE = SCOPER_ROLE_TYPE;
-		
-		if ( ! $src_name || ! $object_type ) {
-			$object_types = $this->cap_defs->object_types_from_caps($reqd_caps);
-			
-			if ( count($object_types) == 1 ) {
-				$src_name = key($object_types);
-				
-				if ( (count($object_types[$src_name]) == 1) && key($object_types[$src_name]) )
-					$object_type = key($object_types[$src_name]);
-				else
-					$object_type = $this->data_sources->detect('type', $src_name);
-			}
-		}
-		
 		if ( ! $qualifying_roles )  // calling function might save a little work or limit to a subset of qualifying roles
-			$qualifying_roles = $this->role_defs->qualify_roles($reqd_caps);
-		
+			$qualifying_roles = $this->role_defs->qualify_roles( $reqd_caps );
+			
 		if ( ! $this->taxonomies->is_member($taxonomy) )
 			return array( '' => array() );
 		
@@ -759,19 +736,12 @@ class Scoper
 		}
 		
 		// If the taxonomy does not require objects to have at least one term, there are no strict terms.
-		// Therefore, blogrole blending is not per-term and is handled in the calling function rather than here.
 		if ( ! $this->taxonomies->member_property($taxonomy, 'requires_term') )
-			$use_blog_roles = false;
-			
-		if ( $override_roles )
-			$qualifying_roles = $override_roles;
-		
+			$ignore_restrictions = true;
+
 		if ( ! is_array($qualifying_roles) )
 			$qualifying_roles = array($qualifying_roles => 1);	
 
-		if ( $alternate_roles )
-			$qualifying_roles = array_unique( array_merge($qualifying_roles, $alternate_roles) );
-			
 		// no need to serialize and md5 the whole user object
 		if ( ! empty($user) )
 			$args['user'] = $user->ID;
@@ -802,37 +772,35 @@ class Scoper
 					$good_terms[$date_key] = agp_array_flatten( $good_terms[$date_key] );
 			}
 		}
-	
+
 		if ( $use_blog_roles ) {
 			foreach ( array_keys($user->blog_roles) as $date_key ) {	
 				$user_blog_roles = array_intersect_key( $user->blog_roles[$date_key], $qualifying_roles );
-				
-				if ( 'rs' == SCOPER_ROLE_TYPE ) {
-					// Also include user's WP blogrole(s) which correspond to the qualifying RS role(s)
-					if ( $wp_qualifying_roles = $this->role_defs->qualify_roles($reqd_caps, 'wp') ) {
-						
-						if ( $user_blog_roles_wp = array_intersect_key( $user->blog_roles[$date_key], $wp_qualifying_roles ) ) {
-						
-							// Credit user's qualifying WP blogrole via equivalent RS role(s)
-							// so we can also enforce "term restrictions", which are based on RS roles
-							$user_blog_roles_via_wp = $this->role_defs->get_contained_roles( array_keys($user_blog_roles_wp), false, 'rs' );
-							$user_blog_roles_via_wp = array_intersect_key( $user_blog_roles_via_wp, $qualifying_roles );
-							$user_blog_roles = array_merge( $user_blog_roles, $user_blog_roles_via_wp );
-						}
+
+				// Also include user's WP blogrole(s) which correspond to the qualifying RS role(s)
+				if ( $wp_qualifying_roles = $this->role_defs->qualify_roles($reqd_caps, 'wp') ) {
+					
+					if ( $user_blog_roles_wp = array_intersect_key( $user->blog_roles[$date_key], $wp_qualifying_roles ) ) {
+					
+						// Credit user's qualifying WP blogrole via equivalent RS role(s)
+						// so we can also enforce "term restrictions", which are based on RS roles
+						$user_blog_roles_via_wp = $this->role_defs->get_contained_roles( array_keys($user_blog_roles_wp), false, 'rs' );
+						$user_blog_roles_via_wp = array_intersect_key( $user_blog_roles_via_wp, $qualifying_roles );
+						$user_blog_roles = array_merge( $user_blog_roles, $user_blog_roles_via_wp );
 					}
 				}
 				
 				if ( $user_blog_roles ) {
 					if ( empty($ignore_restrictions) ) {
-						// array of term_ids that require the specified role to be assigned via taxonomy or blog role (user blog caps ignored)
+						// array of term_ids that require the specified role to be assigned via taxonomy or object role (user blog caps ignored)
 						$strict_terms = $this->get_restrictions(TERM_SCOPE_RS, $taxonomy);
 					} else
 						$strict_terms = array();
-					
+
 					foreach ( array_keys($user_blog_roles) as $role_handle ) {
 						if ( isset($strict_terms['restrictions'][$role_handle]) && is_array($strict_terms['restrictions'][$role_handle]) )
 							$terms_via_this_role = array_diff( $all_terms, array_keys($strict_terms['restrictions'][$role_handle]) );
-					
+						
 						elseif ( isset($strict_terms['unrestrictions'][$role_handle]) && is_array($strict_terms['unrestrictions'][$role_handle]) )
 							$terms_via_this_role = array_intersect( $all_terms, array_keys( $strict_terms['unrestrictions'][$role_handle] ) );
 						
@@ -857,7 +825,7 @@ class Scoper
 				$all_terms_cols = $this->get_terms( $taxonomy, UNFILTERED_RS );
 				$good_tt_ids = array();
 				foreach ( $good_terms[$date_key] as $term_id )
-					foreach (array_keys($all_terms_cols) as $termkey)
+					foreach ( array_keys($all_terms_cols) as $termkey )
 						if ( $all_terms_cols[$termkey]->term_id == $term_id ) {
 							$good_tt_ids []= $all_terms_cols[$termkey]->term_taxonomy_id;
 							break;
@@ -874,59 +842,84 @@ class Scoper
 	
 	// account for different contexts of get_terms calls 
 	// (Scoped roles can dictate different results for front end, edit page/post, manage categories)
-	function get_terms_reqd_caps($src_name, $access_name = '') {
-		global $current_user;	
-	
-		if ( ! $this->data_sources->is_member($src_name) )
-			return;
-		
-		if ( empty($access_name) )
-			$access_name = ( is_admin() && strpos($_SERVER['SCRIPT_NAME'], 'p-admin/profile.php') ) ? 'front' : CURRENT_ACCESS_NAME_RS; // hack to support subscribe2 categories checklist
+	function get_terms_reqd_caps( $taxonomy, $operation = '', $is_term_admin = false ) {
+		global $pagenow;
+
+		if ( ! $src_name = $this->taxonomies->member_property( $taxonomy, 'object_source' ) ) {
+			if ( taxonomy_exists( $taxonomy ) )
+				$src_name = 'post';
+		}
+
+		$return_caps = array();
+
+		$is_term_admin = $is_term_admin || in_array( $pagenow, array( 'edit-tags.php', 'nav-menus.php' ) );	// possible TODO: abstract for non-WP taxonomies
+
+		if ( $is_term_admin ) {
+			// query pertains to the management of terms
+			if ( 'post' == $src_name ) {
+				$taxonomy_obj = get_taxonomy( $taxonomy );
+				$return_caps[$taxonomy] = array( $taxonomy_obj->cap->manage_terms );
+			} elseif ( 'link_category' == $taxonomy ) { 
+				$return_caps[$taxonomy] = array( 'manage_categories' );
+			} else {
+				global $scoper;
+				$cap_defs = $scoper->cap_defs->get_matching( $src_name, $taxonomy, OP_ADMIN_RS );
+				$return_caps[$taxonomy] = $cap_defs ? array_keys( $cap_defs ) : array();
+			}	 	
+		} else {
+			// query pertains to reading or editing content within certain terms, or adding terms to content
 			
-		if ( ! $arr = $this->data_sources->member_property($src_name, 'terms_where_reqd_caps', $access_name ) )
-			return;
+			$base_caps_only = true;
+			
+			if ( 'post' == $src_name ) {
+				$status = ( is_admin() ) ? 'draft' : 'publish';	// we want to retrieve basic object access caps for current access type (possible TODO: define a default_status property)
 
-		if ( ! is_array($arr) )
-			$arr = array($arr);
-		
-		$full_uri = urldecode($_SERVER['REQUEST_URI']);
-		
-		$matched = array();
-		foreach ( $arr as $uri_sub => $reqd_caps )	// if no uri substrings match, use default (nullstring key)
-			if ( ( $uri_sub && strpos($full_uri, $uri_sub) ) || ( ! $uri_sub && ! $matched ) )
-				$matched = $reqd_caps;
-		
-		// replace matched caps with status-specific equivalent if applicable
-		if ( $matched ) {
-			if ( $object_id = $this->data_sources->detect('id', $src_name) ) {
-				$owner_id = $this->data_sources->get_from_db('owner', $src_name, $object_id);
-				$cap_attribs = ( $owner_id == $current_user->ID ) ? '' : array('others'); 
-				
-				$status = $this->data_sources->detect('status', $src_name, $object_id);
+				// terms query should be limited to a single object type for post.php, post-new.php, so only return caps for that object type (TODO: do this in wp-admin regardless of URI ?)
+				if ( in_array( $pagenow, array( 'post.php', 'post-new.php' ) ) )
+					$object_type = cr_find_post_type();
+			} else
+				$status = '';
 
-				if ( $status || $cap_attribs )
-					foreach ( $matched as $object_type => $otype_caps )
-						foreach ( $otype_caps as $cap_name )
-							if ( $cap_def = $this->cap_defs->get($cap_name) )
-								if ( $other_defs = $this->cap_defs->get_matching($src_name, $cap_def->object_type, $cap_def->op_type, STATUS_ANY_RS) )
-									
-									foreach ( $other_defs as $other_cap_name => $other_def )
-										if ( $other_cap_name != $cap_name )
-										
-											if ( ( ! $other_def->status || ( $other_def->status == $status ) )
-											&& ( empty($other_def->attributes) || ( $other_def->attributes == $cap_attribs ) ) )
-												$matched[] = $other_cap_name;
+			// The return array will indicate term role enable / disable, as well as associated capabilities
+			if ( ! empty($object_type) )
+				$check_object_types = array( $object_type );
+			else {
+				if ( $check_object_types = (array) $this->data_sources->member_property( $src_name, 'object_types' ) )
+					$check_object_types = array_keys( $check_object_types );
 			}
+				
+			if ( 'post' == $src_name )
+				$use_post_types = scoper_get_option( 'use_post_types' );	
+			
+			$enabled_object_types = array();
+			foreach ( $check_object_types as $_object_type ) {
+				if ( $use_term_roles = scoper_get_otype_option( 'use_term_roles', $src_name, $_object_type ) )
+					if ( ! empty( $use_term_roles[$taxonomy] ) ) {
+						if ( ( 'post' != $src_name ) || ! empty( $use_post_types[$_object_type] ) )
+							$enabled_object_types []= $_object_type;
+					}
+			}
+
+			if ( empty($operation) )
+				$operation = ( $this->is_front() || ( 'profile.php' == $pagenow ) ) ? 'read' : 'edit';  // hack to support subscribe2 categories checklist
+
+			if ( 'read' == $operation )
+				$status = 'publish';
+
+			foreach( $enabled_object_types as $object_type )
+				$return_caps[$object_type] = cr_get_reqd_caps( $src_name, $operation, $object_type, $status, $base_caps_only );	
 		}
 		
-		return $matched;
+		return $return_caps;
 	}
 	
-	function users_who_can($reqd_caps, $cols = COLS_ALL_RS, $object_src_name = '', $object_id = 0, $args = '' ) {
+	function users_who_can($reqd_caps, $cols = COLS_ALL_RS, $object_src_name = '', $object_id = 0, $args = array() ) {
 		// if there are not capability requirements, no need to load Users_Interceptor filtering class
 		if ( ! $reqd_caps ) {
 			if ( COL_ID_RS == $cols )
 				$qcols = 'ID';
+			elseif ( COLS_ID_NAME_RS == $cols )
+				$qcols = "ID, user_login AS display_name";	// calling code assumes display_name property for user or group object
 			elseif ( COLS_ID_DISPLAYNAME_RS == $cols )
 				$qcols = "ID, display_name";
 			elseif ( COLS_ALL_RS == $cols )
@@ -953,8 +946,7 @@ class Scoper
 			$args = array_merge( $defaults, (array) $args );
 			extract($args);
 	
-			$role_type = SCOPER_ROLE_TYPE;
-			$cache_flag = "{$role_type}_users_who_can";
+			$cache_flag = "rs_users_who_can";
 			$cache_id = md5(serialize($reqd_caps) . $cols . 'src' . $object_src_name . 'id' . $object_id . serialize($args) );
 		
 			if ( ! $force_refresh ) {
@@ -966,20 +958,124 @@ class Scoper
 			}
 			
 			$this->init_users_interceptor();
-			$users = $this->users_interceptor->users_who_can($reqd_caps, $cols, $object_src_name, $object_id, $args );
-		
+			$users = $GLOBALS['users_interceptor']->users_who_can($reqd_caps, $cols, $object_src_name, $object_id, $args );
+
 			wpp_cache_set($cache_id, $users, $cache_flag);
 			return $users;
 		}
 	}
 	
-	function groups_who_can($reqd_caps, $cols = COLS_ALL_RS, $object_src_name = '', $object_id = 0, $args = '' ) {
+	function groups_who_can($reqd_caps, $cols = COLS_ALL_RS, $object_src_name = '', $object_id = 0, $args = array() ) {
 		$this->init_users_interceptor();
-		return $this->users_interceptor->groups_who_can($reqd_caps, $cols, $object_src_name, $object_id, $args );
+		return $GLOBALS['users_interceptor']->groups_who_can($reqd_caps, $cols, $object_src_name, $object_id, $args );
 	}
 	
 	function is_front() {
 		return ( defined('CURRENT_ACCESS_NAME_RS') && ( 'front' == CURRENT_ACCESS_NAME_RS ) );
 	}
+	
+	
+	// returns array of role names which have the required caps (or their basecap equivalent)
+	// AND have been applied to at least one object, for any user or group
+	function qualify_object_roles( $reqd_caps, $object_type = '', $user = '', $base_caps_only = false ) {
+		$roles = array();
+
+		if ( $base_caps_only )
+			$reqd_caps = $this->cap_defs->get_base_caps($reqd_caps);
+
+		$roles = $this->role_defs->qualify_roles($reqd_caps, 'rs', $object_type);
+
+		return $this->confirm_object_scope( $roles, $user );
+	}
+
+	// $roles[$role_handle] = array
+	// returns arr[$role_handle] 
+	function confirm_object_scope( $roles, $user = '' ) {
+		foreach ( array_keys($roles) as $role_handle ) {
+			if ( empty( $this->role_defs->members[$role_handle]->valid_scopes['object'] ) )
+				unset( $roles[$role_handle] );
+		}
+
+		if ( ! $roles )
+			return array();
+		
+		if ( is_object($user) )
+			$applied_obj_roles = $this->get_applied_object_roles( $user );
+		elseif ( empty($user) ) {
+			$applied_obj_roles = $this->get_applied_object_roles( $GLOBALS['current_user'] );
+		} else // -1 value passed to indicate check for all users
+			$applied_obj_roles = $this->get_applied_object_roles();
+
+		return array_intersect_key( $roles, $applied_obj_roles );	
+	}
+	
+	
+	// returns array of role_handles which have been applied to any object
+	// if $user arg is supplied, returns only roles applied for that user (or that user's groups) 
+	function get_applied_object_roles( $user = '' ) {
+		if ( is_object( $user ) ) {
+			$cache_flag = 'rs_object-roles';			// v 1.1: changed cache key from "object_roles" to "object-roles" to match new key format for blog, term roles
+			$cache = $user->cache_get($cache_flag);
+			
+			$limit = '';
+			$u_g_clause = $user->get_user_clause('');
+		} else {
+			$cache_flag = 'rs_applied_object-roles';	// v 1.1: changed cache key from "object_roles" to "object-roles" to match new key format for blog, term roles
+			$cache_id = 'all';
+			$cache = wpp_cache_get($cache_id, $cache_flag);
+			
+			$u_g_clause = '';
+		}
+		
+		if ( is_array($cache) )
+			return $cache;
+		
+		$role_handles = array();
+			
+		global $wpdb;
+		
+		// object roles support date limits, but content date limits (would be redundant and a needless performance hit)
+		$duration_clause = scoper_get_duration_clause( '', $wpdb->user2role2object_rs );
+
+		if ( $role_names = scoper_get_col("SELECT DISTINCT role_name FROM $wpdb->user2role2object_rs WHERE role_type='rs' AND scope='object' $duration_clause $u_g_clause") )
+			$role_handles = scoper_role_names_to_handles($role_names, 'rs', true); //arg: return role keys as array key
+		
+		if ( is_object($user) ) {
+			$user->cache_force_set($role_handles, $cache_flag);
+		} else
+			wpp_cache_force_set($cache_id, $role_handles, $cache_flag);
+		
+		return $role_handles;
+	}
+	
+	function user_can_edit_blogwide( $src_name = '', $object_type = '', $args = '' ) {
+		if ( is_administrator_rs($src_name) )
+			return true;
+	
+		require_once( 'admin/permission_lib_rs.php' );
+		return user_can_edit_blogwide_rs($src_name, $object_type, $args);
+	}
+	
 } // end Scoper class
+
+
+// (needed to stop using shared core library function with Revisionary due to changes in meta_flag handling)
+if ( ! function_exists('awp_user_can') ) {
+function awp_user_can( $reqd_caps, $object_id = 0, $user_id = 0, $meta_flags = array() ) {	
+	return cr_user_can( $reqd_caps, $object_id, $user_id, $meta_flags );
+}
+}
+
+// equivalent to current_user_can, 
+// except it supports array of reqd_caps, supports non-current user, and does not support numeric reqd_caps
+function cr_user_can( $reqd_caps, $object_id = 0, $user_id = 0, $meta_flags = array() ) {	
+	if ( function_exists('is_super_admin') && is_super_admin() ) 
+		return true;
+		
+	if ( is_content_administrator_rs() )
+		return current_user_can( $reqd_caps );
+
+	return _cr_user_can( $reqd_caps, $object_id, $user_id, $meta_flags );
+}
+
 ?>

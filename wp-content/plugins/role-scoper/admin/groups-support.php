@@ -69,8 +69,6 @@ class UserGroups_tp {
 	function deleteGroup ($group_id){
 		global $wpdb;
 
-		$role_type = SCOPER_ROLE_TYPE;
-		
 		if( ! $group_id || ! UserGroups_tp::getGroup($group_id) )
 			return false;
 
@@ -85,14 +83,14 @@ class UserGroups_tp {
 		// first delete all cache entries related to this group
 		if ( $group_members = ScoperAdminLib::get_group_members( $group_id, COL_ID_RS ) ) {
 			$id_in = "'" . implode("', '", $group_members) . "'";
-			$any_user_roles = scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE role_type = '$role_type' AND user_id IN ($id_in) LIMIT 1");
+			$any_user_roles = scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE role_type = 'rs' AND user_id IN ($id_in) LIMIT 1");
 			
 			foreach ($group_members as $user_id )
 				wpp_cache_delete( $user_id, 'group_membership_for_user' );
 		}
 		
-		//if ( $got_blogrole = scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE scope = 'blog' AND role_type = '$role_type' AND group_id = '$group_id' LIMIT 1") ) {
-			scoper_query("DELETE FROM $wpdb->user2role2object_rs WHERE scope = 'blog' AND role_type = '$role_type' AND group_id = '$group_id'");
+		//if ( $got_blogrole = scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE scope = 'blog' AND role_type = 'rs' AND group_id = '$group_id' LIMIT 1") ) {
+			scoper_query("DELETE FROM $wpdb->user2role2object_rs WHERE scope = 'blog' AND role_type = 'rs' AND group_id = '$group_id'");
 		
 			scoper_flush_roles_cache( BLOG_SCOPE_RS, ROLE_BASIS_GROUPS );
 			
@@ -100,8 +98,8 @@ class UserGroups_tp {
 				scoper_flush_roles_cache( BLOG_SCOPE_RS, ROLE_BASIS_USER_AND_GROUPS, $group_members );
 		//}
 		
-		//if ( $got_taxonomyrole = scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE scope = 'term' AND role_type = '$role_type' AND group_id = '$group_id' LIMIT 1") ) {
-			scoper_query("DELETE FROM $wpdb->user2role2object_rs WHERE scope = 'term' AND role_type = '$role_type' AND group_id = '$group_id'");
+		//if ( $got_taxonomyrole = scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE scope = 'term' AND role_type = 'rs' AND group_id = '$group_id' LIMIT 1") ) {
+			scoper_query("DELETE FROM $wpdb->user2role2object_rs WHERE scope = 'term' AND role_type = 'rs' AND group_id = '$group_id'");
 		
 			scoper_flush_roles_cache( TERM_SCOPE_RS, ROLE_BASIS_GROUPS );
 			
@@ -109,8 +107,8 @@ class UserGroups_tp {
 				scoper_flush_roles_cache( TERM_SCOPE_RS, ROLE_BASIS_USER_AND_GROUPS, $group_members );
 		//}
 		
-		//if ( $got_objectrole = scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE scope = 'object' AND role_type = '$role_type' AND group_id = '$group_id' LIMIT 1") ) {
-			scoper_query("DELETE FROM $wpdb->user2role2object_rs WHERE scope = 'object' AND role_type = '$role_type' AND group_id = '$group_id'");
+		//if ( $got_objectrole = scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE scope = 'object' AND role_type = 'rs' AND group_id = '$group_id' LIMIT 1") ) {
+			scoper_query("DELETE FROM $wpdb->user2role2object_rs WHERE scope = 'object' AND role_type = 'rs' AND group_id = '$group_id'");
 
 			scoper_flush_roles_cache( OBJECT_SCOPE_RS, ROLE_BASIS_GROUPS );
 			
@@ -181,7 +179,7 @@ class UserGroups_tp {
 				return false;
 				
 			// don't allow updating of metagroup name / descript
-			if( $prev->meta_id )
+			if( ! empty($prev->meta_id) )
 				return false;
 		}
 			
@@ -217,11 +215,15 @@ class UserGroups_tp {
 
 		if ( $can_moderate ) {
 			$current_members['recommended'] = ScoperAdminLib::get_group_members($group_id, COL_ID_RS, false, array( 'status' => 'recommended' ) );
-			$posted_members['recommended'] = explode( ',', trim($_POST['recommended_agents_rs_csv'], ',') );
+			
+			if ( ! empty($_POST['recommended_agents_rs_csv']) )
+				$posted_members['recommended'] = explode( ',', trim($_POST['recommended_agents_rs_csv'], ',') );
 		}
 
 		$current_members['requested'] = ScoperAdminLib::get_group_members($group_id, COL_ID_RS, false, array( 'status' => 'requested' ) );
-		$posted_members['requested'] = explode( ',', trim($_POST['requested_agents_rs_csv'], ',') );
+		
+		if ( ! empty($_POST['requested_agents_rs_csv']) )
+			$posted_members['requested'] = explode( ',', trim($_POST['requested_agents_rs_csv'], ',') );
 
 		$all_current_members = agp_array_flatten ( $current_members );
 		$all_posted_members = agp_array_flatten ( $posted_members );
@@ -253,7 +255,7 @@ class UserGroups_tp {
 		global $scoper;
 		
 		if ( ! $all_users )
-			$all_users = $scoper->users_who_can('', COLS_ID_DISPLAYNAME_RS);
+			$all_users = $scoper->users_who_can('', COLS_ID_NAME_RS);
 
 		if ( $group_id )
 			$group = ScoperAdminLib::get_group($group_id);
@@ -263,9 +265,13 @@ class UserGroups_tp {
 
 			if ( ! empty($group) && in_array( $group->meta_id, array( 'rv_pending_rev_notice_ed_nr_', 'rv_scheduled_rev_notice_ed_nr_' ) ) ) {
 				$args = array( 'any_object' => true );
-				$post_eligible_ids = $scoper->users_who_can( array("edit_published_posts", "edit_others_posts"), COL_ID_RS, 'post', 0, $args );
-				$page_eligible_ids = $scoper->users_who_can( array("edit_published_pages", "edit_others_pages"), COL_ID_RS, 'post', 0, $args );
-				$eligible_ids = array_unique( array_merge( $post_eligible_ids, $page_eligible_ids ) );
+				
+				$eligible_ids = array();
+				foreach( get_post_types( array( 'public' ), 'object' ) as $_type => $_type_obj ) {
+					$type_eligible_ids = $scoper->users_who_can( array( $_type_obj->cap->edit_published_posts, $_type_obj->cap->edit_others_posts ), COL_ID_RS, $_type, 0, $args );
+					$eligible_ids = array_merge( $eligible_ids, $type_eligible_ids );	
+				}
+				$eligible_ids = array_unique( $eligible_ids );
 			} else {
 				// force_all_users arg is a temporary measure to ensure that any user can be viewed / added to a sitewide MU group regardless of what blog backend it's edited through 
 				$_args = ( IS_MU_RS && scoper_get_option( 'mu_sitewide_groups', true ) ) ? array( 'force_all_users' => true ) : array();
@@ -275,16 +281,14 @@ class UserGroups_tp {
 			
 			$admin_ids = array();
 		} else {
-			$reqd_cap = ( 'moderator' == $user_class ) ? 'recommend_group_membership' : 'manage_groups';
+			$group_role_defs = ( 'moderator' == $user_class ) ? array( 'rs_group_moderator' ) : array( 'rs_group_manager' );
 			
 			if ( $group_id ) {
-				$group_role_defs = $scoper->role_defs->qualify_roles( $reqd_cap );
-
 				require_once('role_assignment_lib_rs.php');
-				$current_roles = ScoperRoleAssignments::organize_assigned_roles(OBJECT_SCOPE_RS, 'group', $group_id, array_keys($group_role_defs), ROLE_BASIS_USER);
+				$current_roles = ScoperRoleAssignments::organize_assigned_roles(OBJECT_SCOPE_RS, 'group', $group_id, $group_role_defs, ROLE_BASIS_USER);
 
 				$current_roles = agp_array_flatten($current_roles, false);
-				
+
 				$current_ids = ( isset($current_roles['assigned']) ) ? $current_roles['assigned'] : array();
 			} else
 				$current_ids = array();

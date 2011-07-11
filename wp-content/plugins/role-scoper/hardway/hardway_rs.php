@@ -25,34 +25,27 @@ if ( $scoper->is_front() || ! is_content_administrator_rs() )
 // flt_get_terms '' so private posts are included in count, as basis for display when hide_empty arg is used
 
 
-if ( $scoper->data_sources->member_property('post', 'object_types', 'page') )
-	add_filter('get_pages', array('ScoperHardway', 'flt_get_pages'), 1, 2);
+add_filter('get_pages', array('ScoperHardway', 'flt_get_pages'), 1, 2);
 
 /**
  * ScoperHardway PHP class for the WordPress plugin Role Scoper
  * hardway_rs.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  * Used by Role Scoper Plugin as a container for statically-called functions
  *
  */	
 class ScoperHardway
 {	
-	//  Scoped equivalent to WP 2.8.3 core get_pages
+	//  Scoped equivalent to WP 3.0 core get_pages
 	//	Currently, scoped roles cannot be enforced without replicating the whole function  
 	//
-	//	Enforces cap requirements as specified in WP_Scoped_Data_Source::reqd_caps
-	function flt_get_pages($results, $args = '') {
-		if ( isset( $args['show_option_none'] ) && ( __('Main Page (no parent)') == $args['show_option_none'] ) ) {
-			// avoid redundant filtering (currently replacing parent dropdown on flt_dropdown_pages filter)
-			return $results;
-		}
-		
-		if ( ! is_array($results) )
-			$results = (array) $results;
-			
+	//	Enforces cap requirements as specified in cr_get_reqd_caps
+	function flt_get_pages($results, $args = array()) {
+		$results = (array) $results;
+
 		global $wpdb;
 
 		// === BEGIN Role Scoper ADDITION: global var; various special case exemption checks ===
@@ -65,9 +58,6 @@ class ScoperHardway
 		// buffer titles in case they were filtered previously
 		$titles = scoper_get_property_array( $results, 'ID', 'post_title' );
 
-		if ( ! scoper_get_otype_option( 'use_object_roles', 'post', 'page' ) )
-			return $results;
-
 		// depth is not really a get_pages arg, but remap exclude arg to exclude_tree if wp_list_terms called with depth=1
 		if ( ! empty($args['exclude']) && empty($args['exclude_tree']) && ! empty($args['depth']) && ( 1 == $args['depth'] ) )
 			if ( 0 !== strpos( $args['exclude'], ',' ) ) // work around wp_list_pages() bug of attaching leading comma if a plugin uses wp_list_pages_excludes filter
@@ -79,18 +69,21 @@ class ScoperHardway
 		$defaults = array(
 			'child_of' => 0, 'sort_order' => 'ASC',
 			'sort_column' => 'post_title', 'hierarchical' => 1,
-			'exclude' => '', 'include' => '',
+			'exclude' => array(), 'include' => array(),
 			'meta_key' => '', 'meta_value' => '',
 			'authors' => '', 'parent' => -1, 'exclude_tree' => '',
 			'number' => '', 'offset' => 0,
+			'post_type' => 'page', 'post_status' => 'publish',
 			
 			'depth' => 0, 'suppress_filters' => 0,
 			'remap_parents' => -1,	'enforce_actual_depth' => -1,	'remap_thru_excluded_parent' => -1
 		);		// Role Scoper arguments added above
 		
 		// === BEGIN Role Scoper ADDITION: support front-end optimization
+		$post_type = ( isset( $args['post_type'] ) ) ? $args['post_type'] : $defaults['post_type'];
+		
 		if ( $scoper->is_front() ) {
-			if ( defined( 'SCOPER_GET_PAGES_LEAN' ) )
+			if ( ( 'page' == $post_type ) && defined( 'SCOPER_GET_PAGES_LEAN' ) ) // custom types are likely to have custom fields
 				$defaults['fields'] = "$wpdb->posts.ID, $wpdb->posts.post_title, $wpdb->posts.post_parent, $wpdb->posts.post_date, $wpdb->posts.post_date_gmt, $wpdb->posts.post_status, $wpdb->posts.post_name, $wpdb->posts.post_modified, $wpdb->posts.post_modified_gmt, $wpdb->posts.guid, $wpdb->posts.menu_order, $wpdb->posts.comment_count";
 			else {
 				$defaults['fields'] = "$wpdb->posts.*";
@@ -114,6 +107,33 @@ class ScoperHardway
 		$offset = (int) $offset;
 
 		$child_of = (int) $child_of;  // Role Scoper modification: null value will confuse children array check
+
+		// Make sure the post type is hierarchical
+		$hierarchical_post_types = get_post_types( array( 'public' => true, 'hierarchical' => true ) );
+		if ( !in_array( $post_type, $hierarchical_post_types ) )
+			return false;
+	
+		// Make sure we have a valid post status
+		if ( !in_array($post_status, get_post_stati()) )
+			return false;
+			
+		// for the page parent dropdown, return no available selections for a published main page if the logged user isn't allowed to de-associate it from Main
+		if ( ! empty( $name ) && ( 'parent_id' == $name ) ) {
+			global $post;
+			
+			if ( ! $post->post_parent && ! $GLOBALS['scoper_admin_filters']->user_can_associate_main( $post_type ) ) {
+				$status_obj = get_post_status_object( $post->post_status );
+				if ( $status_obj->public || $status_obj->private )
+					return array();
+			}
+			
+			if ( ! empty( $post ) && ( $post_type == $post->post_type ) ) {
+				if ( $post->post_parent )
+					$append_page = get_post( $post->post_parent );
+
+				$exclude_tree = $post->ID;
+			}
+		}
 		
 		//$scoper->last_get_pages_args = $r; // don't copy entire args array unless it proves necessary
 		$scoper->last_get_pages_depth = $depth;
@@ -124,11 +144,14 @@ class ScoperHardway
 		
 		// === BEGIN Role Scoper MODIFICATION: wp-cache key and flag specific to access type and user/groups
 		//
+		if ( ! scoper_get_otype_option( 'use_object_roles', 'post', $post_type ) )
+			return $results;
+
 		$key = md5( serialize( compact(array_keys($defaults)) ) );
 		$ckey = md5 ( $key . CURRENT_ACCESS_NAME_RS );
 		
 		global $current_user;
-		$cache_flag = SCOPER_ROLE_TYPE . '_get_pages';
+		$cache_flag = 'rs_get_pages';
 
 		$cache = $current_user->cache_get($cache_flag);
 		
@@ -154,7 +177,7 @@ class ScoperHardway
 			$meta_value = '';
 			$hierarchical = false;
 			$incpages = wp_parse_id_list($include);
-			if ( count($incpages) ) {
+			if ( ! empty( $incpages ) ) {
 				foreach ( $incpages as $incpage ) {
 					if (empty($inclusions))
 						$inclusions = ' AND ( ID = ' . intval($incpage) . ' ';
@@ -169,7 +192,7 @@ class ScoperHardway
 		$exclusions = '';
 		if ( !empty($exclude) ) {
 			$expages = wp_parse_id_list($exclude);
-			if ( count($expages) ) {
+			if ( ! empty( $expages) ) {
 				foreach ( $expages as $expage ) {
 					if (empty($exclusions))
 						$exclusions = ' AND ( ID <> ' . intval($expage) . ' ';
@@ -185,7 +208,7 @@ class ScoperHardway
 		if (!empty($authors)) {
 			$post_authors = wp_parse_id_list($authors);
 	
-			if ( count($post_authors) ) {
+			if ( ! empty( $post_authors ) ) {
 				foreach ( $post_authors as $post_author ) {
 					//Do we have an author id or an author login?
 					if ( 0 == intval($post_author) ) {
@@ -207,73 +230,104 @@ class ScoperHardway
 			}
 		}
 	
-		
-		// === BEGIN Role Scoper MODIFICATION: split query into join, where clause for filtering
-		//
-		$where_base = " AND post_type = 'page' AND post_status='publish' $exclusions $inclusions $author_query ";
-		
-		if ( $parent >= 0 )
-			$where_base .= $wpdb->prepare(' AND post_parent = %d ', $parent);
+		$join = '';
+		$where = "$exclusions $inclusions ";
 
 		if ( ! empty( $meta_key ) && ! empty($meta_value) ) {
+			$join = " INNER JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id";   // Role Scoper modification: was LEFT JOIN in WP 3.0 core (TODO: would that botch uro join results?
+			
 			// meta_key and meta_value might be slashed
 			$meta_key = stripslashes($meta_key);
 			$meta_value = stripslashes($meta_value);
-			$join_base = " INNER JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id";
-			$where_base .= " AND $wpdb->postmeta.meta_key = '$meta_key' AND $wpdb->postmeta.meta_value = '$meta_value'";
-		} else
-			$join_base = '';
+			
+			if ( ! empty( $meta_key ) )
+				$where .= $wpdb->prepare(" AND $wpdb->postmeta.meta_key = %s", $meta_key);
+			if ( ! empty( $meta_value ) )
+				$where .= $wpdb->prepare(" AND $wpdb->postmeta.meta_value = %s", $meta_value);
+		}
 	
-		$request = "SELECT $fields FROM $wpdb->posts $join_base WHERE 1=1 $where_base ORDER BY $sort_column $sort_order ";
-
-		$list_private_pages = scoper_get_otype_option('private_items_listable', 'post', 'page');
-
-		$def_caps = $scoper->data_sources->members['post']->reqd_caps['read']['page']['private'];
+		if ( $parent >= 0 )
+			$where .= $wpdb->prepare(' AND post_parent = %d ', $parent);
+			
+		// === BEGIN Role Scoper MODIFICATION:
+		// allow pages of multiple statuses to be displayed (requires default status=publish to be ignored)
+		//
+		$where_post_type = $wpdb->prepare( "post_type = '%s'", $post_type );
+		$where_status = '';
 		
-		if ( ! is_admin() && ! $list_private_pages ) {
-			// As an extra precaution to make sure we can PREVENT private page listing even if private status is included in query,
-			// temporarily set the required cap for reading private pages to a nonstandard cap name (which is probably not owned by any user)
-			$scoper->data_sources->members['post']->reqd_caps['read']['page']['private'] = array('list_private_pages');
-		} else {
-			// WP core does not include private pages in query.  Include private status clause in anticipation of user-specific filtering
-			$request = str_replace("AND post_status='publish'", "AND ( post_status IN ('publish','private') )", $request);
+		global $current_user;
+		
+		$is_front = $scoper->is_front();
+		$is_teaser_active = $scoper->is_front() && scoper_get_otype_option('do_teaser', 'post') && scoper_get_otype_option('use_teaser', 'post', $post_type); 
+		$private_teaser = $is_teaser_active && scoper_get_otype_option('use_teaser', 'post', $post_type) && ! scoper_get_otype_option('teaser_hide_private', 'post', $post_type);
+		
+		if ( $is_front && ( ! empty($current_user->ID) || $private_teaser ) )
+			$frontend_list_private = scoper_get_otype_option('private_items_listable', 'post', 'page');  // currently using Page option for all hierarchical types
+		else
+			$frontend_list_private = false;
+
+		// WP core does not include private pages in query.  Include private statuses in anticipation of user-specific filtering		
+		if ( $post_status && ( ( 'publish' != $post_status ) || ( $is_front && ! $frontend_list_private ) ) )
+			$where_status = $wpdb->prepare( "post_status = '%s'", $post_status );	
+		else {
+			// since we will be applying status clauses based on content-specific roles and restrictions, only a sanity check safeguard is needed when post_status is unspecified or defaulted to "publish"			
+			$safeguard_statuses = array();
+			foreach( get_post_stati( array('internal' => false), 'object' ) as $status_name => $status_obj )
+				if ( ( ! $is_front ) || $status_obj->private || $status_obj->public )
+					$safeguard_statuses []= $status_name;
+
+			$where_status = "post_status IN ('" . implode("','", $safeguard_statuses ) . "')";
 		}
 		
-		if ( $scoper->is_front() && scoper_get_otype_option('do_teaser', 'post') && scoper_get_otype_option('use_teaser', 'post', 'page') && ! defined('SCOPER_TEASER_HIDE_PAGE_LISTING') ) {
+		$query = "SELECT $fields FROM $wpdb->posts $join WHERE 1=1 AND $where_post_type AND ( $where_status $where $author_query ) ORDER BY $sort_column $sort_order";
+
+		if ( !empty($number) )
+			$query .= ' LIMIT ' . $offset . ',' . $number;
+			
+		if ( $is_teaser_active && ! defined('SCOPER_TEASER_HIDE_PAGE_LISTING') ) {
 			// We are in the front end and the teaser is enabled for pages	
 
-			$pages = scoper_get_results($request);			// execute unfiltered query
+			$query = apply_filters( 'objects_request_rs', $query, 'post', $post_type, array( 'force_teaser' => true ) );
 			
+			$pages = scoper_get_results($query);			// execute unfiltered query
+
 			// Pass results of unfiltered query through the teaser filter.
 			// If listing private pages is disabled, they will be omitted completely, but restricted published pages
 			// will still be teased.  This is a slight design compromise to satisfy potentially conflicting user goals without yet another option
-			$pages = apply_filters('objects_teaser_rs', $pages, 'post', 'page', array('request' => $request, 'force_teaser' => true) );
 			
-			if ( $list_private_pages ) {
-				if ( ! scoper_get_otype_option('teaser_hide_private', 'post', 'page') )
+			$pages = apply_filters( 'objects_results_rs', $pages, 'post', (array) $post_type, array( 'request' => $query, 'force_teaser' => true, 'object_type' => $post_type ) );
+			
+			// restore buffered titles in case they were filtered previously
+			scoper_restore_property_array( $pages, $titles, 'ID', 'post_title' );
+			
+			$pages = apply_filters('objects_teaser_rs', $pages, 'post', $post_type, array('request' => $query, 'force_teaser' => true) );
+			
+			if ( $frontend_list_private ) {
+				if ( ! scoper_get_otype_option('teaser_hide_private', 'post', $post_type) )
 					$tease_all = true;
-			} else
-				// now that the teaser filter has been applied, restore reqd_caps value to normal
-				$scoper->data_sources->members['post']->reqd_caps['read']['page']['private'] = $def_caps;
-	
+			}
+
 		} else {
+			$_args = array( 'skip_teaser' => true );
+
+			if ( in_array( $GLOBALS['pagenow'], array( 'post.php', 'post-new.php' ) ) ) {
+				$_args['alternate_reqd_caps'][0] = array( "create_child_{$post_type}s" );
+			}
+
 			// Pass query through the request filter
-			$request = apply_filters('objects_request_rs', $request, 'post', 'page', array( 'skip_teaser' => true ) );
-			
-			// now that the request filter has been applied, restore reqd_caps value to normal
-			if ( ! $list_private_pages )
-				$scoper->data_sources->members['post']->reqd_caps['read']['page']['private'] = $def_caps;
+			$query = apply_filters('objects_request_rs', $query, 'post', $post_type, $_args );
 
 			// Execute the filtered query
-			$pages = scoper_get_results($request);
+			$pages = scoper_get_results($query);
+			
+			// restore buffered titles in case they were filtered previously
+			scoper_restore_property_array( $pages, $titles, 'ID', 'post_title' );
 		}
 
 		if ( empty($pages) )
 			// alternate hook name (WP core already applied get_pages filter)
 			return apply_filters('get_pages_rs', array(), $r);
 		
-		// restore buffered titles in case they were filtered previously
-		scoper_restore_property_array( $pages, $titles, 'ID', 'post_title' );
 		//
 		// === END Role Scoper MODIFICATION ===
 		// ====================================
@@ -281,7 +335,7 @@ class ScoperHardway
 		// Role Scoper note: WP core get_pages has already updated wp_cache and pagecache with unfiltered results.
 		update_page_cache($pages);
 		
-		
+
 		// === BEGIN Role Scoper MODIFICATION: Support a disjointed pages tree with some parents hidden ========
 		if ( $child_of || empty($tease_all) ) {  // if we're including all pages with teaser, no need to continue thru tree remapping
 
@@ -311,7 +365,7 @@ class ScoperHardway
 		}
 		// === END Role Scoper MODIFICATION ===
 		// ====================================
-		
+
 		if ( ! empty($exclude_tree) ) {
 			$exclude = array();
 	
@@ -321,11 +375,25 @@ class ScoperHardway
 			foreach ( $children as $child )
 				$excludes[] = $child->ID;
 			$excludes[] = $exclude;
+
 			$total = count($pages);
 			for ( $i = 0; $i < $total; $i++ ) {
 				if ( in_array($pages[$i]->ID, $excludes) )
 					unset($pages[$i]);
 			}
+		}
+		
+		if ( ! empty( $append_page ) && ! empty( $pages ) ) {
+			$found = false;
+			foreach( array_keys($pages) as $key ) { 
+				if ( $post->post_parent == $pages[$key]->ID ) {
+					$found = true;
+					break;	
+				}
+			}
+			
+			if ( empty($found) )
+				$pages []= $append_page;
 		}
 		
 		// re-index the array, just in case anyone cares
@@ -459,15 +527,15 @@ class ScoperHardway
 		// temporary WP bug workaround
 		//if ( $child_of && ( $parent < 0 ) && ( ! $any_top_items ) && $first_child_of_match ) {
 		if ( $child_of && ( $parent < 0 ) && $first_child_of_match ) {
-			$first_item = reset($items);
-			
-			if ( $child_of != $first_item->$col_parent ) {
-				// As of WP 2.8.4, Walker class with botch this array because it assumes that the first element in the page array is a child of the display root
-				// To work around, we must move first element with the desired child_of up to the top of the array
-				$_items = array( $items[$first_child_of_match] );
-				
-				unset( $items[$first_child_of_match] );
-				$items = array_merge( $_items, $items );
+			if ( $first_item = reset($items) ) {
+				if ( $child_of != $first_item->$col_parent ) {
+					// As of WP 2.8.4, Walker class will botch this array because it assumes that the first element in the page array is a child of the display root
+					// To work around, we must move first element with the desired child_of up to the top of the array
+					$_items = array( $items[$first_child_of_match] );
+					
+					unset( $items[$first_child_of_match] );
+					$items = array_merge( $_items, $items );
+				}
 			}
 		}
 

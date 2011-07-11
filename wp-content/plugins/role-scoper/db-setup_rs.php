@@ -107,18 +107,9 @@ function scoper_update_schema($last_db_ver) {
 		$wpdb->query($query);
 		
 	} else {
-
 		// if existing table was found but specified groupid and userid columns are invalid, bail
 		$tablefields = $wpdb->get_col("DESC $wpdb->user2group_rs", 0);
-		
-		foreach ($tablefields as $column) if ($column == $wpdb->user2group_gid_col) break;	
-		if ($column != $wpdb->user2group_gid_col)
-			wp_die ( sprintf( 'Database config error: specified ID column (%1$s) not found in table %2$s', $wpdb->user2group_gid_col, $wpdb->user2group_rs ) );
-		
-		foreach ($tablefields as $column) if ($column == $wpdb->user2group_uid_col) break;	
-		if ($column != $wpdb->user2group_uid_col)
-			wp_die ( sprintf( 'Database config error: specified ID column (%1$s) not found in table %2$s', $wpdb->user2group_uid_col, $wpdb->user2group_rs ) );
-
+			
 		foreach ($cols as $requiredcol_name => $requiredcol_typedef) {
 			foreach ($tablefields as $col_name)
 				if ($requiredcol_name == $col_name) break;
@@ -192,32 +183,6 @@ function scoper_update_schema($last_db_ver) {
 	
 } //end update_schema function
 
-
-function scoper_update_supplemental_schema($table_name) {
-	global $wpdb;
-
-	if ( 'data_rs' == $table_name ) {
-		$tabledefs .= "CREATE TABLE {$wpdb->prefix}{$table_name} (
-		 rs_id bigint(20) NOT NULL auto_increment,
-		 topic enum('term', 'object') default 'object',
-		 src_or_tx_name varchar(32) NOT NULL default '',
-		 object_type varchar(32) NOT NULL default '',
-		 actual_id bigint(20) NOT NULL default '0',
-		 name text NOT NULL,
-		 parent bigint(20) NOT NULL default '0',
-		 owner bigint(20) NOT NULL default '0',
-		 status varchar(20) NOT NULL default '',
-		 	PRIMARY KEY  (rs_id),
-		 	KEY actual_id (actual_id,src_or_tx_name,object_type,topic)
-		);
-		";
-		
-		// apply all table definitions
-		dbDelta_rs($tabledefs);
-		
-		return true;
-	}
-}
 
 
 /**

@@ -16,43 +16,40 @@ define ('ASSIGN_FOR_BOTH_RS', 'both');
 
 define( 'OBJECT_UI_RS', 'object_ui' );
 	
-
 require_once( 'admin_lib_rs.php' );
 
 if ( IS_MU_RS )
 	require_once( 'admin_lib-mu_rs.php' );
 
-if ( strpos($_SERVER['SCRIPT_NAME'], 'p-admin/index.php' ) && ! defined( 'USE_RVY_RIGHTNOW' )  )
+if ( ( 'index.php' == $GLOBALS['pagenow'] ) && ! defined( 'USE_RVY_RIGHTNOW' )  )
 	include_once( 'admin-dashboard_rs.php' );
 
 	
 class ScoperAdmin
 {
+	var $scoper;
 	var $role_assigner;	//object reference
 	var $tinymce_readonly;
 	
 	function ScoperAdmin() {
+		global $pagenow;
+		
+		$this->scoper =& $GLOBALS['scoper'];
+		
 		add_action('admin_head', array(&$this, 'admin_head_base'));
 
 		if ( ! defined('DISABLE_QUERYFILTERS_RS') || is_content_administrator_rs() ) {
 			add_action('admin_head', array(&$this, 'admin_head'));
 			
-			if ( ! defined('XMLRPC_REQUEST') && ! strpos($_SERVER['SCRIPT_NAME'], 'p-admin/async-upload.php' ) ) {
+			if ( ! defined('XMLRPC_REQUEST') && ( 'async-upload.php' != $pagenow ) ) {
 				add_action('admin_menu', array(&$this,'build_menu'));
-				
-				if ( strpos($_SERVER['SCRIPT_NAME'], 'p-admin/plugins.php') ) {
-					if ( awp_ver( '2.8' ) )
-						add_filter( 'plugin_row_meta', array(&$this, 'flt_plugin_action_links'), 10, 2 );
-					else
-						add_filter( 'plugin_action_links', array(&$this, 'flt_plugin_action_links'), 10, 2 );
-				}
-						
-				if ( awp_is_plugin_active( 'ozh-admin-drop-down-menu' ) && ! awp_ver( '2.8' ) ) // direct-hacked menu element IDs in the ozh filters are not applicable for WP versions >= 2.8
-					include_once( 'ozh_helper_rs.php' );
+
+				if ( 'plugins.php' == $pagenow )
+					add_filter( 'plugin_row_meta', array(&$this, 'flt_plugin_action_links'), 10, 2 );
 			}
 		}
 
-		if ( ( strpos($_SERVER['SCRIPT_NAME'], 'p-admin/categories.php') || ( isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], 'p-admin/categories.php') ) ) && awp_is_plugin_active('subscribe2') )
+		if ( ( ( 'edit-tags.php' == $pagenow ) || ( isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], 'p-admin/edit-tags.php') ) ) && awp_is_plugin_active('subscribe2') )
 			require_once('subscribe2_helper_rs.php');
 			
 		if ( defined( 'FLUTTER_NAME' ) )
@@ -110,8 +107,13 @@ class ScoperAdmin
 						include_once( SCOPER_ABSPATH . "/admin/section_{$topic}.php" );
 						call_user_func( "scoper_admin_section_{$topic}", $matches[1] ); 
 					} else {
-						if ( ! $matches[2] )
-							$matches[2] = 'post';
+						if ( ! $matches[2] ) {
+							global $scoper;
+							if ( $scoper->data_sources->member_property( 'post', 'object_types', $matches[1] ) )
+								$matches[2] = 'post';
+							else
+								$matches[2] = $matches[1];
+						}
 	
 						include_once( SCOPER_ABSPATH . "/admin/object_{$topic}.php" );
 						call_user_func( "scoper_admin_object_{$topic}", $matches[2], $matches[1] ); 
@@ -124,8 +126,7 @@ class ScoperAdmin
 	// adds an Options link next to Deactivate, Edit in Plugins listing
 	function flt_plugin_action_links($links, $file) {
 		if ( $file == SCOPER_BASENAME ) {
-			if ( awp_ver('2.8') )
-				$links[] = "<a href='http://agapetry.net/forum/'>" . __awp('Support Forum') . "</a>";
+			$links[] = "<a href='http://agapetry.net/forum/'>" . __awp('Support Forum') . "</a>";
 			
 			$page = ( IS_MU_RS ) ? 'rs-site_options' : 'rs-options';
 			$links[] = "<a href='admin.php?page=$page'>" . __awp('Options') . "</a>";
@@ -143,51 +144,49 @@ class ScoperAdmin
 	}
 	
 	function admin_head() {
-		global $scoper;
+		global $pagenow, $plugin_page_cr;
 		
 		echo '<link rel="stylesheet" href="' . SCOPER_URLPATH . '/admin/role-scoper.css" type="text/css" />'."\n";
 
-		if ( false !== strpos(urldecode($_SERVER['REQUEST_URI']), 'page=rs-options') ) {
+		if ( 'rs-options' == $plugin_page_cr ) {
 			if ( scoper_get_option('version_update_notice') ) {
 				require_once('misc/version_notice_rs.php');
 				scoper_new_version_notice();
 			}
 
-		} elseif ( false !== strpos(urldecode($_SERVER['REQUEST_URI']), 'admin.php?page=rs-about') ) {
+		} elseif ( 'rs-about' == $plugin_page_cr ) {
 			echo '<link rel="stylesheet" href="' . SCOPER_URLPATH . '/admin/about/about.css" type="text/css" />'."\n";
 		}
-				
-		// dynamically set checkbox titles for user/group object role selection
-		if ( isset($_GET['src_name']) && isset($_GET['object_type']) ) {
+
+		if ( in_array( $pagenow, array( 'post.php', 'post-new.php') ) ) {
+			$src_name = 'post';
+			$object_type = cr_find_post_type();	
+		} elseif ( isset($_GET['src_name']) && isset($_GET['object_type']) ) {
 			$src_name = $_GET['src_name'];
-			$object_type = $_GET['object_type'];
-			$src = $scoper->data_sources->get($src_name);
-			$otype_def = $scoper->data_sources->member_property($src_name, 'object_types', $object_type);
-		} else {
-			$context = $this->get_context();
-			if ( ! empty($context->source) && ! empty($context->object_type_def) ) {
-				$src = $context->source;
-				$otype_def = $context->object_type_def;
+			$object_type = $_GET['object_type'];	
+		}
+		
+		if ( ! empty($object_type) ) {
+			// dynamically set checkbox titles for user/group object role selection
+			$src = $this->scoper->data_sources->get($src_name);
+			$otype_def = $this->scoper->data_sources->member_property($src_name, 'object_types', $object_type);
+			
+			if ( ! empty($src) && ! empty($src->cols->parent) && empty($otype_def->ignore_object_hierarchy) ) {
+				$obj_title = sprintf( __('assign role for this %s', 'scoper'), agp_strtolower( $otype_def->labels->singular_name ) );
+				$child_title = sprintf( __('assign role for sub-%s', 'scoper'), agp_strtolower( $otype_def->labels->name ) );
+
+				$js_params = "var role_for_object_title = '$obj_title';"
+						. "var role_for_children_title = '$child_title';";
+		
+				// TODO: replace some of this JS with equivalent JQuery
+				echo "\n" . '<script type="text/javascript">' . $js_params . '</script>';
+				echo "\n" . "<script type='text/javascript' src='" . SCOPER_URLPATH . "/admin/rs-objrole-cbox-maint.js'></script>";
 			}
 		}
 		
-		if ( ! empty($src) && ! empty($src->cols->parent) && ! empty($otype_def->ignore_object_hierarchy) ) {
-			$obj_title = sprintf( __('assign role for this %s', 'scoper'), agp_strtolower($otype_def->display_name) );
-			$child_title = sprintf( __('assign role for sub-%s', 'scoper'), agp_strtolower($otype_def->display_name_plural) );
-		
-			$js_params = "var role_for_object_title = '$obj_title';"
-					. "var role_for_children_title = '$child_title';";
-	
-			// TODO: replace some of this JS with equivalent JQuery
-			echo "\n" . '<script type="text/javascript">' . $js_params . '</script>';
-			echo "\n" . "<script type='text/javascript' src='" . SCOPER_URLPATH . "/admin/rs-objrole-cbox-maint.js'></script>";
-		}
-
 		add_filter( 'contextual_help_list', array(&$this, 'flt_contextual_help_list'), 10, 2 );
 		
-		if( false !== strpos( urldecode($_SERVER['REQUEST_URI']), 'admin.php?page=rs-' ) 
-		&& false !== strpos( urldecode($_SERVER['REQUEST_URI']), 'roles' ) ) {
-			
+		if ( ( 0 === strpos( $plugin_page_cr, 'rs-' ) ) && strpos( $plugin_page_cr, 'roles' ) ) {
 			// add Ajax goodies we need for role duration/content date limit editing Bulk Role Admin
 			wp_print_scripts( array( 'page' ) );
 			
@@ -199,15 +198,15 @@ class ScoperAdmin
 		echo "\n" . "<script type='text/javascript' src='" . SCOPER_URLPATH . "/admin/agapetry.js'></script>";
 		echo "\n" . "<script type='text/javascript' src='" . SCOPER_URLPATH . "/admin/role-scoper.js'></script>";
 		
-		if ( awp_ver( '2.8' ) && scoper_get_option( 'group_ajax' ) && ( strpos( $_SERVER['REQUEST_URI'], 'user-edit.php' ) || strpos( $_SERVER['REQUEST_URI'], 'profile.php' ) || strpos( $_SERVER['REQUEST_URI'], 'page=rs-groups' ) ) ) {
+		if ( scoper_get_option( 'group_ajax' ) && ( in_array( $pagenow, array( 'user-edit.php', 'profile.php' ) ) || ( 'rs-groups' == $plugin_page_cr ) ) ) {
 			global $scoper_user_search;
-			
-			if ( strpos( $_SERVER['REQUEST_URI'], 'page=rs-groups' ) ) {
+
+			if ( 'rs-groups' == $plugin_page_cr ) {
 				$agent_type = 'users';
-				$agent_id = $_GET['id'];
+				$agent_id = isset( $_GET['id'] ) ? $_GET['id'] : 0;
 			} else {
 				$agent_type = 'groups';
-				if ( strpos( $_SERVER['REQUEST_URI'], 'profile.php' ) ) {
+				if ( 'profile.php' == $pagenow ) {
 					global $current_user;
 					$agent_id = $current_user->ID;	
 				} else
@@ -239,7 +238,7 @@ class ScoperAdmin
 					$link_section = str_replace( '_t', '', $link_section );	
 				}
 					
-		} elseif ( ('post' == $screen) || ('page' == $screen) ) {
+		} elseif ( in_array( $screen, array( 'post', 'page', 'upload', 'users' ) ) ) {
 			$link_section = $screen;
 		}
 
@@ -257,15 +256,69 @@ class ScoperAdmin
 		return $help;
 	}
 			
-	function build_menu() {
-		if ( ! defined('USER_ROLES_RS') && isset( $_POST['role_type'] ) )
-			scoper_use_posted_init_options();
+	function filter_add_new_content_links() {
+		global $scoper, $submenu;
 	
-		$uri = $_SERVER['SCRIPT_NAME'];
-		$path = SCOPER_ABSPATH;
+		if ( is_content_administrator_rs() )
+			return;
 		
-		global $scoper, $current_user;
+		// workaround for WP's universal inclusion of "Add New"
+		$src = $this->scoper->data_sources->get( 'post' );
+		foreach ( array_keys($src->object_types) as $_post_type ) {
+			if ( $wp_type = get_post_type_object( $_post_type ) ) {
+				$edit_key = ( 'post' == $_post_type ) ? 'edit.php' : "edit.php?post_type=$_post_type";
+				$add_key = ( 'post' == $_post_type ) ? 'post-new.php' :  "post-new.php?post_type=$_post_type";
+				
+				if ( isset($submenu[$edit_key]) ) {
+					foreach ( $submenu[$edit_key] as $key => $arr ) {
+						if ( isset($arr['2']) && ( $add_key == $arr['2'] ) ) {
+							if ( ! cr_user_can( $wp_type->cap->edit_posts, 0, 0, array('skip_id_generation' => true, 'skip_any_object_check' => true ) ) )
+								unset( $submenu[$edit_key][$key]);
+						}
+					}
+				}
+			}
+		}
+		
+		if ( isset($submenu['link-manager.php'][10]) ) {
+			$this->scoper->ignore_object_roles = true;
+			if ( ! current_user_can( 'manage_links' ) )
+				unset( $submenu['link-manager.php'][10] );
 
+			$this->scoper->ignore_object_roles = false;
+		}
+		
+		if ( 'edit.php' == $GLOBALS['pagenow'] ) {
+			$_post_type = ( ! empty($_REQUEST['post_type']) ) ? $_REQUEST['post_type'] : 'post';
+			if ( $wp_type = get_post_type_object( $_post_type ) ) {
+				if ( ! cr_user_can( $wp_type->cap->edit_posts, 0, 0, array('skip_id_generation' => true, 'skip_any_object_check' => true ) ) ) 
+					add_action( 'admin_footer', array( &$this, 'hide_add_new_button' ) );
+			}
+		}
+	}
+	
+	function hide_add_new_button() {
+?>
+<script type="text/javascript">
+/* <![CDATA[ */
+jQuery(document).ready( function($) {
+	$('.add-new-h2').hide();
+});
+/* ]]> */
+</script>
+<?php
+	}
+	
+	function build_menu() {
+		global $plugin_page_cr;
+		
+		if ( ! defined('USER_ROLES_RS') && isset( $_POST['enable_group_roles'] ) )
+			scoper_use_posted_init_options();
+
+		global $current_user;
+
+		$this->filter_add_new_content_links();
+		
 		$is_option_administrator = is_option_administrator_rs();
 		$is_user_administrator = is_user_administrator_rs();
 		$is_content_administrator = is_content_administrator_rs();
@@ -280,7 +333,7 @@ class ScoperAdmin
 		//
 		// end optional hack
 		*/
-		
+				
 		$require_blogwide_editor = scoper_get_option('role_admin_blogwide_editor_only');
 
 		if ( ! $is_content_administrator && ( 'admin_content' == $require_blogwide_editor ) )
@@ -294,14 +347,21 @@ class ScoperAdmin
 		$can_admin_objects = array();
 		$can_admin_terms = array();
 		
+		$use_post_types = scoper_get_option( 'use_post_types' );
+		$use_taxonomies = scoper_get_option( 'use_taxonomies' );
+
+		
 		// which object types does this user have any administration over?
-		foreach ( $scoper->data_sources->get_all() as $src_name => $src ) {
+		foreach ( $this->scoper->data_sources->get_all() as $src_name => $src ) {
 			if ( ! empty($src->no_object_roles) || ! empty($src->taxonomy_only) || ('group' == $src_name) )
 				continue;
 			
 			$object_types = ( isset($src->object_types) ) ? $src->object_types : array( $src_name => true );
 
 			foreach ( array_keys($object_types) as $object_type ) {
+				if ( ( 'post' == $src_name ) && empty( $use_post_types[$object_type] ) )
+					continue;
+				
 				if ( is_administrator_rs($src, 'user') || $this->user_can_admin_object($src_name, $object_type, 0, true) )
 					if ( scoper_get_otype_option('use_object_roles', "$src_name:$object_type") )
 						$can_admin_objects[$src_name][$object_type] = true;
@@ -309,35 +369,32 @@ class ScoperAdmin
 		}
 
 		// which taxonomies does this user have any administration over?
-		foreach ( $scoper->taxonomies->get_all() as $taxonomy => $tx ) {
-			if ( is_administrator_rs($tx->source, 'user') || $this->user_can_admin_terms($taxonomy) ) {
-				if ( scoper_get_otype_option('use_term_roles', $tx->object_source->name) ) {
-					$can_admin_terms[$taxonomy] = true;
-				}
-			}
+		foreach ( $this->scoper->taxonomies->get_all() as $taxonomy => $tx ) {
+			if ( taxonomy_exists($taxonomy) && empty( $use_taxonomies[$taxonomy] ) && ( 'post' == $tx->object_source ) )
+				continue;
+				
+			if ( is_taxonomy_used_rs( $taxonomy ) && ( is_administrator_rs($tx->source, 'user') || $this->user_can_admin_terms($taxonomy) ) )
+				$can_admin_terms[$taxonomy] = true;
 		}
 
 		$can_manage_groups = DEFINE_GROUPS_RS && ( $is_user_administrator || current_user_can('recommend_group_membership') );
 
 		// Users Tab
-		if ( DEFINE_GROUPS_RS && $can_manage_groups ) {
+		if ( DEFINE_GROUPS_RS ) {
 			$cap_req = ( $can_manage_groups ) ? 'read' : 'manage_groups';
 			
 			$groups_caption = ( defined( 'GROUPS_CAPTION_RS' ) ) ? GROUPS_CAPTION_RS : __('Role Groups', 'scoper');
-			
-			if ( IS_MU_RS )
-				$pfx = ( awp_ver('3.0-dev') ) ? 'ms' : 'wpmu';
-			
+
 			if ( IS_MU_RS && scoper_get_site_option( 'mu_sitewide_groups' ) )
-				add_submenu_page( "$pfx-admin.php", $groups_caption, $groups_caption, $cap_req, 'rs-groups', array( &$this, 'menu_handler' ) );
+				add_submenu_page( "ms-admin.php", $groups_caption, $groups_caption, $cap_req, 'rs-groups', array( &$this, 'menu_handler' ) );
 			else
 				add_submenu_page( 'users.php', $groups_caption, $groups_caption, $cap_req, 'rs-groups', array( &$this, 'menu_handler' ) );
 
 			// satisfy WordPress' demand that all admin links be properly defined in menu
-			if ( false !== strpos( urldecode($_SERVER['REQUEST_URI']), 'page=rs-default_groups' ) )
+			if ( 'rs-default_groups' == $plugin_page_cr )
 				add_submenu_page('users.php', __('User Groups', 'scoper'), __('Default Groups', 'scoper'), $cap_req, 'rs-default_groups', array( &$this, 'menu_handler' ) );
 		
-			if ( false !== strpos( urldecode($_SERVER['REQUEST_URI']), 'page=rs-group_members' ) )
+			if ( 'rs-group_members' == $plugin_page_cr )
 				add_submenu_page('users.php', __('User Groups', 'scoper'), __('Group Members', 'scoper'), $cap_req, 'rs-group_members', array( &$this, 'menu_handler' ) );
 		}
 
@@ -345,7 +402,7 @@ class ScoperAdmin
 		if ( ! $is_user_administrator && ! $can_admin_terms && ! $is_user_administrator && ! $can_admin_objects )
 			return;
 	
-		$general_roles = ('rs' == SCOPER_ROLE_TYPE) && $is_user_administrator; // && scoper_get_option('rs_blog_roles');  // rs_blog_roles option has never been active in any RS release; leave commented here in case need arises
+		$general_roles = $is_user_administrator; // && scoper_get_option('rs_blog_roles');  // rs_blog_roles option has never been active in any RS release; leave commented here in case need arises
 		
 		// determine the official WP-registered URL for roles and restrictions menus
 		$object_submenus_first = false;
@@ -359,12 +416,12 @@ class ScoperAdmin
 			$restrictions_menu = 'rs-post-restrictions';
 			$object_submenus_first = true;
 			
-		} elseif ( ! empty($can_admin_objects['post']['page']) ) {
+		} elseif ( ! empty($can_admin_objects['post']['page']) ) {  // TODO: handle custom types here?
 			$roles_menu = 'rs-page-roles';
 			$restrictions_menu = 'rs-page-restrictions';
 			$object_submenus_first = true;
 
-		} elseif ( $can_admin_terms && $scoper->taxonomies->member_property( key($can_admin_terms),  'requires_term' ) ) {
+		} elseif ( $can_admin_terms && $this->scoper->taxonomies->member_property( key($can_admin_terms),  'requires_term' ) ) {
 			$taxonomy = key($can_admin_terms);
 			$roles_menu = "rs-$taxonomy-roles_t";
 			$restrictions_menu = "rs-$taxonomy-restrictions_t";
@@ -393,19 +450,12 @@ class ScoperAdmin
 			$roles_menu = 'rs-general_roles';
 
 
+		if ( $is_option_administrator )
+			$roles_menu = 'rs-options';  // option administrators always have RS Options as top level roles submenu
+
 		if ( $is_user_administrator ) { 
-			$roles_menu = 'rs-options';  // user administrators always have RS Options as top level roles submenu
-			
 			if ( empty( $restrictions_menu ) )
 				$restrictions_menu =  'rs-category-restrictions_t';  // If RS Realms are customized, the can_admin_terms / can_admin_objects result can override this default, even for user administrators
-		}
-			
-		// For convenience in WP 2.6, set the primary menu link (i.e. default submenu) based on current URI
-		// When viewing Category Roles, make Restriction menu default-link to Category Restrictions submenu (and likewise for other terms/objects)
-		// (ozh plugin breaks this, and it is not needed in 2.7+ due to core JS dropdown)
-		if ( ! awp_ver('2.7-dev') && ! awp_is_plugin_active('wp_ozh_adminmenu.php') ) { 
-			require_once( 'admin-legacy_rs.php' );
-			scoper_set_legacy_menu_links( $roles_menu, $restrictions_menu, $uri, $can_admin_terms, $can_admin_objects );
 		}
 		
 		// Register the menus with WP using URI and links determined above
@@ -415,14 +465,14 @@ class ScoperAdmin
 		//  Manually set menu indexes for positioning below Users menu,
 		//  but not if Flutter (a.k.a. Fresh Page) plugin is active.  It re-indexes menu items 
 		if ( ! defined( 'SCOPER_DISABLE_MENU_TWEAK' ) ) {
-			if ( awp_ver('2.9') ) {
+			//if ( awp_ver('2.9') ) {
 				// review each WP version for menu indexes until there's a clean way to force menu proximity to 'Users'
 				if ( isset( $menu[70] ) && $menu[70][2] == 'users.php' ) {  // WP 2.9 and 3.0
 					$tweak_menu = true;
 					$restrictions_menu_key = 71;
 					$roles_menu_key = 72;
 				}
-			}
+			//}
 		}
 
 		$roles_cap = 'read'; // we apply other checks within this function to confirm the menu is valid for current user
@@ -449,25 +499,24 @@ class ScoperAdmin
 				if ( $can_admin_terms ) {
 					// Will only allow assignment to terms for which current user has admin cap
 					// Term Roles page also prevents assignment or removal of roles current user doesn't have
-					foreach ( $scoper->taxonomies->get_all() as $taxonomy => $tx ) {
+					foreach ( $this->scoper->taxonomies->get_all() as $taxonomy => $tx ) {
 						
 						if ( empty($can_admin_terms[$taxonomy]) )
 							continue;
 						
 						if ( $require_blogwide_editor ) {
-							global $current_user;
-							if ( empty( $current_user->allcaps['edit_others_posts'] ) && empty( $current_user->allcaps['edit_others_pages'] ) && empty( $current_user->allcaps['manage_categories'] ) )
+							if ( ! $this->scoper->user_can_edit_blogwide( 'post', '', array( 'require_others_cap' => true, 'status' => 'publish' ) ) )
 								continue;
 						}
 						
 						$show_roles_menu = true;
 
-						add_submenu_page($roles_menu, sprintf(__('%s Roles', 'scoper'), $tx->display_name), $tx->display_name_plural, 'read', "rs-$taxonomy-roles_t", array( &$this, 'menu_handler' ) );
+						add_submenu_page($roles_menu, sprintf(__('%s Roles', 'scoper'), $tx->labels->singular_name ), $tx->labels->name, 'read', "rs-$taxonomy-roles_t", array( &$this, 'menu_handler' ) );
 
 						if ( ! empty($tx->requires_term) ) {
 							$show_restrictions_menu = true;
 
-							add_submenu_page($restrictions_menu, sprintf(__('%s restrictions', 'scoper'), $tx->display_name), $tx->display_name_plural, 'read', "rs-$taxonomy-restrictions_t", array( &$this, 'menu_handler' ) );
+							add_submenu_page($restrictions_menu, sprintf(__('%s restrictions', 'scoper'), $tx->labels->singular_name), $tx->labels->name, 'read', "rs-$taxonomy-restrictions_t", array( &$this, 'menu_handler' ) );
 						}
 					} // end foreach taxonomy
 				} // endif can admin terms
@@ -475,7 +524,7 @@ class ScoperAdmin
 			} else {
 				// Object Roles (will only display objects user can edit)
 				if ( $can_admin_objects ) {
-					foreach ( $scoper->data_sources->get_all() as $src_name => $src ) {
+					foreach ( $this->scoper->data_sources->get_all() as $src_name => $src ) {
 						if ( ! empty($src->no_object_roles) || ! empty($src->taxonomy_only) || ('group' == $src_name) )
 							continue;
 						
@@ -486,10 +535,7 @@ class ScoperAdmin
 								continue;
 		
 							if ( $require_blogwide_editor ) {
-								$required_cap = ( 'page' == $object_type ) ? 'edit_others_pages' : 'edit_others_posts';
-								
-								global $current_user;
-								if ( empty( $current_user->allcaps[$required_cap] ) )
+								if ( ! $this->scoper->user_can_edit_blogwide( $src_name, $object_type, array( 'require_others_cap' => true ) ) )
 									continue;
 							}
 	
@@ -505,12 +551,12 @@ class ScoperAdmin
 							}
 							
 							$src_otype = ( isset($src->object_types) ) ? "{$src_name}:{$object_type}" : $src_name;
-							$display_name = $this->interpret_src_otype($src_otype, false);
-							$display_name_plural = $this->interpret_src_otype($src_otype, true);
+							$item_label_singular = $this->interpret_src_otype($src_otype, 'singular_name');
+							$item_label = $this->interpret_src_otype($src_otype);
 							
-							add_submenu_page($roles_menu, sprintf(__('%s Roles', 'scoper'), $display_name), $display_name_plural, 'read', $roles_page, array( &$this, 'menu_handler' ) );
+							add_submenu_page($roles_menu, sprintf(__('%s Roles', 'scoper'), $item_label_singular), $item_label, 'read', $roles_page, array( &$this, 'menu_handler' ) );
 							
-							add_submenu_page($restrictions_menu, sprintf(__('%s Restrictions', 'scoper'), $display_name), $display_name_plural, 'read', $restrictions_page, array( &$this, 'menu_handler' ) );	
+							add_submenu_page($restrictions_menu, sprintf(__('%s Restrictions', 'scoper'), $item_label_singular), $item_label, 'read', $restrictions_page, array( &$this, 'menu_handler' ) );	
 						} // end foreach obj type
 					} // end foreach data source
 				} // endif can admin objects
@@ -529,7 +575,7 @@ class ScoperAdmin
 				$submenu[$roles_menu][0][0] = __awp('Options');
 				
 			// satisfy WordPress' demand that all admin links be properly defined in menu
-			if ( false !== strpos( urldecode($_SERVER['REQUEST_URI']), 'rs-attachments_utility' ) )
+			if ( 'rs-attachments_utility' == $plugin_page_cr )
 				add_submenu_page($roles_menu, __('Attachment Utility', 'scoper'), __('Attachment Utility', 'scoper'), 'read', 'rs-attachments_utility', array( &$this, 'menu_handler' ) );
 
 		} elseif ( empty($show_restrictions_menu) || empty($show_roles_menu) ) {
@@ -553,104 +599,43 @@ class ScoperAdmin
 			}
 		}
 		
-		
-		// workaround for WP's universal inclusion of "Add New"
-		if ( awp_ver('2.7') ) {
-			// Posts menu
-			if ( isset($submenu['edit.php']) ) {
-				foreach ( $submenu['edit.php'] as $key => $arr ) {
-					if ( isset($arr['2']) && ( 'post-new.php' == $arr['2'] ) ) {
-						$scoper->cap_interceptor->skip_id_generation = true;
-						$scoper->cap_interceptor->skip_any_object_check = true;	
-	
-						if ( ! current_user_can('edit_posts') )
-							unset( $submenu['edit.php'][$key]);
-							
-						$scoper->cap_interceptor->skip_id_generation = false;
-						$scoper->cap_interceptor->skip_any_object_check = false;
-					}
-				}
-			}
-			
-			if ( awp_ver( '3.0' ) ) {
-				// handle Pages and custom post types
-				$src = $scoper->data_sources->get( 'post' );
-				foreach ( array_keys($src->object_types) as $_post_type ) {
-					if ( $wp_type = get_post_type_object( $_post_type ) ) {
-					
-						if ( isset($submenu["edit.php?post_type=$_post_type"]) ) {
-							foreach ( $submenu["edit.php?post_type=$_post_type"] as $key => $arr ) {
-								if ( isset($arr['2']) && ( "post-new.php?post_type=$_post_type" == $arr['2'] ) ) {
-									$scoper->cap_interceptor->skip_id_generation = true;
-									$scoper->cap_interceptor->skip_any_object_check = true;	
-				
-									if ( ! current_user_can($wp_type->cap->edit_posts) )
-										unset( $submenu["edit.php?post_type=$_post_type"][$key]);
-										
-									$scoper->cap_interceptor->skip_id_generation = false;
-									$scoper->cap_interceptor->skip_any_object_check = false;
-								}
-							}
-						}
-					}
-				}
-				
-			} else {
-				// Pages menu
-				if ( isset($submenu['edit-pages.php']) ) {
-					foreach ( $submenu['edit-pages.php'] as $key => $arr ) {
-						if ( isset($arr['2']) && ( 'page-new.php' == $arr['2'] ) ) {
-							$scoper->cap_interceptor->skip_id_generation = true;
-							$scoper->cap_interceptor->skip_any_object_check = true;	
-		
-							if ( ! current_user_can('edit_pages') )
-								unset( $submenu['edit-pages.php'][$key]);
-								
-							$scoper->cap_interceptor->skip_id_generation = false;
-							$scoper->cap_interceptor->skip_any_object_check = false;
-						}
-					}
-				}
-			}
-		}
-		
-		
 		// WP MU site options
 		if ( $is_option_administrator && IS_MU_RS )
 			scoper_mu_site_menu();
 		
 
 		// satisfy WordPress' demand that all admin links be properly defined in menu
-		if ( false !== strpos( urldecode($_SERVER['REQUEST_URI']), 'page=rs-object_role_edit' ) )
+		if ( 'rs-object_role_edit' == $plugin_page_cr )
 			add_submenu_page($roles_menu, __('Object Role Edit', 'scoper'), __('Object Role Edit', 'scoper'), 'read', 'rs-object_role_edit', array( &$this, 'menu_handler' ) );
 	}
 
 	
-	function interpret_src_otype($src_otype, $use_plural_display_name = true) {
-		global $scoper;
-		
+	function interpret_src_otype( $src_otype, $label_property = 'name' ) {
 		if ( ! $arr_src_otype = explode(':', $src_otype) )
-			return $display_name;
-	
-		$display_name_prop = ( $use_plural_display_name ) ? 'display_name_plural' : 'display_name';
-		
-		if ( isset( $arr_src_otype[1]) )
-			$display_name = $scoper->data_sources->member_property($arr_src_otype[0], 'object_types', $arr_src_otype[1], $display_name_prop);
-		else
-			$display_name = $scoper->data_sources->member_property($arr_src_otype[0], $display_name_prop);
+			return $src_otype;
 			
-		if ( ! $display_name )	// in case of data sources definition error, cryptic fallback better than nullstring
-			$display_name = $src_otype;
+		if ( isset( $arr_src_otype[1]) ) {
+			$label_text = $this->scoper->data_sources->member_property($arr_src_otype[0], 'object_types', $arr_src_otype[1], 'labels', $label_property);
+		} else
+			$label_text = $this->scoper->data_sources->member_property($arr_src_otype[0], 'labels', $label_property);
 			
-		return $display_name;
+		if ( ! $label_text ) { // need this in cases (Realm option labeling) where taxonomy is RS-enabled but its corresponding post type is not.  TODO: eliminate redundancy
+			if ( ( 'post' == $arr_src_otype[0] ) && ( $type_object = get_post_type_object( $arr_src_otype[1] ) ) )
+				$label_text = $type_object->labels->name;
+		}
+
+		if ( ! $label_text )	// in case of data sources definition error, cryptic fallback better than nullstring
+			$label_text = $src_otype;
+			
+		return $label_text;
 	}
 
-	function user_can_admin_role($role_handle, $item_id, $src_name = '', $object_type = '', $user = '' ) {
+	function user_can_admin_role($role_handle, $item_id, $src_name = '', $object_type = '', $args = array() ) {
 		if ( is_user_administrator_rs() )
 			return true;
 
 		require_once( 'permission_lib_rs.php' );
-		return user_can_admin_role_rs($role_handle, $item_id, $src_name, $object_type, $user );
+		return user_can_admin_role_rs($role_handle, $item_id, $src_name, $object_type, $args );
 	}
 	
 	function user_can_admin_object($src_name, $object_type, $object_id = false, $any_obj_role_check = false, $user = '' ) {
@@ -668,63 +653,5 @@ class ScoperAdmin
 		require_once( 'permission_lib_rs.php' );
 		return user_can_admin_terms_rs($taxonomy, $term_id, $user);
 	}
-	
-	
-	function user_can_edit_blogwide( $src_name = '', $object_type = '', $args = '' ) {
-		if ( is_administrator_rs($src_name) )
-			return true;
-
-		require_once( 'permission_lib_rs.php' );
-		return user_can_edit_blogwide_rs($src_name, $object_type, $args);
-	}
-	
-	// primary use is to account for different contexts of users query
-	function get_context($src_name = '', $reqd_caps_only = false) {
-		global $scoper;
-		
-		$full_uri = urldecode($_SERVER['REQUEST_URI']);
-		$matched = array();
-		
-		foreach ( $scoper->data_sources->get_all_keys() as $_src_name ) {
-			if ( $src_name)
-				$_src_name = $src_name;  // if a src_name arg was passed in, short-circuit the loop
-			
-			if ( $arr = $scoper->data_sources->member_property($_src_name, 'users_where_reqd_caps', CURRENT_ACCESS_NAME_RS) ) {
-
-				foreach ( $arr as $uri_sub => $reqd_caps ) {	// if no uri substrings match, use default (nullstring key), but only if data source was passed in
-					if ( ( $uri_sub && strpos($full_uri, $uri_sub) )
-					|| ( $src_name && ! $uri_sub && ! $matched ) ) {
-						$matched['reqd_caps'] = $reqd_caps;
-						
-						if ( ! $reqd_caps_only )
-							$matched['source'] = $scoper->data_sources->get($_src_name);
-						
-						if ( $uri_sub) break;
-					}
-				}
-			}
-			
-			if ( $matched || $src_name) // if a src_name arg was passed in, short-circuit the loop
-				break;
-		} // data sources loop
-		
-		if ( $matched && ! $reqd_caps_only ) {
-			if ( isset($matched['source']->object_types) ) {
-				// if this data source has more than one object type defined, 
-				// use the reqd_caps to determine object type for this context
-				if ( count($matched['source']->object_types) > 1 ) {
-					$src_otypes = $scoper->cap_defs->object_types_from_caps($matched['reqd_caps']);
-					if ( isset($src_otypes[$_src_name]) && (count($src_otypes[$_src_name]) == 1) ) {
-						reset($src_otypes[$_src_name]);
-						$matched['object_type_def'] = $matched['source']->object_types[ key($src_otypes[$_src_name]) ];
-					}
-				} else
-					$matched['object_type_def'] = reset( $matched['source']->object_types );
-			}
-		}
-	
-		return (object) $matched;
-	}
-	
 } // end class ScoperAdmin
 ?>

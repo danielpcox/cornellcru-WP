@@ -14,7 +14,6 @@ function scoper_default_options_sitewide() {
 		'group_recommendations' => true,
 		'enable_group_roles' => true,
 		'enable_user_roles' => true,
-		'role_type' => true,
 		'custom_user_blogcaps' => true,
 		'no_frontend_admin' => true,
 		'indicate_blended_roles' => true,
@@ -25,8 +24,6 @@ function scoper_default_options_sitewide() {
 		'rs_page_author_role_objscope' => true,
 		'rs_post_reader_role_objscope' => true,
 		'rs_post_author_role_objscope' => true,
-		'rs_page_revisor_role_objscope' => true,
-		'rs_post_revisor_role_objscope' => true,
 		
 		'display_user_profile_groups' => true,
 		'display_user_profile_roles' => true,
@@ -39,10 +36,13 @@ function scoper_default_options_sitewide() {
 		'remap_thru_excluded_term_parent' => true,
 		'mu_sitewide_groups' => true,
 		'file_filtering' => true,
+		'file_filtering_regen_key' => true,
 		'role_duration_limits' => true,
 		'role_content_date_limits' => true,
 
 		'disabled_access_types' => true,
+		'use_taxonomies' => true,
+		'use_post_types' => true,
 		'use_term_roles' => true,
 		'use_object_roles' => true,
 		'disabled_role_caps' => true,
@@ -78,27 +78,21 @@ function scoper_refresh_options_sitewide() {
 		$scoper_options_sitewide['mu_sitewide_groups'] = true;	// sitewide_groups option must be set site-wide!
 }
 
-
-function scoper_apply_custom_default_options() {
-	global $wpdb, $scoper_default_options, $scoper_default_otype_options, $scoper_options_sitewide;
+function scoper_apply_custom_default_options( $options_var ) {
+	global $wpdb, $scoper_options_sitewide;
 	
 	if ( $results = scoper_get_results( "SELECT meta_key, meta_value FROM $wpdb->sitemeta WHERE site_id = '$wpdb->siteid' AND meta_key LIKE 'scoper_default_%'" ) ) {
-
 		foreach ( $results as $row ) {
 			$option_basename = str_replace( 'scoper_default_', '', $row->meta_key );
 
 			if ( ! empty( $scoper_options_sitewide[$option_basename] ) )
 				continue;	// custom defaults are only for blog-specific options
 
-			if( isset( $scoper_default_options[$option_basename] ) )
-				$scoper_default_options[$option_basename] = maybe_unserialize( $row->meta_value );
-
-			elseif( isset( $scoper_default_otype_options[$option_basename] ) )
-				$scoper_default_otype_options[$option_basename] = maybe_unserialize( $row->meta_value );
+			if( isset( $GLOBALS[$options_var][$option_basename] ) )
+				$GLOBALS[$options_var][$option_basename] = maybe_unserialize( $row->meta_value );
 		}
 	}
 }
-
 
 function scoper_establish_group_scope() {
 	// TODO : possibly change this back to scoper_get_option call

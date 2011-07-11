@@ -8,14 +8,21 @@ class ScoperProfileUI {
 
 	function display_ui_user_roles($user, $groups_only = false) {
 		global $scoper;
-		
+
 		$blog_roles = array();
 		$term_roles = array();
 
-		$blog_roles = $user->get_blog_roles_daterange( SCOPER_ROLE_TYPE, array( 'include_role_duration_key' => true, 'enforce_duration_limits' => false ) );	// arg: return array with additional key dimension for role duration 
+		$blog_roles = $user->get_blog_roles_daterange( 'rs', array( 'include_role_duration_key' => true, 'enforce_duration_limits' => false ) );	// arg: return array with additional key dimension for role duration 
+		
+		// for Administrators, display any custom post General Roles which were auto-assigned to maintain default editing rights
+		global $current_user;
+		if ( $current_user == $user ) {
+			if ( is_content_administrator_rs() )
+				$blog_roles[''][''] = ( isset($blog_roles['']['']) ) ? array_merge( $current_user->assigned_blog_roles[''] ) : $current_user->assigned_blog_roles[''];
+		}
 		
 		foreach ( $this->scoper->taxonomies->get_all() as $taxonomy => $tx )	
-			$term_roles[$taxonomy] = $user->get_term_roles_daterange( $taxonomy, SCOPER_ROLE_TYPE, array( 'include_role_duration_key' => true, 'enforce_duration_limits' => false ) );	// arg: return array with additional key dimension for role duration
+			$term_roles[$taxonomy] = $user->get_term_roles_daterange( $taxonomy, 'rs', array( 'include_role_duration_key' => true, 'enforce_duration_limits' => false ) );	// arg: return array with additional key dimension for role duration
 
 		$duration_limits_enabled = scoper_get_option( 'role_duration_limits' );
 		$content_date_limits_enabled = scoper_get_option( 'role_content_date_limits' );
@@ -43,14 +50,9 @@ class ScoperProfileUI {
 		} else {
 			$html .= "<div id='userprofile_rolesdiv_rs' class='rs-scoped_role_profile'>";
 			$html .= "<h3>" . __('Scoped Roles', 'scoper') . "</h3>";
-	
-			if ( 'rs' == SCOPER_ROLE_TYPE )
-				$wp_blog_roles = $user->get_blog_roles( 'wp' );	// arg: return array with additional key dimension for role duration 
-			else {
-				if ( $blog_roles[''][''] )
-					$wp_blog_roles = $blog_roles[''][''];
-			}
-			
+
+			$wp_blog_roles = array_intersect_key( $user->assigned_blog_roles[''], $scoper->role_defs->get_matching( 'wp' ) );
+
 			if ( ! empty($wp_blog_roles) ) {
 				$display_names = array();
 				
@@ -59,7 +61,7 @@ class ScoperProfileUI {
 
 				$html .= sprintf( __("<strong>Assigned WordPress Role:</strong> %s", 'scoper'), implode(", ", $display_names) );
 			
-				if ( $contained_roles = $this->scoper->role_defs->get_contained_roles( array_keys($wp_blog_roles), false, SCOPER_ROLE_TYPE ) ) {
+				if ( $contained_roles = $this->scoper->role_defs->get_contained_roles( array_keys($wp_blog_roles), false, 'rs' ) ) {
 					$display_names = array();			
 					foreach (array_keys($contained_roles) as $role_handle)
 						$display_names []= $this->scoper->role_defs->get_display_name($role_handle);
@@ -73,69 +75,68 @@ class ScoperProfileUI {
 			$html .= '<br /><br />';
 		}
 		
-		if ( 'rs' == SCOPER_ROLE_TYPE ) {
-			$display_names = array();
-			
-			foreach ( array_keys($blog_roles) as $duration_key ) {
-				if ( is_serialized($duration_key) ) {
-					$role_date_limits = unserialize( $duration_key );
-					$role_date_limits->date_limited = true;
+		
+		$display_names = array();
+		
+		foreach ( array_keys($blog_roles) as $duration_key ) {
+			if ( is_serialized($duration_key) ) {
+				$role_date_limits = unserialize( $duration_key );
+				$role_date_limits->date_limited = true;
+			} else
+				$role_date_limits = array();
+
+			foreach ( array_keys($blog_roles[$duration_key]) as $date_key ) {
+				$display_names = array();
+				
+				if ( is_serialized($date_key) ) {
+					$content_date_limits = unserialize( $date_key );
+					$content_date_limits->content_date_limited = true;
 				} else
-					$role_date_limits = array();
+					$content_date_limits = array();
 
-				foreach ( array_keys($blog_roles[$duration_key]) as $date_key ) {
-					$display_names = array();
+				$date_caption = '';
 					
-					if ( is_serialized($date_key) ) {
-						$content_date_limits = unserialize( $date_key );
-						$content_date_limits->content_date_limited = true;
-					} else
-						$content_date_limits = array();
-
-					$date_caption = '';
-						
-					if ( $role_date_limits || $content_date_limits ) {
-						$limit_class = ''; // unused byref arg
-						$limit_style = ''; // unused byref arg
-						$link_class = '';  // unused byref arg
-						ScoperAdminUI::set_agent_formatting( array_merge( (array) $role_date_limits, (array) $content_date_limits ), $date_caption, $limit_class, $link_class, $limit_style, false ); // arg: no title='' wrapper around date_caption
-						$date_caption = '<span class="rs-gray"> ' . trim($date_caption) . '</span>';
-					}
-						
-					if ( $rs_blog_roles = $this->scoper->role_defs->filter_roles_by_type($blog_roles[$duration_key][$date_key], 'rs') ) {
-						foreach (array_keys($rs_blog_roles) as $role_handle)
+				if ( $role_date_limits || $content_date_limits ) {
+					$limit_class = ''; // unused byref arg
+					$limit_style = ''; // unused byref arg
+					$link_class = '';  // unused byref arg
+					ScoperAdminUI::set_agent_formatting( array_merge( (array) $role_date_limits, (array) $content_date_limits ), $date_caption, $limit_class, $link_class, $limit_style, false ); // arg: no title='' wrapper around date_caption
+					$date_caption = '<span class="rs-gray"> ' . trim($date_caption) . '</span>';
+				}
+					
+				if ( $rs_blog_roles = $this->scoper->role_defs->filter( $blog_roles[$duration_key][$date_key], array( 'role_type' => 'rs' ) ) ) {
+					foreach ( array_keys($rs_blog_roles) as $role_handle )
+						$display_names []= $this->scoper->role_defs->get_display_name($role_handle);
+					
+					$url = "admin.php?page=rs-general_roles";
+					$linkopen = "<strong><a href='$url'>";
+					$linkclose = "</a></strong>";
+					$list = implode(", ", $display_names);
+					
+					if ( $groups_only )
+						$html .= sprintf( _n('<strong>%1$sGeneral Role%2$s</strong>%4$s: %3$s', '<strong>%1$sGeneral Roles%2$s</strong>%4$s: %3$s', count($display_names), 'scoper'), $linkopen, $linkclose, $list, $date_caption);
+					else
+						$html .= sprintf( _n('<strong>Additional %1$sGeneral Role%2$s</strong>%4$s: %3$s', '<strong>Additional %1$sGeneral Roles%2$s</strong>%4$s: %3$s', count($display_names), 'scoper'), $linkopen, $linkclose, $list, $date_caption);
+				
+					if ( $contained_roles = $this->scoper->role_defs->get_contained_roles( array_keys($rs_blog_roles), false, 'rs' ) ) {
+						$display_names = array();
+						foreach (array_keys($contained_roles) as $role_handle)
 							$display_names []= $this->scoper->role_defs->get_display_name($role_handle);
 						
-						$url = "admin.php?page=rs-general_roles";
-						$linkopen = "<strong><a href='$url'>";
-						$linkclose = "</a></strong>";
-						$list = implode(", ", $display_names);
-						
-						if ( $groups_only )
-							$html .= sprintf( _n('<strong>%1$sGeneral Role%2$s</strong>%4$s: %3$s', '<strong>%1$sGeneral Roles%2$s</strong>%4$s: %3$s', count($display_names), 'scoper'), $linkopen, $linkclose, $list, $date_caption);
-						else
-							$html .= sprintf( _n('<strong>Additional %1$sGeneral Role%2$s</strong>%4$s: %3$s', '<strong>Additional %1$sGeneral Roles%2$s</strong>%4$s: %3$s', count($display_names), 'scoper'), $linkopen, $linkclose, $list, $date_caption);
-					
-						if ( $contained_roles = $this->scoper->role_defs->get_contained_roles( array_keys($rs_blog_roles), false, 'rs' ) ) {
-							$display_names = array();			
-							foreach (array_keys($contained_roles) as $role_handle)
-								$display_names []= $this->scoper->role_defs->get_display_name($role_handle);
-							
-							$html .= '<br /><span class="rs-gray">';
-							$html .= sprintf( __("(contains %s)", 'scoper'), implode(", ", $display_names) );
-							$html .= '</span>';
-						}
-						
-						$html .= '<br /><br />';
+						$html .= '<br /><span class="rs-gray">';
+						$html .= sprintf( __("(contains %s)", 'scoper'), implode(", ", $display_names) );
+						$html .= '</span>';
 					}
-				} // end foreach content date range
-			} // end foreach role duration date range
-		}
+					
+					$html .= '<br /><br />';
+				}
+			} // end foreach content date range
+		} // end foreach role duration date range
 	
 		
 		$disable_role_admin = false;
 		
-		global $profileuser, $current_user;
+		global $profileuser;
 
 		$viewing_own_profile = ( ! empty($profileuser) && ( $profileuser->ID == $current_user->ID ) );
 		
@@ -147,8 +148,7 @@ class ScoperProfileUI {
 				if ( ( 'admin_content' == $require_blogwide_editor ) && ! is_content_administrator_rs() )
 					return false;
 		
-				global $current_user;
-				$disable_role_admin = empty( $current_user->allcaps['edit_others_posts'] ) && empty( $current_user->allcaps['edit_others_pages'] );
+				$disable_role_admin = ! $scoper->user_can_edit_blogwide( 'post', '', array( 'require_others_cap' => true, 'status' => 'publish' ) );
 			}
 		}
 
@@ -161,26 +161,33 @@ class ScoperProfileUI {
 			if ( ! $terms = $this->scoper->get_terms($taxonomy, UNFILTERED_RS, COLS_ALL_RS, 0, $args) )
 				continue;
 
-			if ( ! scoper_get_otype_option('use_term_roles', $tx->object_source->name) )
+			$object_types = array();
+			
+			$obj_src = $this->scoper->data_sources->get( $tx->object_source );
+			foreach ( array_keys($obj_src->object_types) as $object_type)
+				if ( scoper_get_otype_option('use_term_roles', $tx->object_source, $object_type) )
+					$object_types []= $object_type;
+				
+			if ( ! $object_types )
 				continue;
 
+			$object_types []= $taxonomy;
+				
 			$admin_terms = ( $disable_role_admin ) ? array() : $this->scoper->get_terms($taxonomy, ADMIN_TERMS_FILTER_RS, COL_ID_RS);
 
 			$strict_terms = $this->scoper->get_restrictions(TERM_SCOPE_RS, $taxonomy);
 
-			$object_types = array();
-			foreach ( array_keys($tx->object_source->object_types) as $object_type)
-				if ( scoper_get_otype_option('use_term_roles', $tx->object_source->name, $object_type) )
-					$object_types []= $object_type;
+			$role_defs = $this->scoper->role_defs->get_matching('rs', $tx->object_source, $object_types);
+
+			$tx_src = $this->scoper->data_sources->get( $tx->source );
+			$col_id = $tx_src->cols->id;
+			$col_name = $tx_src->cols->name;
 			
-			$object_types []= $taxonomy;
-
-			$role_defs = $this->scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $tx->object_source->name, $object_types);
-
 			$term_names = array();
+
 			foreach ( $terms as $term )
-				$term_names[$term->term_id] = $term->name;
-	
+				$term_names[$term->$col_id] = $term->$col_name;
+				
 			foreach ( array_keys($term_roles[$taxonomy]) as $duration_key ) {
 				if ( is_serialized($duration_key) ) {
 					$role_date_limits = unserialize( $duration_key );
@@ -211,16 +218,16 @@ class ScoperProfileUI {
 					if ( $admin_terms ) {
 						$url = "admin.php?page=rs-$taxonomy-roles_t";
 						//$html .= ("\n<h4><a href='$url'>" . sprintf(_ x('%1$s Roles%2$s:', 'Category Roles, content date range', 'scoper'), $tx->display_name, '</a><span style="font-weight:normal">' . $date_caption) . '</span></h4>' );
-						$html .= ("\n<h4><a href='$url'>" . sprintf(__('%1$s Roles%2$s:', 'scoper'), $tx->display_name, '</a><span style="font-weight:normal">' . $date_caption) . '</span></h4>' );
+						$html .= ("\n<h4><a href='$url'>" . sprintf(__('%1$s Roles%2$s:', 'scoper'), $tx->labels->singular_name, '</a><span style="font-weight:normal">' . $date_caption) . '</span></h4>' );
 					} else
-						$html .= ("\n<h4>" . sprintf(__('%1$s Roles%2$s:', 'scoper'), $tx->display_name, $date_caption) . '</h4>' );
+						$html .= ("\n<h4>" . sprintf(__('%1$s Roles%2$s:', 'scoper'), $tx->labels->singular_name, $date_caption) . '</h4>' );
 						//$html .= ("\n<h4>" . sprintf(_ x('%1$s Roles%2$s:', 'Category Roles, content date range', 'scoper'), $tx->display_name, $date_caption) . '</h4>' );
 		
 					$html .= '<ul class="rs-termlist" style="padding-left:0.1em;">';
 					$html .= '<li>';
 					$html .= '<table class="widefat"><thead><tr class="thead">';
 					$html .= '<th class="rs-tightcol">' . __awp('Role') . '</th>';
-					$html .= '<th>' . $tx->display_name_plural . '</th>';
+					$html .= '<th>' . $tx->labels->name . '</th>';
 					$html .= '</tr></thead><tbody>';
 
 					
@@ -275,7 +282,6 @@ class ScoperProfileUI {
 			}
 				//echo '<p>' . __('No roles are assigned to this group.', 'scoper'), '</p>';
 		} else {
-			echo '<div>';
 			echo $html;
 			echo '</div>';
 		}
@@ -400,7 +406,7 @@ class ScoperProfileUI {
 			echo '</fieldset>';
 		}
 
-		echo '</div>';
+		echo '</div><br />';
 		
 		echo "<input type='hidden' name='rs_editing_user_groups' value='1' />";
 	}

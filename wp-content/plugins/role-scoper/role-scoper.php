@@ -3,10 +3,10 @@
 Plugin Name: Role Scoper
 Plugin URI: http://agapetry.net/
 Description: CMS-like permissions for reading and editing. Content-specific restrictions and roles supplement/override WordPress roles. User groups optional.
-Version: 1.2.7
+Version: 1.3.27
 Author: Kevin Behrens
 Author URI: http://agapetry.net/
-Min WP Version: 2.6
+Min WP Version: 3.0
 License: GPL version 2 - http://www.opensource.org/licenses/gpl-license.php
 */
 
@@ -30,12 +30,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die( 'This page cannot be called directly.' );
 	
-if ( strpos( $_SERVER['SCRIPT_NAME'], 'p-admin/index-extra.php' ) || strpos( $_SERVER['SCRIPT_NAME'], 'p-admin/update.php' ) )
+if ( in_array( $GLOBALS['pagenow'], array( 'index-extra.php', 'update.php' ) ) )
 	return;
 
 if ( defined( 'SCOPER_VERSION' ) ) {
 	// don't allow two copies of RS to run simultaneously
-	if ( is_admin() && strpos( $_SERVER['SCRIPT_NAME'], 'p-admin/plugins.php' ) && ! strpos( urldecode($_SERVER['REQUEST_URI']), 'deactivate' ) ) {
+	if ( is_admin() && ( 'plugins.php' == $GLOBALS['pagenow'] ) && empty( $_REQUEST['deactivate'] ) ) {
 		$message = sprintf( __( '<strong>Error:</strong> Multiple copies of Role Scoper activated. Only version %1$s (in folder "%2$s") is functional.', 'scoper' ), SCOPER_VERSION, SCOPER_FOLDER );
 		
 		add_action('admin_notices', create_function('', 'echo \'<div id="message" class="error fade" style="color: black">' . $message . '</div>\';'));
@@ -44,10 +44,8 @@ if ( defined( 'SCOPER_VERSION' ) ) {
 	return;
 }
 
-define ('SCOPER_VERSION', '1.2.7');
+define ('SCOPER_VERSION', '1.3.27');
 define ('SCOPER_DB_VERSION', '1.1.2');
-
-define( 'ENABLE_PERSISTENT_CACHE', true );
 
 /* --- ATTACHMENT FILTERING NOTE ---
 Read access to uploaded file attachments is normally filtered (via .htaccess RewriteRules) to match post/page access.
@@ -73,8 +71,21 @@ To disable caching of the pages / categories listing, add the following lines to
 	define( 'SCOPER_NO_TERMS_CACHE', true );
 */
 
+// WP role type support is dropped as of 1.2.9.  If current installation is using it, bail out - hiding all content and displaying an explanation.
+if ( $prev = get_option('scoper_version') ) {
+	if ( version_compare( $prev['version'], '1.3.1', '<') ) {
+		if ( $role_type = get_option( 'scoper_role_type' ) ) {
+			if ( 'wp' == $role_type ) {
+				require_once( 'error_rs.php' );
+				scoper_startup_error( 'wp_role_type' );
+				$bail = 1;
+			}
+		}	
+	}
+}
+
 // avoid lockout in case of editing plugin via wp-admin
-if ( defined('RS_DEBUG') && is_admin() && ( strpos( urldecode($_SERVER['REQUEST_URI']), 'p-admin/plugin-editor.php' ) || strpos( urldecode($_SERVER['REQUEST_URI']), 'p-admin/plugins.php' ) ) && false === strpos( $_SERVER['REQUEST_URI'], 'activate' ) )
+if ( defined('RS_DEBUG') && is_admin() && in_array( $GLOBALS['pagenow'], array( 'plugin-editor.php', 'plugins.php' ) ) && empty( $_REQUEST['activate'] ) )
 	return;
 	
 define ('COLS_ALL_RS', 0);
@@ -82,6 +93,7 @@ define ('COL_ID_RS', 1);
 define ('COLS_ID_DISPLAYNAME_RS', 2);
 define ('COL_TAXONOMY_ID_RS', 3);
 define ('COL_COUNT_RS', 4);
+define ('COLS_ID_NAME_RS', 5);
 
 define ('UNFILTERED_RS', 0);
 define ('FILTERED_RS', 1);
@@ -104,7 +116,8 @@ if ( defined('RS_DEBUG') ) {
 	include_once('lib/debug_shell.php');
 	
 //log_mem_usage_rs( 'plugin load' );
-	
+
+
 //if ( version_compare( phpversion(), '5.2', '<' ) )	// some servers (Ubuntu) return irregular version string format
 if ( ! function_exists("array_fill_keys") )
 	require_once('lib/php4support_rs.php');
@@ -160,31 +173,28 @@ define ('ROLE_BASIS_USER_AND_GROUPS', 'ug');
 define ('ANY_CONTENT_DATE_RS', '');
 define ('NO_OBJSCOPE_CLAUSE_RS', '');
 
-global $wpdb;
-
 global $scoper_role_types;
 $scoper_role_types = array('rs', 'wp', 'wp_cap');
 
+global $wpdb;
+
 $bail = 0;
 
-if ( awp_ver( '2.7' ) ) {	// older db servers running on WP < 2.7 will have to fail silently because the has_cap check was introduced in 2.7
+if ( ! awp_ver('3.0') ) {
+	rs_notice('Sorry, this version of Role Scoper requires WordPress 3.0 or higher.  Please upgrade Wordpress or deactivate Role Scoper.  If you must run WP 2.7 - 2.9.2, try <a href="http://agapetry.net/downloads/role-scoper_legacy">Role Scoper 1.2.x</a>.');
+	$bail = 1;	
+} else {
 	if ( ! $wpdb->has_cap( 'subqueries' ) ) {
 		rs_notice('Sorry, this version of Role Scoper requires a database server that supports subqueries (such as MySQL 4.1+).  Please upgrade your server or deactivate Role Scoper.');
 		$bail = 1;
 	}
-} elseif ( ! awp_ver('2.6') ) {
-	rs_notice('Sorry, this version of Role Scoper requires WordPress 2.6 or higher.  Please upgrade Wordpress or deactivate Role Scoper.  If you must run WP 2.2 - 2.5, try <a href="http://agapetry.net/downloads/role-scoper_legacy">Role Scoper 0.9</a>.');
-	$bail = 1;	
 }
 
 if ( is_admin() || defined('XMLRPC_REQUEST') ) {
 	// Early bailout for problematic 3rd party plugin ajax calls
 	if ( strpos($_SERVER['SCRIPT_NAME'], 'wp-wall-ajax.php') )
 		return;
-		
-	// skip WP version check and init operations when a WP plugin auto-update is in progress
-	if ( false !== strpos($_SERVER['SCRIPT_NAME'], 'update.php') )
-		return;
+
 } elseif ( ! $bail ) {
 	require_once('feed-interceptor_rs.php'); // must define get_currentuserinfo early
 }
@@ -197,7 +207,6 @@ if ( is_admin() || defined('XMLRPC_REQUEST') ) {
 if ( function_exists('wp_set_current_user') || function_exists('set_current_user') ) {  //if is_administrator_rs exists, then these functions scoped_user.php somehow already executed (and plugged set_current_user) 
 	require_once( 'error_rs.php' );
 	scoper_startup_error();
-	
 	$bail = 1;
 }
 
@@ -215,9 +224,9 @@ if ( ! $bail ) {
 	
 	// if role options were just updated via http POST, use new values rather than loading old option values from DB
 	// These option values are used in WP_Scoped_User constructor
-	if ( is_admin() && isset( $_POST['role_type'] ) && strpos( urldecode($_SERVER['REQUEST_URI']), 'admin.php?page=rs-' )  ) {
+	if ( is_admin() && isset( $_POST['enable_group_roles'] ) && ( 0 === strpos( $GLOBALS['plugin_page_cr'], 'rs-' ) ) )
 		scoper_use_posted_init_options();
-	} else
+	else
 		scoper_get_init_options();
 	
 	if ( IS_MU_RS ) {
@@ -236,8 +245,15 @@ if ( ! $bail ) {
 
 	//log_mem_usage_rs( 'user-plug_rs' );
 	
+	if ( ! defined( 'SCOPER_LATE_INIT' ) && ! defined( 'SCOPER_EARLY_INIT' ) ) {
+		if ( awp_is_plugin_active( 'more-taxonomies' ) || awp_is_plugin_active( 'ultimate-taxonomy-manager' ) )	// More Taxonomies registers taxonomies on the init action at priority 20
+			define( 'SCOPER_LATE_INIT', true );
+	}
+
 	// since sequence of set_current_user and init actions seems unreliable, make sure our current_user is loaded first
-	add_action('set_current_user', 'scoper_maybe_init', 2);
-	add_action('init', 'scoper_log_init_action', 1);
+	$priority = ( defined( 'SCOPER_LATE_INIT' ) && ! defined( 'SCOPER_EARLY_INIT' ) ) ? 50 : 1;
+
+	add_action('set_current_user', 'scoper_maybe_init', $priority + 1);
+	add_action('init', 'scoper_log_init_action', $priority);
 }
 ?>

@@ -7,7 +7,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
  * agents_checklist_rs.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  */
  
@@ -46,30 +46,28 @@ class ScoperAgentsChecklist {
 			echo "<div $div_style>$edit_groups_link</div>";
 	}
 	
-	function agents_checklist( $role_basis, $all_agents, $id_prefix = '', $stored_assignments = '', $args = '') {
+	function agents_checklist( $role_basis, $all_agents, $id_prefix = '', $stored_assignments = '', $args = array()) {
 		if ( empty($all_agents) && ! scoper_get_option("{$role_basis}_role_assignment_csv" ) )
 			return;
 
 		$key = array();
 		$action_links = array();
 		
-		global $is_IE;
-		
 		// list current selections on top first
 		if ( $stored_assignments ) {
 			ScoperAgentsChecklist::_agents_checklist_display( CURRENT_ITEMS_RS, $role_basis, $all_agents, $id_prefix, $stored_assignments, $args, $key, $action_links); 
-			if ( $is_IE )
+			if ( ! empty( $GLOBALS['is_IE'] ) )
 				echo '<p class="rs-agents-spacer-ie">&nbsp;</p>';
 		}
 			
 		ScoperAgentsChecklist::_agents_checklist_display( ELIGIBLE_ITEMS_RS, $role_basis, $all_agents, $id_prefix, $stored_assignments, $args, $key, $action_links); 
-		if ( $is_IE )
+		if ( ! empty( $GLOBALS['is_IE'] ) )
 			echo '<div class="rs-agents-spacer-ie">&nbsp;</div>';
 		
 		echo '<div style="clear:both; height:1px; margin:0">&nbsp;</div>';
 		
 		if ( $action_links ) {
-			echo "<div class='rs-keytext' style='margin: 1em 0 1em 0'>";
+			echo "<div class='rs-keytext' style='margin: 0.5em 0 1em 0'>";
 			echo( sprintf( __('Actions: %s', 'scoper'), implode(' &nbsp; ', $action_links) ) );
 			echo '</div>';
 		}
@@ -117,10 +115,9 @@ class ScoperAgentsChecklist {
 
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
-		
-		global $is_IE;
-		$ie_checkbox_style = ( $is_IE ) ? "style='height:1em'" : '';
-		
+
+		$ie_checkbox_style = ( ! empty( $GLOBALS['is_IE'] ) ) ? "style='height:1em'" : '';
+
 		if ( ( ELIGIBLE_ITEMS_RS == $agents_subset ) && scoper_get_option("{$role_basis}_role_assignment_csv") )
 			return ScoperAgentsChecklist::eligible_agents_input_box( $role_basis, $id_prefix, $propagation );
 
@@ -158,7 +155,7 @@ class ScoperAgentsChecklist {
 
 		// determine whether to show caption, show/hide checkbox and filter textbox
 		$any_display_filtering = ($agent_count[CURRENT_ITEMS_RS] > $filter_threshold) || ($agent_count[ELIGIBLE_ITEMS_RS] > $filter_threshold);
-		
+
 		if ( $agent_count[$agents_subset] > $filter_threshold ) {
 			if ( ROLE_BASIS_GROUPS == $role_basis )
 				$caption = ( CURRENT_ITEMS_RS == $agents_subset ) ? __('show current groups (%d)', 'scoper') : __('show eligible groups (%d)', 'scoper');
@@ -231,11 +228,11 @@ class ScoperAgentsChecklist {
 	
 		$title = '';
 		if ( $propagation ) {
-			if ( ! $objtype_display_name )
-				$objtype_display_name = __('object', 'scoper');
+			if ( ! $otype_label_singular )
+				$otype_label_singular = __('object', 'scoper');
 			
-			if ( ! $objtype_display_name_plural )
-				$objtype_display_name_plural = __('objects', 'scoper');
+			if ( ! $otype_label )
+				$otype_label = __('objects', 'scoper');
 		}
 		
 		if ( $any_display_filtering || $agent_count[$agents_subset] > $emsize_threshold ) {
@@ -456,7 +453,7 @@ class ScoperAgentsChecklist {
 		// display key
 		if ( $any_inherited && $inherited_prefix )
 			$key ['inherited']= "$inherited_prefix $inherited_suffix"
-				 . '<span class="rs-keytext">' . sprintf(__('inherited from parent %s', 'scoper'), agp_strtolower($objtype_display_name)) . '</span>';
+				 . '<span class="rs-keytext">' . sprintf(__('inherited from parent %s', 'scoper'), agp_strtolower($otype_label_singular)) . '</span>';
 		
 		if ( $any_other_role && $via_other_role_prefix )
 			$key ['other_role']= "<span class='rs-via-r'>{$via_other_role_prefix}&nbsp;{$via_other_role_suffix}"
@@ -471,12 +468,13 @@ class ScoperAgentsChecklist {
 				 . '<span class="rs-keytext">' . str_replace( ' ', '&nbsp;', __('has via other scope', 'scoper') ) . '</span></span>';
 		 
 		if ( $propagation )
-			$key ['propagation']= "{<input type='checkbox' disabled='disabled' name='rs-prop_key_{$agents_subset}_{$id_prefix}' id='rs-prop_key_{$agents_subset}_{$id_prefix}' $ie_checkbox_style />}"
-				 . '<span class="rs-keytext">' . sprintf(__('propagate to sub-%s', 'scoper'), agp_strtolower($objtype_display_name_plural)) . '</span>';
+			$key ['propagation']= "{<input type='checkbox' disabled='disabled' name='rs-prop_key_{$agents_subset}_{$id_prefix}' id='rs-prop_key_{$agents_subset}_{$id_prefix}' style='vertical-align:middle' />}"
+				 . '<span class="rs-keytext">' . sprintf(__('propagate to sub-%s', 'scoper'), agp_strtolower($otype_label)) . '</span>';
 	
-		
-		if ( $any_date_limits && $object_id )
-			$action_links ['limits']= sprintf( __('%1$sEdit date limits%2$s', 'scoper'), "<a href='admin.php?page=rs-$object_type-roles#item-$object_id'>", '</a>' );
+		if ( $any_date_limits && ! empty($object_id) ) {
+			if ( empty($GLOBALS['post']) || ( 'auto-draft' != $GLOBALS['post']->post_status ) ) //don't display link for auto-drafts
+				$action_links ['limits']= sprintf( __('%1$sEdit date limits%2$s', 'scoper'), "<a href='admin.php?page=rs-$object_type-roles#item-$object_id'>", '</a>' );
+		}
 	}
 
 } // end class

@@ -7,7 +7,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
  * scoper_admin_ui_lib.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  * Used by Role Scoper Plugin as a container for statically-called functions
  * These function can be used during activation, deactivation, or other 
@@ -102,46 +102,47 @@ class ScoperAdminUI {
 				$content_title_caption = sprintf( $content_min_caption, agp_date_i18n( $datef_min, $content_min_date_gmt + $gmt_seconds ) );
 		}
 		
-		$title = implode(", ", $title_captions) . ' ' . $content_title_caption;
+		if ( $title_captions || $content_title_caption )
+			$title = implode(", ", $title_captions) . ' ' . $content_title_caption;
 	}
 	
-	function restriction_captions( $scope, $tx = '', $display_name = '', $display_name_plural = '') {
+	function restriction_captions( $scope, $tx = '', $item_label_singular = '', $item_label = '') {
 		$table_captions = array();
 	
 		if ( TERM_SCOPE_RS == $scope ) {
-			if ( ! $display_name_plural ) 
-				$display_name_plural = ( 'link_category' == $tx->name ) ? agp_strtolower( $this->scoper->taxonomies->member_property('category', 'display_name_plural') ) : agp_strtolower($tx->display_name_plural);
-			if ( ! $display_name ) 
-				$display_name = ( 'link_category' == $tx->name ) ? agp_strtolower( $this->scoper->taxonomies->member_property('category', 'display_name') ) : agp_strtolower($tx->display_name);
+			if ( ! $item_label ) 
+				$item_label = ( 'link_category' == $tx->name ) ? agp_strtolower( __('Categories') ) : agp_strtolower( $tx->labels->name );
+			if ( ! $item_label_singular ) 
+				$item_label_singular = ( 'link_category' == $tx->name ) ? agp_strtolower( __('Category') ) : agp_strtolower( $tx->labels->singular_name );
 		}
-		
+
 		$table_captions = array();
 		$table_captions['restrictions'] = array(	// captions for roles which are NOT default strict
-			ASSIGN_FOR_ENTITY_RS => sprintf(__('Restricted for %s', 'scoper'), $display_name), 
-			ASSIGN_FOR_CHILDREN_RS => sprintf(__('Unrestricted for %1$s, Restricted for sub-%2$s', 'scoper'), $display_name, $display_name_plural), 
-			ASSIGN_FOR_BOTH_RS => sprintf(__('Restricted for selected and sub-%s', 'scoper'), $display_name_plural),
-			false => sprintf(__('Unrestricted by default', 'scoper'), $display_name),
-			'default' => sprintf(__('Unrestricted', 'scoper'), $display_name)
+			ASSIGN_FOR_ENTITY_RS => sprintf(__('Restricted for %s', 'scoper'), $item_label_singular), 
+			ASSIGN_FOR_CHILDREN_RS => sprintf(__('Unrestricted for %1$s, Restricted for sub-%2$s', 'scoper'), $item_label_singular, $item_label), 
+			ASSIGN_FOR_BOTH_RS => sprintf(__('Restricted for selected and sub-%s', 'scoper'), $item_label),
+			false => sprintf(__('Unrestricted by default', 'scoper'), $item_label_singular),
+			'default' => sprintf(__('Unrestricted', 'scoper'), $item_label_singular)
 		);
 		$table_captions['unrestrictions'] = array( // captions for roles which are default strict
-			ASSIGN_FOR_ENTITY_RS => sprintf(__('Unrestricted for %s', 'scoper'), $display_name), 
-			ASSIGN_FOR_CHILDREN_RS => sprintf(__('Unrestricted for sub-%s', 'scoper'), $display_name_plural), 
-			ASSIGN_FOR_BOTH_RS => sprintf(__('Unrestricted for selected and sub-%s', 'scoper'), $display_name_plural),
-			false => sprintf(__('Restricted by default', 'scoper'), $display_name),
-			'default' => sprintf(__('Restricted', 'scoper'), $display_name)
+			ASSIGN_FOR_ENTITY_RS => sprintf(__('Unrestricted for %s', 'scoper'), $item_label_singular), 
+			ASSIGN_FOR_CHILDREN_RS => sprintf(__('Unrestricted for sub-%s', 'scoper'), $item_label), 
+			ASSIGN_FOR_BOTH_RS => sprintf(__('Unrestricted for selected and sub-%s', 'scoper'), $item_label),
+			false => sprintf(__('Restricted by default', 'scoper'), $item_label_singular),
+			'default' => sprintf(__('Restricted', 'scoper'), $item_label_singular)
 		);
 		
 		return $table_captions;
 	}
 	
-	function role_owners_key($tx_or_otype, $args = '') {
+	function role_owners_key($tx_or_otype, $args = array()) {
 		$defaults = array( 'display_links' => true, 'display_restriction_key' => true, 'restriction_caption' => '',
 							'role_basis' => '', 'agent_caption' => '' );
 		$args = array_merge( $defaults, (array) $args);
 		extract($args);
 	
-		$display_name_plural = agp_strtolower($tx_or_otype->display_name_plural);
-		$display_name = agp_strtolower($tx_or_otype->display_name);
+		$item_label = agp_strtolower( $tx_or_otype->labels->name );
+		$item_label_singular = agp_strtolower( $tx_or_otype->labels->singular_name );
 
 		if ( $role_basis ) {
 			if ( ! $agent_caption && $role_basis )
@@ -159,28 +160,28 @@ class ScoperAdminUI {
 		
 		echo '<li>';
 		echo "{$link_open}$generic_name{$link_close}: ";
-		printf (__('%1$s has role assigned for the specified %2$s.', 'scoper'), $agent_caption, $display_name);
+		printf (__('%1$s has role assigned for the specified %2$s.', 'scoper'), $agent_caption, $item_label_singular);
 		echo '</li>';
 		
 		echo '<li>';
 		echo "<span class='rs-bold'>{$link_open}$generic_name{$link_close}</span>: ";
-		printf (__('%1$s has role assigned for the specified %2$s and, by default, for all its sub-%3$s. (Propagated roles can also be explicitly removed).', 'scoper'), $agent_caption, $display_name, $display_name_plural);
+		printf (__('%1$s has role assigned for the specified %2$s and, by default, for all its sub-%3$s. (Propagated roles can also be explicitly removed).', 'scoper'), $agent_caption, $item_label_singular, $item_label);
 		echo '</li>';
 		
 		echo '<li>';
 		echo "<span class='rs-bold rs-gray'>{$link_open}$generic_name{$link_close}</span>: ";
-		printf (__('%1$s does NOT have role assigned for the specified %2$s, but has it by default for sub-%3$s.', 'scoper'), $agent_caption, $display_name, $display_name_plural);
+		printf (__('%1$s does NOT have role assigned for the specified %2$s, but has it by default for sub-%3$s.', 'scoper'), $agent_caption, $item_label_singular, $item_label);
 		echo '</li>';
 		
 		echo '<li>';
 		echo '<span class="rs-bold">{' . "{$link_open}$generic_name{$link_close}" . '}</span>: ';
-		printf (__('%1$s has this role via propagation from parent %2$s, and by default for sub-%3$s.', 'scoper'), $agent_caption, $display_name, $display_name_plural);
+		printf (__('%1$s has this role via propagation from parent %2$s, and by default for sub-%3$s.', 'scoper'), $agent_caption, $item_label_singular, $item_label);
 		echo '</li>';
 		
 		if ( $display_restriction_key ) {
 			echo '<li>';
 			echo "<span class='rs-bold rs-backylw' style='border:1px solid #00a;padding-left:0.5em;padding-right:0.5em'>" . __('Role Name', 'scoper') . "</span>: ";
-			echo "<span>" . sprintf(__('role is restricted for specified %s.', 'scoper'), $display_name) . "</span>";
+			echo "<span>" . sprintf(__('role is restricted for specified %s.', 'scoper'), $item_label_singular) . "</span>";
 			echo '</li>';
 		}
 		
@@ -189,8 +190,8 @@ class ScoperAdminUI {
 	
 	// Role Scoping for NGG calls ScoperAdminUI::dropdown_pages
 	function dropdown_pages($object_id = '', $stored_parent_id = '') {
-		require_once( SCOPER_ABSPATH . '/hardway/hardway-parent_rs.php');
-		return ScoperHardwayParent::dropdown_pages( $object_id, $stored_parent_id );
+		require_once( SCOPER_ABSPATH . '/hardway/hardway-parent-legacy_rs.php');
+		return ScoperHardwayParentLegacy::dropdown_pages( $object_id, $stored_parent_id );
 	}
 } // end class ScoperAdminUI
 ?>

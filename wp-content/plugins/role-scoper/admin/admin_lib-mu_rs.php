@@ -2,14 +2,12 @@
 
 function scoper_mu_site_menu() {	
 	$path = SCOPER_ABSPATH;
-	
-	$pfx = ( awp_ver('3.0-dev') ) ? 'ms' : 'wpmu';
-	
+
 	// RS Site Options
-	add_submenu_page("$pfx-admin.php", __('Role Scoper Options', 'scoper'), __('Role Options', 'scoper'), 'read', 'rs-site_options' );
+	add_submenu_page("ms-admin.php", __('Role Scoper Options', 'scoper'), __('Role Options', 'scoper'), 'read', 'rs-site_options' );
 	
 	$func = "include_once('$path' . '/admin/options.php');scoper_options( true );";
-	add_action("$pfx-admin_page_rs-site_options", create_function( '', $func ) );	
+	add_action("ms-admin_page_rs-site_options", create_function( '', $func ) );	
 
 	
 	global $scoper_default_options, $scoper_options_sitewide;
@@ -20,10 +18,10 @@ function scoper_mu_site_menu() {
 	
 	if ( count($scoper_options_sitewide) != count($scoper_default_options) ) {
 		// RS Default Options (for per-blog settings)
-		add_submenu_page("$pfx-admin.php", __('Role Scoper Option Defaults', 'scoper'), __('Role Defaults', 'scoper'), 'read', 'rs-default_options' );
+		add_submenu_page("ms-admin.php", __('Role Scoper Option Defaults', 'scoper'), __('Role Defaults', 'scoper'), 'read', 'rs-default_options' );
 	
 		$func = "include_once('$path' . '/admin/options.php');scoper_options( false, true );";
-		add_action("$pfx-admin_page_rs-default_options", create_function( '', $func ) );
+		add_action("ms-admin_page_rs-default_options", create_function( '', $func ) );
 	}
 }
 

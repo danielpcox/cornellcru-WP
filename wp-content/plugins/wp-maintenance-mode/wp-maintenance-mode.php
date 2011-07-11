@@ -8,8 +8,8 @@
  * Author: Frank B&uuml;ltge
  * Author URI: http://bueltge.de/
  * Donate URI: http://bueltge.de/wunschliste/
- * Version: 1.6.5
- * Last change: 16.09.2010 13:58:36
+ * Version: 1.6.7
+ * Last change: 05.01.2011
  * Licence: GPL
 */
 
@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 Requirements:
 ==============================================================================
-This plugin requires WordPress >= 2.6 and tested with PHP Interpreter >= 5.2.9
+This plugin requires WordPress >= 2.6 and tested with PHP Interpreter >= 5.3.1
 */
 
 //avoid direct calls to this file, because now WP core and framework has been used
@@ -53,6 +53,7 @@ if ( !class_exists('WPMaintenanceMode') ) {
 	
 	define( 'FB_WM_BASENAME', plugin_basename(__FILE__) );
 	define( 'FB_WM_BASEDIR', dirname( plugin_basename(__FILE__) ) );
+	define( 'FB_WM_BASE', rtrim (dirname (__FILE__), '/') );
 	define( 'FB_WM_TEXTDOMAIN', 'wp-maintenance-mode' );
 
 	class WPMaintenanceMode {
@@ -60,6 +61,7 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		function WPMaintenanceMode() {
 			global $wp_version;
 			
+			register_activation_hook( __FILE__, array(&$this, 'add_config') );
 			add_action( 'load-plugins.php', array(&$this, 'add_scripts') );
 			add_action( 'admin_init', array(&$this, 'admin_init') );
 			if ( version_compare( $wp_version, '2.7alpha', '>' ) ) {
@@ -71,9 +73,17 @@ if ( !class_exists('WPMaintenanceMode') ) {
 			}
 			add_action( 'wp_ajax_wm_config-update', array(&$this, 'save_config' ) );
 			add_action( 'wp_ajax_wm_config-active', array(&$this, 'save_active' ) );
-			add_action( 'init', array(&$this, 'on_init') );
-			register_activation_hook( __FILE__, array(&$this, 'add_config') );
-			//register_deactivation_hook( __FILE__, array(&$this, 'del_config') );
+			add_action( 'init', array(&$this, 'on_init'), 1 );
+		}
+		
+		
+		function esc_attr($text) {
+			if ( function_exists('esc_attr') )
+				$text = esc_attr($text);
+			else
+				$text = attribute_escape($text);
+				
+			return $text;
 		}
 		
 		
@@ -122,12 +132,9 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		
 		
 		function add_scripts() {
-			global $locale, $current_user;
+			global $current_user;
 			
-			if ( defined('WPLANG') )
-				$locale = WPLANG;
-			if ( empty($locale) )
-				$locale = 'en_US';
+			$locale = get_locale();
 			
 			wp_enqueue_script( 'jquery-ui-datetimepicker', $this->get_plugins_url( 'js/ui.datetimepicker.js', __FILE__ ), array('jquery-ui-core') , 0.1, TRUE );
 			//wp_register_script( 'jquery-ui-datetimepicker-de', $this->get_plugins_url( 'js/de_DE.datetimepicker.js', __FILE__ ), array( 'jquery-ui-core', 'jquery-ui-datetimepicker' ) , 0.1, TRUE );
@@ -148,7 +155,6 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		
 		
 		function add_settings_link( $links, $file ) {
-			
 			array_unshift(
 				$links,
 				sprintf( '<a id="wm-pluginconflink" href="javascript:void(0)" title="Configure this plugin">%s</a>', __('Settings') )
@@ -163,18 +169,23 @@ if ( !class_exists('WPMaintenanceMode') ) {
 			<script type="text/javascript">
 				jQuery(document).ready( function($){
 					
-					$('#wm-pluginconflink').click(function(s){jQuery('#wm_config_row').slideToggle('fast');});
-					$('#wm_config_active').click(function(){ wm_config_active() });
-					$('#wm_config_submit').click(function(){ wm_config_update() });
+					$('#wm-pluginconflink').click(function(s){$('#wm_config_row').slideToggle('fast'); });
+					$('#wm_config_active').click(function(){ wm_config_active(); });
+					$('#wm_config_submit').click(function(){ wm_config_update(); });
 					$("#wm_config-date").datetimepicker({ dateFormat: 'dd-mm-yy', timeFormat: ' hh:ii:ss' });
 					
 					function wm_config_active(){
 						
 						active_Val = $('#wm_config-active').val();
 						url = '<?php echo get_bloginfo('wpurl'); ?>/wp-admin/admin-ajax.php';
-						$.post(url , { "action" : "wm_config-active", "wm_config-active" : active_Val }, function(data) {
-							$('#wm_message_active, #wm_message_active2').show('fast').animate({opacity: 1.0}, 3000).hide('slow');
-						});
+						$.post( url , { 
+								"action" : "wm_config-active", 
+								"wm_config-active" : active_Val 
+							}, 
+							function(data) {
+								$('#wm_message_active, #wm_message_active2').show('fast').animate({opacity: 1.0}, 3000).hide('slow');
+							}
+						);
 					}
 					
 					function wm_config_update(){
@@ -196,9 +207,30 @@ if ( !class_exists('WPMaintenanceMode') ) {
 						cd_month_Val     = $('#wm_config-cd-month').val();
 						cd_year_Val      = $('#wm_config-cd-year').val();
 						url = '<?php echo get_bloginfo('wpurl'); ?>/wp-admin/admin-ajax.php';
-						$.post(url , { "action" : "wm_config-update", "wm_config-time" : time_Val, "wm_config-unit" : unit_Val, "wm_config-link" : link_Val, "wm_config-theme" : theme_Val, "wm_config-styleurl" : styleurl_Val, "wm_config-title" : title_Val, "wm_config-header" : header_Val, "wm_config-heading" : heading_Val,"wm_config-text" : text_Val, "wm_config-exclude" : exclude_Val, "wm_config-role" : role_Val, "wm_config-radio" : radio_Val, "wm_config-date" : date_Val, "wm_config-cd-day" : cd_day_Val, "wm_config-cd-month" : cd_month_Val, "wm_config-cd-year" : cd_year_Val }, function(data) {
-							$('#wm_message_update, #wm_message_update2').show('fast').animate({opacity: 1.0}, 3000).hide('slow');
-						});
+						$.post( url , {
+								"action" : "wm_config-update", 
+								"wm_config-time" : time_Val, 
+								"wm_config-unit" : unit_Val, 
+								"wm_config-link" : link_Val, 
+								"wm_config-theme" : theme_Val, 
+								"wm_config-styleurl" : styleurl_Val, 
+								"wm_config-title" : title_Val, 
+								"wm_config-header" : header_Val, 
+								"wm_config-heading" : heading_Val, 
+								"wm_config-text" : text_Val, 
+								"wm_config-exclude" : exclude_Val, 
+								"wm_config-role" : role_Val, 
+								"wm_config-radio" : radio_Val, 
+								"wm_config-date" : date_Val, 
+								"wm_config-cd-day" : cd_day_Val, 
+								"wm_config-cd-month" : cd_month_Val, 
+								"wm_config-cd-year" : cd_year_Val
+							}, 
+							function(data) {
+								$('#wm_message_update, #wm_message_update2').show('fast').animate({opacity: 1.0}, 3000).hide('slow');
+							}
+						);
+						return false;
 					}
 				});
 			</script>
@@ -221,14 +253,18 @@ if ( !class_exists('WPMaintenanceMode') ) {
 			$value = get_option( FB_WM_TEXTDOMAIN );
 			?>
 			<tr id="wm_config_tr" >
-			<td colspan="3">
-			
+				<td colspan="3">
+				
 				<div id="wm_config_row" class="<?php echo ( isset($_GET['show']) && 'wmconfig' == $_GET['show'] ) ? '' : 'config_hidden' ;?>">
-					<div class="updated fade" id="wm_message_update" style="background-color: #FFFBCC;"><p><?php echo sprintf( __( 'Plugin %s settings <strong>updated</strong>.', FB_WM_TEXTDOMAIN ), $wm_plugindata['Name'] ); ?></p></div>
-					<div class="error fade" id="wm_message_active" ><p><?php echo sprintf( __( 'Plugin %s active status <strong>updated</strong>.', FB_WM_TEXTDOMAIN ), $wm_plugindata['Name'] ); ?></p></div>
+					<div class="updated fade" id="wm_message_update" style="background-color: #FFFBCC;">
+						<p><?php echo sprintf( __( 'Plugin %s settings <strong>updated</strong>.', FB_WM_TEXTDOMAIN ), $wm_plugindata['Name'] ); ?></p>
+					</div>
+					<div class="error fade" id="wm_message_active" >
+						<p><?php echo sprintf( __( 'Plugin %s active status <strong>updated</strong>.', FB_WM_TEXTDOMAIN ), $wm_plugindata['Name'] ); ?></p>
+					</div>
 					
 					<h4><?php _e( 'Plugin Activate', FB_WM_TEXTDOMAIN ); ?></h4>
-					<input type="hidden" name="action" value="wm_config-active" />
+					<input type="hidden" name="wm_action" value="wm_config-active" />
 					<p>
 						<select name="wm_config-active" id="wm_config-active">
 							<option value="0"<?php if ( isset($value['active']) && 0 === $value['active'] ) { echo ' selected="selected"'; } ?>><?php _e('False', FB_WM_TEXTDOMAIN ); ?> </option>
@@ -236,10 +272,12 @@ if ( !class_exists('WPMaintenanceMode') ) {
 						</select> 
 						<input id="wm_config_active" type="button" value="<?php _e( 'Update', FB_WM_TEXTDOMAIN ); ?>" class="button-primary" />
 					</p>
-					<div class="plugin-update-tr"><p id="wm_message_active2" class="update-message"><?php echo sprintf( __( 'Plugin %s active status <strong>updated</strong>.', FB_WM_TEXTDOMAIN ), $wm_plugindata['Name'] ); ?></p></div>
+					<div class="plugin-update-tr">
+						<p id="wm_message_active2" class="update-message"><?php echo sprintf( __( 'Plugin %s active status <strong>updated</strong>.', FB_WM_TEXTDOMAIN ), $wm_plugindata['Name'] ); ?></p>
+					</div>
 					
 					<h4><?php _e( 'Plugin Settings', FB_WM_TEXTDOMAIN ); ?></h4>
-					<input type="hidden" name="action" value="wm_config-update" />
+					<input type="hidden" name="wm_action" value="wm_config-update" />
 					
 					<table class="form-table">
 						<tr valign="top">
@@ -248,8 +286,8 @@ if ( !class_exists('WPMaintenanceMode') ) {
 							</th>
 							<td>
 								<select name="wm_config-radio" id="wm_config-radio">
-									<option value="0"<?php if ( 0 === $value['radio'] ) { echo ' selected="selected"'; } ?>><?php _e('False', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="1"<?php if ( 1 === $value['radio'] ) { echo ' selected="selected"'; } ?>><?php _e('True', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="0"<?php if ( isset($value['radio']) && 0 === $value['radio'] ) { echo ' selected="selected"'; } ?>><?php _e('False', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="1"<?php if ( isset($value['radio']) && 1 === $value['radio'] ) { echo ' selected="selected"'; } ?>><?php _e('True', FB_WM_TEXTDOMAIN ); ?> </option>
 								</select>
 							</td>
 						</tr>
@@ -267,7 +305,7 @@ if ( !class_exists('WPMaintenanceMode') ) {
 								<label for="wm_config-time"><?php _e( 'Value:', FB_WM_TEXTDOMAIN ); ?></label>
 							</th>
 							<td class="alternate">
-								<input size="5" type="text" id="wm_config-time" name="wm_config-time" value="<?php echo $value['time']; ?>" />
+								<input size="5" type="text" id="wm_config-time" name="wm_config-time" value="<?php if( isset($value['time']) ) echo $value['time']; ?>" />
 							</td>
 						</tr>
 						<tr valign="top">
@@ -276,13 +314,13 @@ if ( !class_exists('WPMaintenanceMode') ) {
 							</th>
 							<td class="alternate">
 								<select name="wm_config-unit" id="wm_config-unit">
-									<option value="0"<?php if ( 0 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('second', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="1"<?php if ( 1 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('minute', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="2"<?php if ( 2 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('hour', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="3"<?php if ( 3 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('day', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="4"<?php if ( 4 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('week', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="5"<?php if ( 5 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('month', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="6"<?php if ( 6 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('year', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="0"<?php if ( isset($value['unit']) && 0 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('second', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="1"<?php if ( isset($value['unit']) && 1 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('minute', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="2"<?php if ( isset($value['unit']) && 2 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('hour', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="3"<?php if ( isset($value['unit']) && 3 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('day', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="4"<?php if ( isset($value['unit']) && 4 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('week', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="5"<?php if ( isset($value['unit']) && 5 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('month', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="6"<?php if ( isset($value['unit']) && 6 === $value['unit'] ) { echo ' selected="selected"'; } ?>><?php _e('year', FB_WM_TEXTDOMAIN ); ?> </option>
 								</select>
 							</td>
 						</tr>
@@ -292,8 +330,8 @@ if ( !class_exists('WPMaintenanceMode') ) {
 							</th>
 							<td>
 								<select name="wm_config-link" id="wm_config-link">
-									<option value="0"<?php if ( 0 === $value['link'] ) { echo ' selected="selected"'; } ?>><?php _e('False', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="1"<?php if ( 1 === $value['link'] ) { echo ' selected="selected"'; } ?>><?php _e('True', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="0"<?php if ( isset($value['link']) && 0 === $value['link'] ) { echo ' selected="selected"'; } ?>><?php _e('False', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="1"<?php if ( isset($value['link']) && 1 === $value['link'] ) { echo ' selected="selected"'; } ?>><?php _e('True', FB_WM_TEXTDOMAIN ); ?> </option>
 								</select>
 								<br />
 								<small><?php _e( 'Please leave a link to the plugin- and design-author on your maintenance mode site.', FB_WM_TEXTDOMAIN ); ?></small>
@@ -305,19 +343,19 @@ if ( !class_exists('WPMaintenanceMode') ) {
 							</th>
 							<td class="alternate">
 								<select name="wm_config-theme" id="wm_config-theme">
-									<option value="0"<?php if ( 0 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Own Style', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="1"<?php if ( 1 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Simple Text', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="2"<?php if ( 2 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('The Truck', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="3"<?php if ( 3 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('The Sun', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="4"<?php if ( 4 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('The FF Error', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="5"<?php if ( 5 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Monster', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="6"<?php if ( 6 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Chastely', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="7"<?php if ( 7 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Only Typo', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="8"<?php if ( 8 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Paint', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="9"<?php if ( 9 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Animate (Flash)', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="10"<?php if ( 10 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Damask', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="11"<?php if ( 11 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Lego', FB_WM_TEXTDOMAIN ); ?> </option>
-									<option value="12"<?php if ( 12 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Chemistry', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="0"<?php if ( isset($value['theme']) && 0 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Own Style', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="1"<?php if ( isset($value['theme']) && 1 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Simple Text', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="2"<?php if ( isset($value['theme']) && 2 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('The Truck', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="3"<?php if ( isset($value['theme']) && 3 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('The Sun', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="4"<?php if ( isset($value['theme']) && 4 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('The FF Error', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="5"<?php if ( isset($value['theme']) && 5 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Monster', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="6"<?php if ( isset($value['theme']) && 6 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Chastely', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="7"<?php if ( isset($value['theme']) && 7 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Only Typo', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="8"<?php if ( isset($value['theme']) && 8 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Paint', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="9"<?php if ( isset($value['theme']) && 9 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Animate (Flash)', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="10"<?php if ( isset($value['theme']) && 10 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Damask', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="11"<?php if ( isset($value['theme']) && 11 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Lego', FB_WM_TEXTDOMAIN ); ?> </option>
+									<option value="12"<?php if ( isset($value['theme']) && 12 === $value['theme'] ) { echo ' selected="selected"'; } ?>><?php _e('Chemistry', FB_WM_TEXTDOMAIN ); ?> </option>
 								</select>
 							</td>
 						</tr>
@@ -368,9 +406,9 @@ if ( !class_exists('WPMaintenanceMode') ) {
 								<label for="wm_config-text"><?php _e( 'Text:', FB_WM_TEXTDOMAIN ); ?></label>
 							</th>
 							<td class="alternate">
-								<textarea class="code" style="width: 95%;" cols="40" rows="4" name="wm_config-text" id="wm_config-text"><?php echo $value['text']; ?></textarea>
+								<textarea class="code" style="width: 95%;" cols="40" rows="4" name="wm_config-text" id="wm_config-text"><?php if ( isset($value['text']) ) echo esc_attr($value['text']); ?></textarea>
 								<br />
-								<small><?php _e( 'Use the first <em>%1$s</em> for the time value or countdown and second <em>%2$s</em> for the unit of the time or countdown-value; HTML is possible', FB_WM_TEXTDOMAIN ); ?></small>
+								<small><?php _e( 'Use the first <em>%1$s</em> for the time value or countdown and second <em>%2$s</em> for the unit of the time or countdown-value; HTML and Shortcodes are possible', FB_WM_TEXTDOMAIN ); ?></small>
 							</td>
 						</tr>
 						<tr valign="top">
@@ -378,9 +416,20 @@ if ( !class_exists('WPMaintenanceMode') ) {
 								<label for="wm_config-exclude"><?php _e( 'Excludes:', FB_WM_TEXTDOMAIN ); ?></label>
 							</th>
 							<td>
-								<input size="30" type="text" id="wm_config-exclude" name="wm_config-exclude" value="<?php if ( isset($value['exclude']) ) { echo join( ', ', $value['exclude'] ); } ?>" />
+								<?php 
+								if ( isset($value['exclude']) ) {
+									if ( 1 < count($value['exclude']) ) {
+										$value_exclude = join( ', ', $value['exclude'] );
+									} else {
+										$value_exclude = $value['exclude'];
+									} 
+								} else {
+									$value_exclude = NULL;
+								}
+								?>
+								<input size="30" type="text" id="wm_config-exclude" name="wm_config-exclude" value="<?php echo $value_exclude; ?>" />
 								<br />
-								<small><?php _e( 'Exclude pages, posts or archives from the maintenance mode. Add the Slug of page or post as a comma-separated list.<br />Example:', FB_WM_TEXTDOMAIN ); ?> <code>about, my-first-page, how-is-this-possible, category/test</code></small>
+								<small><?php _e( 'Exclude feed, pages, posts or archives from the maintenance mode. Add the Slug of page or post as a comma-separated list.<br />Example:', FB_WM_TEXTDOMAIN ); ?> <code>wp-cron, feed, wp-admin, about, my-first-page, how-is-this-possible, category/test</code></small>
 							</td>
 						</tr>
 						<tr valign="top">
@@ -390,6 +439,10 @@ if ( !class_exists('WPMaintenanceMode') ) {
 							<td class="alternate">
 								<select name="wm_config-role" id="wm_config-role">
 									<?php
+									// fallback
+									if ( !isset($value['role'][0]) )
+										$value['role'][0] = NULL;
+									
 									foreach ( $wp_roles->roles as $role => $name ) {
 										if ( function_exists('translate_user_role') )
 											$role_name = translate_user_role( $name['name'] );
@@ -406,19 +459,21 @@ if ( !class_exists('WPMaintenanceMode') ) {
 									}
 									?>
 								</select>
-								<small><?php _e( 'Allowed userrole to see the frontend of this blog.', FB_WM_TEXTDOMAIN ); ?></small>
+								<small><?php _e( 'Allowed userrole to see the frontend of this blog.', FB_WM_TEXTDOMAIN ); ?>
+								<?php if ( is_multisite() ) { _e( 'Super Admin has always access.', FB_WM_TEXTDOMAIN ); } ?></small>
 							</td>
 						</tr>
 						</table>
 						<br />
-						<div class="plugin-update-tr"><p id="wm_message_update2" class="update-message"><?php echo sprintf( __( 'Plugin %s settings <strong>updated</strong>.', FB_WM_TEXTDOMAIN ), $wm_plugindata['Name'] ); ?></p></div>
+						<div class="plugin-update-tr">
+							<p id="wm_message_update2" class="update-message"><?php echo sprintf( __( 'Plugin %s settings <strong>updated</strong>.', FB_WM_TEXTDOMAIN ), $wm_plugindata['Name'] ); ?></p>
+						</div>
 						<p id="submitbutton">
 							<input id="wm_config_submit" type="button" value="<?php _e( 'Save', FB_WM_TEXTDOMAIN ); ?>" class="button-secondary" />
 						</p>
-						
 					</div>
 					
-			</td>
+				</td>
 			</tr>
 			<?php
 		}
@@ -426,7 +481,18 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		
 		function add_config() {
 			
-			$this->data = array( 'active' => 0, 'radio' => 0,'time' => 60, 'link' => 1, 'theme' => 2, 'role' => 'administrator', 'unit' => 1, 'title' => 'Maintenance mode', 'text' => '<p>Sorry for the inconvenience.<br />Our website is currently undergoing scheduled maintenance.<br /><strong>Please try back in %1$s %2$s</strong><br />Thank you for your understanding.</p>' );
+			$this->data = array( 
+				'active' => 0, 
+				'radio' => 0, 
+				'time' => 60, 
+				'link' => 1, 
+				'theme' => 1, 
+				'role' => 'administrator', 
+				'unit' => 1, 
+				'title' => 'Maintenance mode', 
+				'text' => '<p>Sorry for the inconvenience.<br />Our website is currently undergoing scheduled maintenance.<br /><strong>Please try back in %1$s %2$s</strong><br />Thank you for your understanding.</p>', 
+				'exclude' => 'wp-cron, feed, wp-admin'
+			);
 			add_option( FB_WM_TEXTDOMAIN, $this->data );
 			add_option( FB_WM_TEXTDOMAIN . '-msqld', $this->data['active'] );
 			
@@ -481,13 +547,13 @@ if ( !class_exists('WPMaintenanceMode') ) {
 			if ( isset($_POST['wm_config-text']) ) 
 				$this->data['text'] =  stripslashes_deep( $_POST['wm_config-text'] );
 			if ( isset($_POST['wm_config-exclude']) )
-				$this->data['exclude'] = preg_split("/[\s,]+/", attribute_escape( $_POST['wm_config-exclude'] ) );
+				$this->data['exclude'] = preg_split("/[\s,]+/", $this->esc_attr( $_POST['wm_config-exclude'] ) );
 			if ( isset($_POST['wm_config-role']) )
-				$this->data['role'] = preg_split("/[\s,]+/", attribute_escape( $_POST['wm_config-role'] ) );
+				$this->data['role'] = preg_split("/[\s,]+/", $this->esc_attr( $_POST['wm_config-role'] ) );
 			if ( isset($_POST['wm_config-radio']) )
 				$this->data['radio'] = (int) $_POST['wm_config-radio'];
 			if ( isset($_POST['wm_config-date']) )
-				$this->data['date'] = attribute_escape( $_POST['wm_config-date'] );
+				$this->data['date'] = $this->esc_attr( $_POST['wm_config-date'] );
 			
 			update_option( FB_WM_TEXTDOMAIN, $this->data );
 			
@@ -531,29 +597,36 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		function check_role() {
 			$value = get_option( FB_WM_TEXTDOMAIN );
 			
+			if ( is_super_admin() )
+				return TRUE;
+			
 			if ( !isset( $value['role'][0] ) || ( '' != $value['role'][0] ) )
 				$role = 'manage_options';
 			
 			$defaultroles = array('administrator', 'editor', 'author', 'contributor', 'subscriber');
 			
-			if ( 'administrator' == $value['role'][0] )
+			if ( isset($value['role'][0]) ) {
+				if ( 'administrator' == $value['role'][0] )
+					$role = 'manage_options';
+					
+				elseif ( 'editor' == $value['role'][0] )
+					$role = 'manage_categories';
+					
+				elseif ( 'author' == $value['role'][0] )
+					$role = 'publish_posts';
+					
+				elseif ( 'contributor' == $value['role'][0] )
+					$role = 'edit_posts';
+					
+				elseif ( 'subscriber' == $value['role'][0] )
+					$role = 'read';
+					
+				elseif ( !in_array( $value['role'][0], $defaultroles ) )
+					$role = 'manage_options';
+			} else {
 				$role = 'manage_options';
-				
-			elseif ( 'editor' == $value['role'][0] )
-				$role = 'manage_categories';
-				
-			elseif ( 'author' == $value['role'][0] )
-				$role = 'publish_posts';
-				
-			elseif ( 'contributor' == $value['role'][0] )
-				$role = 'edit_posts';
-				
-			elseif ( 'subscriber' == $value['role'][0] )
-				$role = 'read';
-				
-			elseif ( !in_array( $value['role'][0], $defaultroles ) )
-				$role = 'manage_options';
-				
+			}
+			
 			if ( current_user_can( $role ) )
 				return TRUE;
 			
@@ -601,8 +674,40 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		}
 		
 		
+		function check_datetime() {
+			
+			$datetime = NULL;
+			$time = NULL;
+			$date = NULL;
+			$value = get_option( FB_WM_TEXTDOMAIN );
+			
+			if ( isset($value['radio']) && 1 === $value['radio'] ) {
+				$datetime = explode( ' ', $value['date'] );
+				$date = explode( '-', $datetime[0] );
+				if ( isset($datetime[1]) )
+					$time = explode( ':', $datetime[1] );
+				else $time = 0;
+				if (count($date) < 3) {
+					$date = 0; //ausschalten wegen datum is nicht
+				} else {
+					$date[1] = $date[1] - 1;
+					if (count($time) < 3)
+						$time = 0;
+					if ( isset($time) && 0 !== $time ) {
+						// 'Years', 'Months', 'Weeks', 'Days', 'Hours', 'Minutes', 'Seconds'
+						$date = $date[2].', '.$date[1].', '.$date[0].', '.$time[0].', '.$time[1].', '.$time[2];
+					} else {
+						$date = $date[2].', '.$date[1].', '.$date[0];
+					}
+				}
+			}
+			
+			return array( $datetime, $time, $date );
+		}
+		
+		
 		function on_active() {
-			global $locale, $current_user;
+			global $current_user;
 			
 			$value = get_option( FB_WM_TEXTDOMAIN );
 			
@@ -621,18 +726,20 @@ if ( !class_exists('WPMaintenanceMode') ) {
 			
 			add_action( 'wm_head', array(&$this, 'add_theme') );
 			add_action( 'wm_content', array(&$this, 'add_flash') );
-			if ( 1 === $value['link'] )
+			add_action( 'wm_content', array( &$this, 'add_content' ) );
+			if ( isset($value['link']) && 1 === $value['link'] )
 				add_action( 'wm_footer', array(&$this, 'add_link') );
 			
-			if ( defined('WPLANG') )
-				$locale = WPLANG;
-			if ( empty($locale) )
-				$locale = 'en_US';
+			$locale = get_locale();
 			
-			$unitvalues = $this->case_unit($value['unit']);
+			if ( isset($value['unit']) )
+				$unitvalues = $this->case_unit($value['unit']);
 			
 			// set backtime for header status
-			$backtime = $value['time'] * $unitvalues['multiplier'];
+			if ( isset($value['time']) )
+				$backtime = $value['time'] * $unitvalues['multiplier'];
+			else
+				$backtime = NULL;
 			
 			if ( ( !$this->check_role() )
 					&& !strstr($_SERVER['PHP_SELF'], 'wp-login.php' )
@@ -641,6 +748,7 @@ if ( !class_exists('WPMaintenanceMode') ) {
 					&& !$this->check_exclude()
 				 ) {
 				$rolestatus = 'norights';
+				nocache_headers();
 				header("HTTP/1.0 503 Service Unavailable");
 				header("Retry-After: $backtime");
 				include('site.php');
@@ -649,18 +757,19 @@ if ( !class_exists('WPMaintenanceMode') ) {
 			
 			//$this->check_version();
 			if ( !strstr($_SERVER['PHP_SELF'], 'feed/')
-					&& !strstr($_SERVER['PHP_SELF'], 'wp-admin/')
-					&& !strstr($_SERVER['PHP_SELF'], 'wp-login.php')
-					&& !strstr($_SERVER['PHP_SELF'], 'async-upload.php')
-					&& !( strstr($_SERVER['PHP_SELF'], 'upgrade.php') && $this->check_role() )
-					&& !strstr($_SERVER['PHP_SELF'], 'trackback/')
-					&& !strstr($_SERVER['PHP_SELF'], '/plugins/')
-					&& !$this->check_exclude()
-					&& !$this->check_role()
-				 ) {
+				&& !strstr($_SERVER['PHP_SELF'], 'wp-admin/')
+				&& !strstr($_SERVER['PHP_SELF'], 'wp-login.php')
+				&& !strstr($_SERVER['PHP_SELF'], 'async-upload.php')
+				&& !( strstr($_SERVER['PHP_SELF'], 'upgrade.php') && $this->check_role() )
+				&& !strstr($_SERVER['PHP_SELF'], 'trackback/')
+				&& !strstr($_SERVER['PHP_SELF'], '/plugins/')
+				&& !$this->check_exclude()
+				&& !$this->check_role()
+				) {
 				include('site.php');
 				exit();
 			} else if ( strstr($_SERVER['PHP_SELF'], 'feed/') || strstr($_SERVER['PHP_SELF'], 'trackback/') ) {
+				nocache_headers();
 				header("HTTP/1.0 503 Service Unavailable");
 				header("Retry-After: $backtime");
 				exit();
@@ -705,18 +814,17 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		
 		
 		function add_theme() {
-			global $locale;
 			
-			if ( defined('WPLANG') )
-				$locale = WPLANG;
-			if ( empty($locale) )
-				$locale = 'en_US';
-			
+			$locale = get_locale();
 			$value = get_option( FB_WM_TEXTDOMAIN );
 			
 			$theme  = '';
 			$link   = '';
 			$style  = '';
+			// default theme
+			if ( !isset($value['theme']) )
+				$value['theme'] = 1;
+			
 			switch( $value['theme'] ) {
 				case 0:
 					if ( $value['styleurl'] )
@@ -773,21 +881,20 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		
 		
 		function add_flash() {
-			global $locale;
 			
-			if ( defined('WPLANG') )
-				$locale = WPLANG;
-			if ( empty($locale) )
-				$locale = 'en_US';
-			
+			$locale = get_locale();
 			$value = get_option( FB_WM_TEXTDOMAIN );
 			
 			$flash  = '';
 			$object = '';
+			// default theme
+			if ( !isset($value['theme']) )
+				$value['theme'] = 1;
+			
 			switch( $value['theme'] ) {
 				case 9:
-					$flash  = $this->get_plugins_url( 'styles/', __FILE__ ) . 'wartung-' . $locale . '.swf';
-					if ( $this->url_exists( $flash ) ) {
+					$flash = FB_WM_BASE . '/styles/wartung-' . $locale . '.swf';
+					if ( file_exists($flash) ) {
 						$flash = $flash;
 					} else {
 						$flash = $this->get_plugins_url( 'styles/', __FILE__ ) . 'wartung.swf';
@@ -804,6 +911,33 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		}
 		
 		
+		function add_content() {
+			
+			$locale = get_locale();
+			$value = get_option( FB_WM_TEXTDOMAIN );
+			$echo = NULL;
+			// default for unit
+			if ( !isset($value['unit']) )
+				$value['unit'] = NULL;
+				
+			$unitvalues = $this->case_unit($value['unit']);
+			$td = $this->check_datetime();
+			
+			if ( isset($value['radio']) && 1 === $value['radio'] && 0 !== $td[2] ) {
+				$echodate = $td[0][0];
+				if ('de_DE' == $locale)
+					$echodate = str_replace('-', '.', $td[0][0]);
+				if ( 0 !== $td[1] )
+					$echodate .= ' ' . $td[0][1];
+				$echo = sprintf( stripslashes_deep( $value['text']), '<br /><span id="countdown"></span>', $echodate );
+			} elseif ( isset($value['text']) && isset($value['time']) ) {
+				$echo = sprintf( stripslashes_deep( $value['text'] ), $value['time'], $unitvalues['unit'] );
+			}
+			
+			echo do_shortcode($echo);
+		}
+		
+		
 		function check_file($url) {
 			
 			$url = parse_url($url);
@@ -813,8 +947,8 @@ if ( !class_exists('WPMaintenanceMode') ) {
 				echo $errstr . ' (' . $errno . ')<br />'. "\n";
 			} else {
 				$httpRequest = 'HEAD ' . $url['path'] . ' HTTP/1.1' . "\r\n"
-										. 'Host: ' . $url['host'] ."\r\n"
-										. 'Connection: close'. "\r\n\r\n";
+								. 'Host: ' . $url['host'] ."\r\n"
+								. 'Connection: close'. "\r\n\r\n";
 				
 				fputs($fp, $httpRequest);
 				$zeileeins = fgets($fp, 1024);
@@ -830,33 +964,18 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		
 		
 		function url_exists($url) {
-			$url = str_replace("http://", "", $url);
-			if (strstr($url, "/")) {
-				$url = explode("/", $url, 2);
-				$url[1] = "/".$url[1];
-			} else {
-				$url = array($url, "/");
-			}
-			
-			$fh = fsockopen($url[0], 80);
-			if ($fh) {
-				fputs( $fh,"GET " . $url[1] . " HTTP/1.1\nHost:" . $url[0] . "\n\n" );
-				if (fread($fh, 22) == "HTTP/1.1 404 Not Found") {
-					return FALSE;
-				} else {
-					return TRUE;
-				}
-			
-			} else {
+			if ( (strpos($url, "http")) === FALSE ) $url = "http://" . $url;
+			if ( is_array(@get_headers($url)) )
+				return TRUE;
+			else
 				return FALSE;
-			}
 		}
 		
 	} // end class
 	
 	/**
-	 * Template tag to use in site-template
-	 */
+	* Template tag to use in site-template
+	*/
 	function wm_head() {
 		
 		do_action('wm_head');
@@ -872,11 +991,7 @@ if ( !class_exists('WPMaintenanceMode') ) {
 		do_action('wm_footer');
 	}
 	
-	// add the class to WP
-	function WPMaintenanceModeStart() {
-		
-		new WPMaintenanceMode();
-	}
-	add_action( 'plugins_loaded', 'WPMaintenanceModeStart' );
+	$GLOBALS['WPMaintenanceMode'] = new WPMaintenanceMode();
 }
+
 ?>

@@ -29,35 +29,10 @@ if ( !isset($value) ) {
 	if ( !defined('FB_WM_BASEDIR') )
 		define( 'FB_WM_BASEDIR', dirname( plugin_basename(__FILE__) ) );
 	
-	global $locale, $user_ID;
+	global $user_ID;
 	
 	get_currentuserinfo();
-	
-	if ( defined('WPLANG') )
-		$locale = WPLANG;
-	if ( empty($locale) )
-		$locale = 'en_US';
-	
-	if ( isset($value['radio']) && 1 === $value['radio'] ) {
-		$datetime = explode( ' ', $value['date'] );
-		$date = explode( '-', $datetime[0] );
-		if ( isset($datetime[1]) )
-			$time = explode( ':', $datetime[1] );
-		else $time = 0;
-		if (count($date) < 3) {
-			$date = 0; //ausschalten wegen datum is nicht
-		} else {
-			$date[1] = $date[1] - 1;
-			if (count($time) < 3)
-				$time = 0;
-			if ( isset($time) && 0 !== $time ) {
-				// 'Years', 'Months', 'Weeks', 'Days', 'Hours', 'Minutes', 'Seconds'
-				$date = $date[2].', '.$date[1].', '.$date[0].', '.$time[0].', '.$time[1].', '.$time[2];
-			} else {
-				$date = $date[2].', '.$date[1].', '.$date[0];
-			}
-		}
-	}
+	$locale = get_locale();
 	
 	wm_head(); ?>
 	
@@ -70,6 +45,8 @@ if ( !isset($value) ) {
 	</div>
 
 	<div id="content">
+		<h1><?php if ( isset($value['heading']) && ($value['heading'] != '') ) echo stripslashes_deep( $value['heading'] ); else _e( 'Maintenance Mode', FB_WM_TEXTDOMAIN ); ?></h1>
+		
 		<?php wm_content();
 		
 		if (isset($user_ID) && $user_ID) {
@@ -84,40 +61,28 @@ if ( !isset($value) ) {
 			$adminloginmsg = '';
 			$adminloginstr = __( 'Admin-Login', FB_WM_TEXTDOMAIN );
 		} ?>
-		
-		<h1><?php if ( isset($value['heading']) && ($value['heading'] != '') ) echo stripslashes_deep( $value['heading'] ); else _e( 'Maintenance Mode', FB_WM_TEXTDOMAIN ); ?></h1>
 		<?php echo $adminloginmsg; ?>
-		<?php if ( isset($value['radio']) && 1 === $value['radio'] && 0 !== $date ) {
-			$echodate = $datetime[0];
-			if ('de_DE' == $locale)
-				$echodate = str_replace('-', '.', $datetime[0]);
-			if ( 0 !== $time )
-			$echodate .= ' ' . $datetime[1];
-			?>
-		<?php echo sprintf( stripslashes_deep( $value['text']), '<br /><span id="countdown"></span>', $echodate ); ?>
-		<?php } elseif ( isset($value['text']) && isset($value['time']) ) { ?>
-		<?php echo sprintf( stripslashes_deep( $value['text'] ), $value['time'], $unitvalues['unit'] ); ?>
-		<?php } ?>
 		<div class="admin" onclick="location.href='<?php echo $adminlogin; ?>';" onkeypress="location.href='<?php echo $adminlogin; ?>';"><a href="<?php echo $adminlogin; ?>"><?php echo $adminloginstr; ?></a></div>
 	</div>
 	
 	<?php wm_footer(); ?>
 	
 	<?php
-	if ( isset($date) && 0 !== $date ) {
+	$td = WPMaintenanceMode::check_datetime();
+	if ( isset($td[2]) && 0 !== $td[2] ) {
 
 		$locale = substr($locale, 0, 2);
 	?>
 		<script type="text/javascript" src="<?php bloginfo('url') ?>/wp-includes/js/jquery/jquery.js"></script>
 		<script type="text/javascript" src="<?php echo WPMaintenanceMode::get_plugins_url( 'js/jquery.countdown.pack.js', __FILE__ ); ?>"></script>
-		<?php if ( WPMaintenanceMode::url_exists( WPMaintenanceMode::get_plugins_url( 'js/jquery.countdown-' . $locale . '.js', __FILE__ ) ) ) { ?>
+		<?php if ( file_exists(FB_WM_BASE . '/js/jquery.countdown-' . $locale . '.js') ) { ?>
 		<script type="text/javascript" src="<?php echo WPMaintenanceMode::get_plugins_url( 'js/jquery.countdown-' . $locale . '.js', __FILE__ ); ?>"></script>
 		<?php } ?>
 		<script type="text/javascript">
 		jQuery(document).ready( function($){
 			var austDay = new Date();
 			// 'Years', 'Months', 'Weeks', 'Days', 'Hours', 'Minutes', 'Seconds'
-			austDay = new Date(<?php echo $date;  ?>);
+			austDay = new Date(<?php echo $td[2]; ?>);
 			$('#countdown').countdown({until: austDay});
 		});
 		</script>

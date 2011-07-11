@@ -5,7 +5,7 @@
  * rewrite-rules_rs.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  */
  
@@ -41,7 +41,7 @@ class ScoperRewrite {
 			if ( file_exists( ABSPATH . '/wp-admin/includes/file.php' ) )
 				include_once( ABSPATH . '/wp-admin/includes/file.php' );
 
-			add_action( 'shutdown', create_function( '', 'global $wp_rewrite; if ( ! empty($wp_rewrite) ) { $wp_rewrite->flush_rules(true); }' ) );
+			add_action( 'shutdown', create_function( '', 'global $wp_rewrite; if ( ! did_action("delete_option_rewrite_rules") && ! empty($wp_rewrite) ) { $wp_rewrite->flush_rules(true); }' ), 999 );
 		}
 	}
 	
@@ -117,9 +117,8 @@ class ScoperRewrite {
 		$uploads = scoper_get_upload_info();
 
 		// If a filter has changed MU basedir, don't filter file attachments for this blog because we might not be able to regenerate the basedir for rule removal at RS deactivation
-		if ( ! IS_MU_RS || strpos( $uploads['basedir'], "/blogs.dir/$blog_id/files" ) ) {
+		if ( ! IS_MU_RS || strpos( $uploads['basedir'], "/blogs.dir/$blog_id/files" ) || ( false !== strpos( $uploads['basedir'], trailingslashit(WP_CONTENT_DIR) . 'uploads' ) ) ) {
 			$htaccess_path = trailingslashit($uploads['basedir']) . '.htaccess';
-
 			ScoperRewrite::insert_with_markers( $htaccess_path, 'Role Scoper', $rules );
 		}
 	}
@@ -186,7 +185,7 @@ class ScoperRewrite {
 				$new_rules .= "RewriteCond %{REQUEST_URI} ^(.*)/$file_path" . "$ [NC]\n";
 				$new_rules .= "RewriteCond %{QUERY_STRING} !^(.*)rs_file_key=$key(.*)\n";
 				$new_rules .= $main_rewrite_rule;
-						
+
 				if ( $pos_ext = strrpos( $file_path, '\.' ) ) {
 					$thumb_path = substr( $file_path, 0, $pos_ext );
 					$ext = substr( $file_path, $pos_ext + 2 );	

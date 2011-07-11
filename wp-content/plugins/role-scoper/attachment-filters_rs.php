@@ -24,22 +24,26 @@ function agp_return_file( $file_path, $attachment_id = 0 ) {
 		if ( ! $attachment_id = scoper_get_var( "SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND guid = '$orig_file_url' AND post_parent > 0 LIMIT 1" ) )
 			return;
 	}
-	
+
 	if ( ! $key = get_post_meta( $attachment_id, '_rs_file_key' ) ) {
 		// The key was lost from DB, so regenerate it (and files / uploads .htaccess)
 		require_once( 'rewrite-rules_rs.php' );
 		ScoperRewrite::resync_file_rules();
 		
 		// If the key is still not available, fail out to avoid recursion
-		if ( ! $key = get_post_meta( $attachment_id, '_rs_file_key' ) )
+		if ( ! $key = get_post_meta( $attachment_id, '_rs_file_key' ) ) {
 			exit(0);
-	} elseif ( ! empty($_GET['rs_file_key']) && ( $_GET['rs_file_key'] == $key ) ) {
+		}
+	} elseif ( strpos( $_SERVER['REQUEST_URI'], 'rs_file_key' ) ) {
 		// Apparantly, the .htaccess rules contain an entry for this file, but with invalid file key.  URL with this valid key already passed through RewriteRules.  
-		// Regenerate .htaccess, but don't risk recursion by redirecting again.
-		require_once( 'rewrite-rules_rs.php' );
-		ScoperRewrite::resync_file_rules();
-		
-		exit(0);
+		// Regenerate .htaccess file in uploads folder, but don't risk recursion by redirecting again.  Note that Firefox browser cache may need to be cleared following this error.
+		$last_resync = get_option( 'scoper_last_htaccess_resync' );
+		if ( ( ! $last_resync ) || ( time() - $last_resync > 3600 ) ) {  // prevent abuse (mismatched .htaccess keys should not be a frequent occurance)
+			update_option( 'scoper_last_htaccess_resync', time() );
+			require_once( 'rewrite-rules_rs.php' );
+			ScoperRewrite::resync_file_rules();
+		}
+		exit(0);  // If htaccess rewrite was instantaneous, we could just continue without this exit.  But settle for the one-time image access failure to avoid a redirect loop on delayed file update.
 	}
 
 	if ( is_array($key) )
@@ -107,17 +111,8 @@ class AttachmentFilters_RS {
 		$return_attachment_id = 0;
 		
 		if ( empty($results) ) {
-			global $scoper;
-
-			$scoper->cap_interceptor->skip_any_object_check = true;
-			$scoper->cap_interceptor->skip_any_term_check = true;
-			$can_edit_others = current_user_can('edit_others_posts') || current_user_can('edit_others_pages');
-			$scoper->cap_interceptor->skip_any_object_check = false;
-			$scoper->cap_interceptor->skip_any_term_check = false;
-
-			//rs_errlog( "unattached upload, returning $can_edit_others" );
-
-			return $can_edit_others;
+			$args = array( 'skip_any_object_check' => true, 'skip_any_term_check' => true );
+			return cr_user_can( 'edit_others_posts', 0, 0, $args ) || cr_user_can( 'edit_others_pages', 0, 0, $args );
 		} else {
 			// set global flag (checked by flt_user_has_cap, which filters current_user_Can)
 			global $scoper_checking_attachment_access;
@@ -174,8 +169,14 @@ class AttachmentFilters_RS {
 			agp_return_file($file, $return_attachment_id);
 			return;
 		}
+		 
+		// File access was not granted.  Since a 404 page will now be displayed, add filters which (for performance) were suppressed on the direct file access request
+		global $scoper;
+		$scoper->direct_file_access = false;
+		$scoper->add_main_filters();
+		$scoper->add_hardway_filters();
 		
-		// file access was not granted.  Determine if teaser message should be triggered
+		//Determine if teaser message should be triggered
 		if ( file_exists( $uploads['basedir'] . "/$file" ) ) {
 			
 			if ( $matched_published_post && scoper_get_otype_option('do_teaser', 'post') ) {

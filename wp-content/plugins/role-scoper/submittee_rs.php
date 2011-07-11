@@ -28,13 +28,13 @@ class Scoper_Submittee {
 			$sitewide = true;		// default customization is only for per-blog options, but is sitewide in terms of DB storage in sitemeta table
 			
 		if ( 'flush' == $action ) {
-			wpp_cache_flush();
+			wpp_cache_flush_all_sites();
 			return;	
 		}
 
-		if ( ! in_array( $_GET["page"], array( 'rs-options', 'rs-site_options') ) )
+		if ( ! in_array( $_GET["page"], array( 'rs-options', 'rs-site_options', 'rs-default_options') ) )
 			return;
-		
+			
 		if ( empty($_POST['rs_submission_topic']) )
 			return;
 		
@@ -190,12 +190,13 @@ class Scoper_Submittee {
 	
 	function update_page_options( $sitewide = false, $customize_defaults = false ) {
 		global $scoper_role_types;
-
+		global $scoper_default_options;
+		
 		// changes to these options will trigger .htaccess regen
 		if ( $sitewide ) {
-			add_action( 'update_site_option_scoper_file_filtering', 'scoper_flush_site_rules' );
+			add_action( 'pre_update_site_option_scoper_file_filtering', 'scoper_maybe_flush_site_rules', 10, 2 );
 			add_action( 'add_site_option_scoper_file_filtering', 'scoper_flush_site_rules' );
-			add_action( 'update_site_option_scoper_file_filtering', 'scoper_expire_file_rules' );
+			add_action( 'pre_update_site_option_scoper_file_filtering', 'scoper_maybe_expire_file_rules', 10, 2 );
 			add_action( 'add_site_option_scoper_file_filtering', 'scoper_expire_file_rules' );
 		} else {
 			add_action( 'update_option_scoper_file_filtering', 'scoper_maybe_expire_file_rules', 10, 2 );
@@ -205,11 +206,18 @@ class Scoper_Submittee {
 		$default_prefix = ( $customize_defaults ) ? 'default_' : '';
 		
 		$reviewed_options = explode(',', $_POST['all_options']);
-		
+
 		foreach ( $reviewed_options as $option_basename ) {
 			$value = isset($_POST[$option_basename]) ? $_POST[$option_basename] : '';
-			
-			if ( 'role_type' == $option_basename )
+
+			if ( ( 'use_post_types' == $option_basename ) || ( 'use_taxonomies' == $option_basename ) ) {
+				$value = array();
+				foreach ( array_keys($scoper_default_options[$option_basename]) as $key ) {
+					$postvar = $option_basename . '-' . $key;
+					$value[$key] = isset($_POST[$postvar]) ? $_POST[$postvar] : '';
+				}	
+			}
+			elseif ( 'role_type' == $option_basename )
 				$value = $scoper_role_types[$value];
 			elseif ( 'mu_sitewide_groups' == $option_basename ) {
 				$current_setting = get_site_option( 'scoper_mu_sitewide_groups' );
@@ -225,13 +233,11 @@ class Scoper_Submittee {
 
 			if ( ! is_array($value) )
 				$value = trim($value);
+
 			$value = stripslashes_deep($value);
 	
 			scoper_update_option( $default_prefix . $option_basename, $value, $sitewide );
 		}
-		
-		//dump($_POST);
-		//die;
 	}
 	
 	function update_page_otype_options( $sitewide = false, $customize_defaults = false ) {
@@ -239,23 +245,24 @@ class Scoper_Submittee {
 		
 		// changes to these options will trigger .htaccess regen
 		if ( $sitewide ) {
-			add_action( 'add_site_option_scoper_use_term_roles', 'scoper_expire_file_rules' );
-			add_action( 'add_site_option_scoper_use_object_roles', 'scoper_expire_file_rules' );
-			add_action( 'pre_update_site_option_scoper_use_term_roles', 'scoper_expire_file_rules' );
-			add_action( 'pre_update_site_option_scoper_use_object_roles', 'scoper_expire_file_rules' );
+			add_filter( 'add_site_option_scoper_use_term_roles', 'scoper_expire_file_rules' );
+			add_filter( 'add_site_option_scoper_use_object_roles', 'scoper_expire_file_rules' );
+			add_filter( 'pre_update_site_option_scoper_use_term_roles', 'scoper_maybe_expire_file_rules', 10, 2 );   // update_site_option hook does not pass old_value (as of WP 3.0)
+			add_filter( 'pre_update_site_option_scoper_use_object_roles', 'scoper_maybe_expire_file_rules', 10, 2 );
 		} else {
-			add_action( 'update_option_scoper_use_term_roles', 'scoper_maybe_expire_file_rules', 10, 2 );
-			add_action( 'update_option_scoper_use_object_roles', 'scoper_maybe_expire_file_rules', 10, 2 );
+			add_filter( 'update_option_scoper_use_term_roles', 'scoper_maybe_expire_file_rules', 10, 2 );
+			add_filter( 'update_option_scoper_use_object_roles', 'scoper_maybe_expire_file_rules', 10, 2 );
 		}
 
 		$default_prefix = ( $customize_defaults ) ? 'default_' : '';
 		
 		$reviewed_otype_options = explode(',', $_POST['all_otype_options']);
+		
 		$otype_option_vals = array();
 		foreach ( $reviewed_otype_options as $option_basename ) {
 			if ( isset( $scoper_default_otype_options[$option_basename] ) ) {
 				if ( $opt = $scoper_default_otype_options[$option_basename] ) {
-
+					
 					foreach ( array_keys($opt) as $src_otype ) {
 						if( is_array( $opt[$src_otype] ) ) {
 							foreach ( array_keys($opt[$src_otype]) as $taxonomy ) {
@@ -279,8 +286,9 @@ class Scoper_Submittee {
 			}
 		}
 
-		foreach ( $otype_option_vals as $option_basename => $value )
+		foreach ( $otype_option_vals as $option_basename => $value ) {
 			scoper_update_option( $default_prefix . $option_basename , $value, $sitewide);
+		}
 	}
 	
 	function update_rs_role_defs_customize_defaults () {
@@ -294,24 +302,29 @@ class Scoper_Submittee {
 	function update_rs_role_defs( $sitewide = false, $customize_defaults = false ) {
 		$default_prefix = ( $customize_defaults ) ? 'default_' : '';
 		
-		$default_role_caps = apply_filters('define_role_caps_rs', scoper_core_role_caps() );
+		$default_role_caps = apply_filters( 'define_role_caps_rs', cr_role_caps() );
 
-		$cap_defs = new WP_Scoped_Capabilities();
+		$cap_defs = new CR_Capabilities();
 		$cap_defs = apply_filters('define_capabilities_rs', $cap_defs);
-		$cap_defs->add_member_objects( scoper_core_cap_defs() );
+		$cap_defs->add_member_objects( cr_cap_defs() );
 
 		global $scoper, $scoper_role_types;
-		$role_defs = new WP_Scoped_Roles($cap_defs, $scoper_role_types);
-		$role_defs->add_member_objects( scoper_core_role_defs() );
+		$role_defs = new CR_Roles();
+		$role_defs->add_member_objects( cr_role_defs() );
 		$role_defs = apply_filters('define_roles_rs', $role_defs);
 
+		$reviewed_roles = explode(',', $_POST['reviewed_roles']);
+		
 		$disable_caps = array();
 		$add_caps = array();
 		
 		foreach ( $default_role_caps as $role_handle => $default_caps ) {
+			if ( ! in_array( $role_handle, $reviewed_roles ) )
+				continue;
+			
 			if ( $role_defs->member_property($role_handle, 'no_custom_caps') || $role_defs->member_property($role_handle, 'anon_user_blogrole') )
 				continue;
-
+				
 			$posted_set_caps = ( empty($_POST["{$role_handle}_caps"]) ) ? array() : $_POST["{$role_handle}_caps"];
 
 			// html IDs have any spaces stripped out of cap names.  Replace them for processing.
@@ -337,13 +350,15 @@ class Scoper_Submittee {
 		scoper_update_option( $default_prefix . 'user_role_caps', $add_caps, $sitewide);
 		
 		scoper_refresh_options();
-		$scoper->load_role_caps();
+		$scoper->load_definition('cap_defs');
 		
 		global $wp_roles;
 		
 		// synchronize WP roles as requested
 		if ( ! empty( $_POST['sync_wp_roles'] ) ) {
 			foreach ( $_POST['sync_wp_roles'] as $sync_request ) {
+				$scoper->log_cap_usage( $scoper->role_defs, $scoper->cap_defs );
+				
 				$sync_handles = explode( ':', $sync_request );
 				$rs_role_handle = $sync_handles[0];
 				$wp_role_handle = $sync_handles[1];
@@ -352,10 +367,8 @@ class Scoper_Submittee {
 				
 				// only remove caps which are defined for this RS role's data source and object type
 				$role_attributes = $scoper->role_defs->get_role_attributes( $rs_role_handle );
-				$src_name = $role_attributes->src_names[0];
-				$object_type = $role_attributes->object_types[0];
-				$otype_caps = $scoper->cap_defs->get_matching( $src_name, $object_type, '', STATUS_ANY_RS );
-				
+				$otype_caps = $scoper->cap_defs->get_matching( $role_attributes->src_name, $role_attributes->object_type, '', STATUS_ANY_RS );
+
 				// make the roledef change for all blogs if RS role def is sitewide
 				if ( IS_MU_RS && $sitewide ) {
 					global $wpdb, $blog_id;
@@ -390,7 +403,7 @@ class Scoper_Submittee {
 		}
 
 		$scoper->role_defs->locked = false;
-		$scoper->role_defs->populate_with_wp_roles();
+		$scoper->log_wp_roles( $scoper->role_defs );
 		$scoper->role_defs->lock();
 	}
 }

@@ -18,11 +18,9 @@ if ( scoper_get_option('display_hints') ) {
 	_e('These WordPress role definitions may be modified via the Capability Manager or Role Manager plugin.', 'scoper');
 	echo '</p>';
 	
-	if ( 'rs' == SCOPER_ROLE_TYPE ) {
-		echo '<p style="margin-top:0">';
-		_e('To understand how your WordPress roles relate to type-specific RS Roles, see <a href="#wp_rs_equiv">WP/RS Role Equivalence</a>.', 'scoper');
-		echo '</p>';
-	}
+	echo '<p style="margin-top:0">';
+	_e('To understand how your WordPress roles relate to type-specific RS Roles, see <a href="#wp_rs_equiv">WP/RS Role Equivalence</a>.', 'scoper');
+	echo '</p>';
 	
 	echo '</div>';
 }
@@ -72,8 +70,7 @@ if ( scoper_get_option('display_hints') ) {
 	
 	echo '</tbody></table>';
 	echo '<br /><br />';
-	
-if ( 'rs' == SCOPER_ROLE_TYPE ) {
+
 	echo '<a name="wp_rs_equiv"></a>';
 	echo '<h3>' . __('WP / RS Role Equivalence', 'scoper'), '</h3>';
 ?>
@@ -88,6 +85,8 @@ if ( 'rs' == SCOPER_ROLE_TYPE ) {
 <?php	
 	$style = '';
 
+	$use_post_types = scoper_get_option( 'use_post_types' );
+	
 	// order WP roles by display name
 	foreach ( array_keys($wp_role_names) as $wp_role_name ) {
 		$role_handle = scoper_get_role_handle( $wp_role_name, 'wp' ); 
@@ -97,18 +96,25 @@ if ( 'rs' == SCOPER_ROLE_TYPE ) {
 		$display_names = array();
 		$contained_roles_handles = $scoper->role_defs->get_contained_roles($role_handle, false, 'rs');
 	
-		foreach( array_keys($contained_roles_handles) as $contained_role_handle )
-			$display_names[] = $scoper->role_defs->get_display_name($contained_role_handle);
+		foreach( array_keys($contained_roles_handles) as $contained_role_handle ) {
+			$role_def = $scoper->role_defs->get( $contained_role_handle );
+			
+			if ( $role_def->object_type && post_type_exists( $role_def->object_type ) && ! isset( $use_post_types[$role_def->object_type] ) )
+				continue;	
 
+			$display_names[] = $scoper->role_defs->get_display_name($contained_role_handle);
+		}
+			
 		$list = "<li>" . implode("</li><li>", $display_names) . "</li>";
 
+		$note = ( 'administrator' == $wp_role_name ) ? '<br /><br />' . __( '<strong>note</strong>: Role Scoper also implicitly grants Administrators the Editor role for each enabled custom post type, and the Manager role for each enabled taxonomy.', 'scoper' ) : '';
+		
 		echo "\n\t"
-			. "<tr$style><td>" . $scoper->role_defs->get_display_name($role_handle) . "</td><td><ul class='rs-cap_list'>$list</ul></td></tr>";
+			. "<tr$style><td>" . $scoper->role_defs->get_display_name($role_handle) . $note . "</td><td><ul class='rs-cap_list'>$list</ul></td></tr>";
 	} // end foreach role
 		
 	echo '</tbody></table>';
 	echo '<br /><br />';
-} // endif 'rs' == SCOPER_ROLE_TYPE
 ?>
 </div>
 

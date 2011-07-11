@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: peters_collaboration_emails.php\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-09-02 11:40-0800\n"
+"POT-Creation-Date: 2010-11-26 22:29-0800\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Peter <peter@keung.biz>\n"
 "Language-Team: \n"
@@ -13,365 +13,439 @@ msgstr ""
 "X-Poedit-Basepath: .\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: peters_collaboration_emails.php:177
+#: peters_collaboration_emails.php:180
 #, php-format
 msgid "There is a new post to review, written by %s."
 msgstr "Une nouvelle note écrite par %s est à approuver."
 
-#: peters_collaboration_emails.php:180
+#: peters_collaboration_emails.php:183
 #, php-format
 msgid "Accompanying note from %s:"
 msgstr "Attaché à la note de %s  :"
 
-#: peters_collaboration_emails.php:183
+#: peters_collaboration_emails.php:186
 msgid "Review and publish it here: "
 msgstr "Adresse pour approuver et publier :"
 
-#: peters_collaboration_emails.php:186
+#: peters_collaboration_emails.php:189
 msgid "pending"
 msgstr "en attente"
 
-#: peters_collaboration_emails.php:203
-#: peters_collaboration_emails.php:232
-#: peters_collaboration_emails.php:262
-#: peters_collaboration_emails.php:294
+#: peters_collaboration_emails.php:206
+#: peters_collaboration_emails.php:235
+#: peters_collaboration_emails.php:265
+#: peters_collaboration_emails.php:297
 #, php-format
 msgid "Hi %s!"
 msgstr "Bonjour %s!"
 
-#: peters_collaboration_emails.php:204
-#: peters_collaboration_emails.php:233
+#: peters_collaboration_emails.php:207
+#: peters_collaboration_emails.php:236
 msgid "Your post has been approved"
 msgstr "Votre note a été approuvée"
 
-#: peters_collaboration_emails.php:205
-#: peters_collaboration_emails.php:234
-#: peters_collaboration_emails.php:264
+#: peters_collaboration_emails.php:208
+#: peters_collaboration_emails.php:237
+#: peters_collaboration_emails.php:267
 msgid "by"
 msgstr "par"
 
-#: peters_collaboration_emails.php:206
+#: peters_collaboration_emails.php:209
 msgid "and is now published."
 msgstr "et a été publiée."
 
-#: peters_collaboration_emails.php:209
-#: peters_collaboration_emails.php:239
-#: peters_collaboration_emails.php:268
+#: peters_collaboration_emails.php:212
+#: peters_collaboration_emails.php:242
+#: peters_collaboration_emails.php:271
 msgid "Accompanying note:"
 msgstr "Note attachée : "
 
-#: peters_collaboration_emails.php:212
-#: peters_collaboration_emails.php:296
+#: peters_collaboration_emails.php:215
+#: peters_collaboration_emails.php:299
 msgid "See it here:"
 msgstr "Aperçu ici :"
 
-#: peters_collaboration_emails.php:215
+#: peters_collaboration_emails.php:218
 msgid "published"
 msgstr "publiée"
 
-#: peters_collaboration_emails.php:235
+#: peters_collaboration_emails.php:238
 #, php-format
 msgid "and is scheduled to be published on %s UTC %s."
 msgstr "et a été programmée pour publication le %s UTC %s."
 
-#: peters_collaboration_emails.php:244
+#: peters_collaboration_emails.php:247
 msgid "approved and scheduled"
 msgstr "approuvée et programmée"
 
-#: peters_collaboration_emails.php:263
+#: peters_collaboration_emails.php:266
 msgid "Your post has been reverted back to draft status"
 msgstr "Votre note a été replacée comme brouillon"
 
-#: peters_collaboration_emails.php:272
+#: peters_collaboration_emails.php:275
 msgid "Edit it again here:"
 msgstr "Vous pouvez l'éditer à nouveau à cette adresse :"
 
-#: peters_collaboration_emails.php:275
+#: peters_collaboration_emails.php:278
 msgid "back to draft"
 msgstr "replacée comme brouillon"
 
-#: peters_collaboration_emails.php:295
+#: peters_collaboration_emails.php:298
 msgid "Your post is now live."
 msgstr "Votre note est maintenant en ligne."
 
-#: peters_collaboration_emails.php:299
+#: peters_collaboration_emails.php:302
 msgid "is now live"
 msgstr "maintenant en ligne"
 
-#: peters_collaboration_emails.php:361
+#: peters_collaboration_emails.php:474
 msgid "Admin address"
 msgstr "Adresse de l'admin"
 
-#: peters_collaboration_emails.php:363
+#: peters_collaboration_emails.php:476
 msgid "Other"
 msgstr "Autre"
 
-#: peters_collaboration_emails.php:380
-#: peters_collaboration_emails.php:396
+#: peters_collaboration_emails.php:493
+#: peters_collaboration_emails.php:509
 msgid "**** ERROR: Invalid moderator user ID ****"
 msgstr "**** ERREUR : ID du modérateur incorrect ****"
 
-#: peters_collaboration_emails.php:406
+#: peters_collaboration_emails.php:519
 msgid "**** ERROR: Invalid moderator e-mail address submitted ****"
 msgstr "**** ERREUR : Email du modérateur incorrect ****"
 
-#: peters_collaboration_emails.php:416
+#: peters_collaboration_emails.php:529
 msgid "**** ERROR: Invalid e-mail address submitted ****"
 msgstr "**** ERREUR: Email soumis incorrect ****"
 
-#: peters_collaboration_emails.php:459
+#: peters_collaboration_emails.php:562
 msgid "Default moderators updated."
 msgstr "Modérateurs par défaut mis à jour."
 
-#: peters_collaboration_emails.php:463
+#: peters_collaboration_emails.php:566
 msgid "You must have at least one default mod."
 msgstr "Vous devez sélectionner au moins un modérateur par défaut."
 
-#: peters_collaboration_emails.php:502
+#: peters_collaboration_emails.php:596
 #, php-format
 msgid "**** ERROR: Group with ID of %d does not exist ****"
 msgstr "**** ERREUR : Le groupe avec l'ID %d n'existe pas ****"
 
-#: peters_collaboration_emails.php:524
-#, php-format
-msgid "Moderators for the group %s updated."
-msgstr "Modérateurs pour le groupe %s mis à jour."
-
-#: peters_collaboration_emails.php:528
+#: peters_collaboration_emails.php:619
 #, php-format
 msgid "You must have at least one default mod for the group \"%s\"."
 msgstr "Vous devez sélectionner au moins un modérateur par défaut pour le groupe  \"%s\"."
 
-#: peters_collaboration_emails.php:563
+#: peters_collaboration_emails.php:627
+#, fuzzy
+msgid "Group moderators updated."
+msgstr "Modérateurs par défaut mis à jour."
+
+#: peters_collaboration_emails.php:650
 msgid "**** ERROR: Invalid new group contributor user ID ****"
 msgstr "**** ERREUR : ID de l'utilisateur du nouveau groupe incorrect ****"
 
-#: peters_collaboration_emails.php:574
+#: peters_collaboration_emails.php:659
 msgid "**** ERROR: Invalid new group moderator user ID ****"
 msgstr "**** ERREUR: ID de l'utilisateur modérateur du nouveau groupe incorrect ****"
 
-#: peters_collaboration_emails.php:586
+#: peters_collaboration_emails.php:669
 msgid "**** ERROR: Invalid new group moderator submitted ****"
 msgstr "**** ERREUR: Nouveau groupe modérateur soumis incorrect ****"
 
-#: peters_collaboration_emails.php:596
+#: peters_collaboration_emails.php:677
 msgid "New group created."
 msgstr "Nouveau groupe créé."
 
-#: peters_collaboration_emails.php:599
+#: peters_collaboration_emails.php:680
 msgid "**** ERROR: Unknown query error when adding a collaborator to the new group ****"
 msgstr "**** ERREUR : Erreur de requête inconnue lors de l'ajout d'un contributeur au nouveau groupe ****"
 
-#: peters_collaboration_emails.php:605
+#: peters_collaboration_emails.php:684
 msgid "**** ERROR: Unknown query error when creating new group ****"
 msgstr "**** ERREUR : Erreur de requête inconnue lors de la création d'un nouveau groupe ****"
 
-#: peters_collaboration_emails.php:612
+#: peters_collaboration_emails.php:689
 msgid "**** ERROR: Not all necessary group information was submitted to add a group ****"
 msgstr "**** ERREUR : Des informations necessaires sont manquantes pour l'ajout d'un nouveau groupe ****"
 
-#: peters_collaboration_emails.php:634
-#: peters_collaboration_emails.php:944
+#: peters_collaboration_emails.php:704
+#: peters_collaboration_emails.php:851
 msgid "That group does not exist."
 msgstr "Ce groupe n'existe pas."
 
-#: peters_collaboration_emails.php:648
+#: peters_collaboration_emails.php:718
 msgid "**** ERROR: Insufficient group name or contributor information ****"
 msgstr "**** ERREUR : Nom de groupe ou informations du contributeur manquantes ****"
 
-#: peters_collaboration_emails.php:649
+#: peters_collaboration_emails.php:719
 msgid "**** Make sure that there is at least one contributor. ****"
 msgstr "**** Vérifiez d'avoir au moins un contributeur. ****"
 
-#: peters_collaboration_emails.php:680
+#: peters_collaboration_emails.php:750
 msgid "**** ERROR: Invalid contributor user ID ****"
 msgstr "**** ERREUR : ID Utilisateur du contributeur incorrect ****"
 
-#: peters_collaboration_emails.php:703
+#: peters_collaboration_emails.php:773
 msgid "Collaborators updated."
 msgstr "Contributeurs mis à jour."
 
-#: peters_collaboration_emails.php:708
+#: peters_collaboration_emails.php:778
 msgid "Group name updated."
 msgstr "Nom du groupe mis à jour."
 
-#: peters_collaboration_emails.php:733
+#: peters_collaboration_emails.php:797
 msgid "**** ERROR: That group does not exist ****"
 msgstr "**** ERREUR: Ce groupe ne'existe pas ****"
 
-#: peters_collaboration_emails.php:751
+#: peters_collaboration_emails.php:811
 #, php-format
 msgid "Group %s successfully deleted."
 msgstr "Le groupe %s a été supprimé."
 
-#: peters_collaboration_emails.php:754
+#: peters_collaboration_emails.php:814
 msgid "**** ERROR: Database problem in removing the group. ****"
 msgstr "**** ERREUR : Erreur de DB lors de la suppression du groupe. ****"
 
-#: peters_collaboration_emails.php:794
-#, php-format
-msgid "**** ERROR: Category with ID of %d does not exist ****"
-msgstr "**** ERREUR : La catégorie ID %d n'existe pas ****"
-
-#: peters_collaboration_emails.php:819
-#, php-format
-msgid "Moderators for the category \"%s\" updated."
-msgstr "Les modérateurs de la catégorie \"%s\" mis à jour."
-
-#: peters_collaboration_emails.php:823
-#, php-format
-msgid "You must have at least one default mod for the category \"%s\"."
-msgstr "Vous devez laisser au moins un moderateur pour la catégorie \"%s\"."
-
-#: peters_collaboration_emails.php:857
-msgid "**** ERROR: Invalid category ID ****"
-msgstr "**** ERREUR : ID de la catégorie incorrect ****"
-
-#: peters_collaboration_emails.php:868
-msgid "**** ERROR: Invalid new category moderator user ID ****"
-msgstr "**** ERREUR : ID utilisateur du modérateur de la nouvelle catégorie incorrect ****"
-
 #: peters_collaboration_emails.php:880
-msgid "**** ERROR: Invalid new category moderator submitted ****"
-msgstr "**** ERREUR : Modérateur de la nouvelle catégorie incorrect ****"
-
-#: peters_collaboration_emails.php:893
-#, php-format
-msgid "New moderator added for the %s category."
-msgstr "Nouveau modérateur ajouté pour la catégorie %s."
-
-#: peters_collaboration_emails.php:896
-msgid "**** ERROR: Unknown query error when adding a new category moderator ****"
-msgstr "**** ERREUR : Erreur de requête inconnue lors de l'ajout du modérateur de la nouvelle catégorie ****"
-
-#: peters_collaboration_emails.php:903
-msgid "**** ERROR: No moderator was submitted for the category ****"
-msgstr "**** ERREUR : Aucun modérateur n'a été soumis pour la catégorie ****"
-
-#: peters_collaboration_emails.php:973
 msgid "Manage group:"
 msgstr "Gestion du groupe :"
 
-#: peters_collaboration_emails.php:975
+#: peters_collaboration_emails.php:882
 msgid "Back to the main collaboration config menu"
 msgstr "Retour au menu principal"
 
-#: peters_collaboration_emails.php:977
-#: peters_collaboration_emails.php:1204
+#: peters_collaboration_emails.php:884
+#: peters_collaboration_emails.php:1066
 msgid "Group name:"
 msgstr "Nom du groupe :"
 
-#: peters_collaboration_emails.php:978
+#: peters_collaboration_emails.php:885
 msgid "Contributors in this group:"
 msgstr "Contributeur dans ce groupe :"
 
-#: peters_collaboration_emails.php:982
-#: peters_collaboration_emails.php:1308
-#: peters_collaboration_emails.php:1322
-#: peters_collaboration_emails.php:1328
-#: peters_collaboration_emails.php:1342
-#: peters_collaboration_emails.php:1348
+#: peters_collaboration_emails.php:889
+#: peters_collaboration_emails.php:1202
+#: peters_collaboration_emails.php:1216
+#: peters_collaboration_emails.php:1222
+#: peters_collaboration_emails.php:1238
+#: peters_collaboration_emails.php:1266
 msgid "Update"
 msgstr "Mise à jour"
 
-#: peters_collaboration_emails.php:986
+#: peters_collaboration_emails.php:893
 msgid "Delete this group"
 msgstr "Supprimer ce groupe"
 
-#: peters_collaboration_emails.php:1020
-#, php-format
-msgid "Are you sure you want to remove the moderators for the <strong>%s</strong> category?"
-msgstr "Êtes-vous certain de vouloir supprimer les modérateurs pour la catégorie <strong>%s</strong> ?"
-
-#: peters_collaboration_emails.php:1022
-msgid "Yes"
-msgstr "Oui"
-
-#: peters_collaboration_emails.php:1026
-msgid "No, go back"
-msgstr "Non, retour"
-
-#: peters_collaboration_emails.php:1094
-#: peters_collaboration_emails.php:1177
-#: peters_collaboration_emails.php:1262
+#: peters_collaboration_emails.php:959
+#: peters_collaboration_emails.php:1039
+#: peters_collaboration_emails.php:1162
 msgid "General admin"
 msgstr ""
 
-#: peters_collaboration_emails.php:1106
-#: peters_collaboration_emails.php:1189
-#: peters_collaboration_emails.php:1273
+#: peters_collaboration_emails.php:971
+#: peters_collaboration_emails.php:1051
+#: peters_collaboration_emails.php:1175
 msgid "Add:"
 msgstr "Ajouter :"
 
-#: peters_collaboration_emails.php:1205
+#: peters_collaboration_emails.php:1067
 msgid "Add contributor:"
 msgstr "Ajouter un contributeur :"
 
-#: peters_collaboration_emails.php:1212
-#: peters_collaboration_emails.php:1292
+#: peters_collaboration_emails.php:1074
+#: peters_collaboration_emails.php:1261
 msgid "Add moderator:"
 msgstr "Ajouteur un modérateur :"
 
-#: peters_collaboration_emails.php:1275
-#: peters_collaboration_emails.php:1295
-msgid "E-mail:"
-msgstr "Email :"
+#: peters_collaboration_emails.php:1106
+msgid "All"
+msgstr ""
 
-#: peters_collaboration_emails.php:1288
-msgid "Category:"
-msgstr "Catégorie :"
+#: peters_collaboration_emails.php:1113
+msgid "*** undefined ***"
+msgstr ""
 
-#: peters_collaboration_emails.php:1299
+#: peters_collaboration_emails.php:1126
+msgid "*** n/a ***"
+msgstr ""
+
+#: peters_collaboration_emails.php:1186
 msgid "Manage collaboration e-mails"
 msgstr "Gestion de collaboration e-mails"
 
-#: peters_collaboration_emails.php:1300
+#: peters_collaboration_emails.php:1187
 msgid "Set the moderators who should be e-mailed whenever Contributor users submit pending posts."
 msgstr "Selectionnez les modérateurs qui recevront un email lorsqu'un contributeur soumet une note."
 
-#: peters_collaboration_emails.php:1303
+#: peters_collaboration_emails.php:1197
 msgid "Default moderators"
 msgstr "Modérateurs par défaut"
 
-#: peters_collaboration_emails.php:1305
+#: peters_collaboration_emails.php:1199
 msgid "These users will be e-mailed if none of the rules below match. Note that they must be either editors or administrators."
 msgstr "Ces utilisateurs recevront un email si aucune règle n'est spécifiée. Notez qu'ils doivent être editeurs ou administrateurs."
 
-#: peters_collaboration_emails.php:1311
+#: peters_collaboration_emails.php:1205
 msgid "Moderators by group"
 msgstr "Modérateurs par groupe"
 
-#: peters_collaboration_emails.php:1313
-#: peters_collaboration_emails.php:1333
+#: peters_collaboration_emails.php:1207
+#: peters_collaboration_emails.php:1227
 msgid "Existing rules"
 msgstr "Règles existantes"
 
-#: peters_collaboration_emails.php:1316
+#: peters_collaboration_emails.php:1210
 msgid "Group"
 msgstr "Groupe"
 
-#: peters_collaboration_emails.php:1317
-#: peters_collaboration_emails.php:1337
-msgid "Rules"
-msgstr "Règles"
+#: peters_collaboration_emails.php:1211
+#: peters_collaboration_emails.php:1233
+#, fuzzy
+msgid "Moderators"
+msgstr "Modérateurs par groupe"
 
-#: peters_collaboration_emails.php:1325
+#: peters_collaboration_emails.php:1219
 msgid "Add a group"
 msgstr "Ajouter un groupe"
 
-#: peters_collaboration_emails.php:1331
-msgid "Moderators by category"
+#: peters_collaboration_emails.php:1225
+#, fuzzy
+msgid "Moderators by post type and taxonomy"
 msgstr "Modérateurs par catégorie"
 
-#: peters_collaboration_emails.php:1336
-msgid "Category"
-msgstr "Catégorie"
+#: peters_collaboration_emails.php:1230
+msgid "Post Type"
+msgstr ""
 
-#: peters_collaboration_emails.php:1345
-msgid "Add category-specific moderators"
+#: peters_collaboration_emails.php:1231
+msgid "Taxonomy"
+msgstr ""
+
+#: peters_collaboration_emails.php:1232
+msgid "Term"
+msgstr ""
+
+#: peters_collaboration_emails.php:1241
+#, fuzzy
+msgid "Add post-type-specific moderators"
 msgstr "Ajouter des modérateurs pour une catégorie spécifique"
 
-#: peters_collaboration_emails.php:1406
+#: peters_collaboration_emails.php:1511
+#, fuzzy
+msgid "**** ERROR: That taxonomy type does not exist for that post type ****"
+msgstr "**** ERREUR: Ce groupe ne'existe pas ****"
+
+#: peters_collaboration_emails.php:1528
+msgid "**** ERROR: That post type rule already exists. Please add or remove moderators to the existing rule. ****"
+msgstr ""
+
+#: peters_collaboration_emails.php:1538
+#, fuzzy
+msgid "**** ERROR: Invalid new moderator user ID ****"
+msgstr "**** ERREUR : ID du modérateur incorrect ****"
+
+#: peters_collaboration_emails.php:1550
+#, fuzzy
+msgid "**** ERROR: Invalid new moderator submitted ****"
+msgstr "**** ERREUR: Nouveau groupe modérateur soumis incorrect ****"
+
+#: peters_collaboration_emails.php:1565
+#, fuzzy
+msgid "New moderator added for the post type rule."
+msgstr "Nouveau modérateur ajouté pour la catégorie %s."
+
+#: peters_collaboration_emails.php:1569
+#, fuzzy
+msgid "**** ERROR: Unknown query error when adding a new moderator for the post type rule ****"
+msgstr "**** ERREUR : Erreur de requête inconnue lors de l'ajout d'un contributeur au nouveau groupe ****"
+
+#: peters_collaboration_emails.php:1575
+#, fuzzy
+msgid "**** ERROR: No moderator was submitted for the post type rule ****"
+msgstr "**** ERREUR : Aucun modérateur n'a été soumis pour la catégorie ****"
+
+#: peters_collaboration_emails.php:1609
+#, fuzzy, php-format
+msgid "**** ERROR: Post type rule with ID of %d does not exist ****"
+msgstr "**** ERREUR : Le groupe avec l'ID %d n'existe pas ****"
+
+#: peters_collaboration_emails.php:1638
+#, fuzzy
+msgid "You must have at least one default moderator for each rule. Otherwise, delete the rule."
+msgstr "Vous devez sélectionner au moins un modérateur par défaut pour le groupe  \"%s\"."
+
+#: peters_collaboration_emails.php:1646
+#, fuzzy
+msgid "Moderators for the post type rules updated."
+msgstr "Modérateurs pour le groupe %s mis à jour."
+
+#: peters_collaboration_emails.php:1659
+msgid "Delete post type rule"
+msgstr ""
+
+#: peters_collaboration_emails.php:1667
+#, fuzzy
+msgid "Post type rule successfully deleted."
+msgstr "Le groupe %s a été supprimé."
+
+#: peters_collaboration_emails.php:1672
+#, fuzzy
+msgid "Are you sure you want to remove this post type rule?"
+msgstr "Êtes-vous certain de vouloir supprimer les modérateurs pour la catégorie <strong>%s</strong> ?"
+
+#: peters_collaboration_emails.php:1674
+msgid "Yes"
+msgstr "Oui"
+
+#: peters_collaboration_emails.php:1677
+msgid "No, go back"
+msgstr "Non, retour"
+
+#: peters_collaboration_emails.php:1683
+#, fuzzy
+msgid "That post type rule does not exist."
+msgstr "Ce groupe n'existe pas."
+
+#: peters_collaboration_emails.php:1721
 msgid "Collaboration e-mails"
 msgstr "Collaboration e-mails"
 
+#~ msgid "**** ERROR: Category with ID of %d does not exist ****"
+#~ msgstr "**** ERREUR : La catégorie ID %d n'existe pas ****"
+
+#~ msgid "Moderators for the category \"%s\" updated."
+#~ msgstr "Les modérateurs de la catégorie \"%s\" mis à jour."
+
+#~ msgid "You must have at least one default mod for the category \"%s\"."
+#~ msgstr "Vous devez laisser au moins un moderateur pour la catégorie \"%s\"."
+
+#~ msgid "**** ERROR: Invalid category ID ****"
+#~ msgstr "**** ERREUR : ID de la catégorie incorrect ****"
+
+#~ msgid "**** ERROR: Invalid new category moderator user ID ****"
+#~ msgstr ""
+#~ "**** ERREUR : ID utilisateur du modérateur de la nouvelle catégorie "
+#~ "incorrect ****"
+
+#~ msgid "**** ERROR: Invalid new category moderator submitted ****"
+#~ msgstr "**** ERREUR : Modérateur de la nouvelle catégorie incorrect ****"
+
+#~ msgid ""
+#~ "**** ERROR: Unknown query error when adding a new category moderator ****"
+#~ msgstr ""
+#~ "**** ERREUR : Erreur de requête inconnue lors de l'ajout du modérateur de "
+#~ "la nouvelle catégorie ****"
+
+#~ msgid "E-mail:"
+#~ msgstr "Email :"
+
+#~ msgid "Category:"
+#~ msgstr "Catégorie :"
+
+#~ msgid "Rules"
+#~ msgstr "Règles"
+
+#~ msgid "Category"
+#~ msgstr "Catégorie"

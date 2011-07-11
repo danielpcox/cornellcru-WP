@@ -4,7 +4,9 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die( 'This page cannot be called directly.' );
 
 function scoper_admin_object_roles($src_name, $object_type) {
-global $scoper;
+global $scoper, $scoper_admin;
+
+$GLOBALS['scoper_object_type'] = $object_type;
 
 if ( ! ( $src = $scoper->data_sources->get($src_name) ) || ! empty($src->no_object_roles) || ! empty($src->taxonomy_only) || ($src_name == 'group') )
 	wp_die(__('Invalid data source', 'scoper'));
@@ -13,10 +15,10 @@ $is_administrator = is_administrator_rs($src, 'user');
 
 $role_bases = array();
 
-if ( USER_ROLES_RS && ( $is_administrator || $scoper->admin->user_can_admin_object($src_name, $object_type, 0, true) ) )
+if ( USER_ROLES_RS && ( $is_administrator || $scoper_admin->user_can_admin_object($src_name, $object_type, 0, true) ) )
 	$role_bases []= ROLE_BASIS_USER;
 	
-if ( GROUP_ROLES_RS && ( $is_administrator || $scoper->admin->user_can_admin_object($src_name, $object_type, 0, true) || current_user_can('manage_groups') ) )
+if ( GROUP_ROLES_RS && ( $is_administrator || $scoper_admin->user_can_admin_object($src_name, $object_type, 0, true) || current_user_can('manage_groups') ) )
 	$role_bases []= ROLE_BASIS_GROUPS;
 
 if ( empty($role_bases) )
@@ -24,8 +26,8 @@ if ( empty($role_bases) )
 
 $otype = $scoper->data_sources->member_property($src_name, 'object_types', $object_type);
 	
-require_once( SCOPER_ABSPATH . '/hardway/hardway-parent_rs.php');
 require_once( 'admin-bulk_rs.php' );
+require_once( 'admin_lib-bulk-parent_rs.php');
 require_once('role_assignment_lib_rs.php');
 $role_assigner = init_role_assigner();
 	
@@ -52,10 +54,10 @@ if ( isset($_POST['rs_submit'] ) )
 <?php
 
 $src_otype = ( isset($src->object_types) ) ? "{$src_name}:{$object_type}" : $src_name;
-$display_name = $scoper->admin->interpret_src_otype($src_otype, false);
-$display_name_plural = $scoper->admin->interpret_src_otype($src_otype, true);
+$item_label_singular = $scoper_admin->interpret_src_otype($src_otype, 'singular_name');
+$item_label = $scoper_admin->interpret_src_otype($src_otype);
 
-echo '<h2>' . sprintf(__('%s Roles', 'scoper'), $display_name)
+echo '<h2>' . sprintf(__('%s Roles', 'scoper'), $item_label_singular)
 	. '&nbsp;&nbsp;<span style="font-size: 0.6em; font-style: normal">(<a href="#scoper_notes">' . __('see notes', 'scoper') . '</a>)</span>'
 	. '</h2>';
 	
@@ -64,8 +66,8 @@ if ( scoper_get_option('display_hints') ) {
 	
 	$restrictions_page = "rs-{$object_type}-restrictions";
 	
-	//printf(_ x('Expand access to a %2$s, potentially beyond what a user\'s WP role would allow. To reduce access, define %1$s%2$s&nbsp;Restrictions%3$s.', 'arguments are link open, object type name, link close', 'scoper'), "<a href='admin.php?page=$restrictions_page'>", $display_name, '</a>');
-	printf(__('Expand access to a %2$s, potentially beyond what a user\'s WP role would allow. To reduce access, define %1$s%2$s&nbsp;Restrictions%3$s.', 'scoper'), "<a href='admin.php?page=$restrictions_page'>", $display_name, '</a>');
+	//printf(_ x('Expand access to a %2$s, potentially beyond what a user\'s WP role would allow. To reduce access, define %1$s%2$s&nbsp;Restrictions%3$s.', 'arguments are link open, object type name, link close', 'scoper'), "<a href='admin.php?page=$restrictions_page'>", $item_label_singular, '</a>');
+	printf(__('Expand access to a %2$s, potentially beyond what a user\'s WP role would allow. To reduce access, define %1$s%2$s&nbsp;Restrictions%3$s.', 'scoper'), "<a href='admin.php?page=$restrictions_page'>", $item_label_singular, '</a>');
 	echo '</div>';
 }
 
@@ -85,9 +87,9 @@ if ( empty($src->cols->parent) || $ignore_hierarchy )
 	);
 else
 	$assignment_modes = array( 
-		ASSIGN_FOR_ENTITY_RS => sprintf(__('Assign for selected %s', 'scoper'), $display_name_plural),
-		ASSIGN_FOR_CHILDREN_RS => sprintf(__('Assign for sub-%s of selected', 'scoper'), $display_name_plural),
-		ASSIGN_FOR_BOTH_RS => sprintf(__('Assign for selected and sub-%s', 'scoper'), $display_name_plural),
+		ASSIGN_FOR_ENTITY_RS => sprintf(__('Assign for selected %s', 'scoper'), $item_label),
+		ASSIGN_FOR_CHILDREN_RS => sprintf(__('Assign for sub-%s of selected', 'scoper'), $item_label),
+		ASSIGN_FOR_BOTH_RS => sprintf(__('Assign for selected and sub-%s', 'scoper'), $item_label),
 		REMOVE_ASSIGNMENT_RS =>__('Remove', 'scoper')
 	);
 $args = array( 'role_bases' => $role_bases, 'agents' => $agents, 'agent_caption_plural' => $agent_caption_plural, 'scope' => OBJECT_SCOPE_RS, 'src_or_tx_name' => $src_name );
@@ -106,7 +108,7 @@ $nexttext = __('next', 'scoper');
 $site_url = get_option('siteurl');
 
 $role_defs_by_otype = array();
-$role_defs_by_otype[$object_type] = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $src_name, $object_type);
+$role_defs_by_otype[$object_type] = $scoper->role_defs->get_matching('rs', $src_name, $object_type);
 
 $object_roles = array();
 foreach ( $role_bases as $role_basis ) {
@@ -132,13 +134,13 @@ if ( $object_roles ) {
 	$object_ids = array_flip( array_unique($object_ids) );
 
 	// Get the obj name, parent associated with each role (also sets $object_names, $unlisted objects)
-	$listed_objects = ScoperAdminBulk::get_objects_info($object_ids, $object_names, $object_status, $unlisted_objects, $src, $otype, $ignore_hierarchy);
+	$listed_objects = ScoperAdminBulkParent::get_objects_info($object_ids, $object_names, $object_status, $unlisted_objects, $src, $otype, $ignore_hierarchy);
 }
 
 if ( $col_parent ) {
 	if ( $listed_objects ) {
 		if ( $unlisted_objects ) // query for any parent objects which don't have their own role assignments
-			$listed_objects = ScoperHardwayParent::add_missing_parents($listed_objects, $unlisted_objects, $col_parent);
+			$listed_objects = ScoperAdminBulkParent::add_missing_parents($listed_objects, $unlisted_objects, $col_parent);
 
 		// convert keys from object ID to title+ID so we can alpha sort them
 		$listed_objects_alpha = array();
@@ -147,7 +149,7 @@ if ( $col_parent ) {
 
 		uksort($listed_objects_alpha, "strnatcasecmp");
 	
-		$listed_objects = ScoperHardwayParent::order_by_hierarchy($listed_objects_alpha, $col_id, $col_parent);
+		$listed_objects = ScoperAdminBulkParent::order_by_hierarchy($listed_objects_alpha, $col_id, $col_parent);
 	} // endif any listed objects
 	
 } else { // endif doing object hierarchy
@@ -170,22 +172,23 @@ if ( ! $is_administrator )
 else
 	$admin_items = '';	// no need to filter admins
 	
+// membuffer ids so user_can_admin_role() doesn't trigger a separate has_cap query for each one
+if ( $admin_items )
+	$scoper->listed_ids[$src_name] = $admin_items;
+	
+global $scoper_admin;
+	
 $role_display = array();
 $editable_roles = array();
-foreach ( $scoper->role_defs->get_all_keys() as $role_handle ) {
+foreach ( array_keys($role_defs_by_otype[$object_type]) as $role_handle ) {
 	$role_display[$role_handle] = $scoper->role_defs->get_abbrev( $role_handle, OBJECT_UI_RS );
-	
-	if ( $scoper->admin->user_can_admin_role($role_handle, 0, $src->name, $object_type) )
-		$editable_roles[0][$role_handle] = true;
 
-	/* this is too slow for a large number of bulk items.  Will just show checkbox for roles user can edit base on their own termwide / blogwide role
-	// Will still show all editable roles if they click on single object role edit (or Post/Page edit)
-	if ( ! $is_administrator ) {
-		foreach ( $listed_objects as $key => $obj )
-			if ( isset($admin_items[$obj->$col_id]) )
-				$editable_roles[$obj->$col_id][$role_handle] = $scoper->admin->user_can_admin_role($role_handle, $obj->$col_id, $src->name, $object_type);
+	if ( $admin_items && ! is_user_administrator_rs() ) {
+		foreach( array_keys($admin_items) as $object_id ) {
+			if ( $scoper_admin->user_can_admin_role($role_handle, $object_id, $src_name, $object_type) )
+				$editable_roles[$object_id][$role_handle] = true;
+		}
 	}
-	*/
 }
 
 $args = array( 
@@ -208,16 +211,16 @@ echo '</div>';
 echo '</form><br /><h4 style="margin-bottom:0.1em"><a name="scoper_notes"></a>' . __("Notes", 'scoper') . ':</h4><ul class="rs-notes">';	
 
 echo '<li>';
-printf(__('To edit all roles for any %1$s, click on the %1$s name.', 'scoper'), $otype->display_name);
+printf(__('To edit all roles for any %1$s, click on the %1$s name.', 'scoper'), $otype->labels->singular_name );
 echo '</li>';
 
 echo '<li>';
-printf(__("To edit the %s via its default editor, click on the ID link.", 'scoper'), $otype->display_name);
+printf(__("To edit the %s via its default editor, click on the ID link.", 'scoper'), $otype->labels->singular_name );
 echo '</li>';
 
 if ( ! $is_administrator ) {
 	echo '<li>';
-	printf(__('To enhance performance, the role editing checkboxes here may not include some roles which you can only edit due to your own %1$s-specific role. In such cases, click on the editing link to edit roles for the individual %1$s.', 'scoper'), $otype->display_name);
+	printf(__('To enhance performance, the role editing checkboxes here may not include some roles which you can only edit due to your own %1$s-specific role. In such cases, click on the editing link to edit roles for the individual %1$s.', 'scoper'), $otype->labels->singular_name );
 	echo '</li>';
 }
 

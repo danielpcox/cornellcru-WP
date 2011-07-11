@@ -3,22 +3,25 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die();
 	
 class ScoperTeaser {
-	// normally called by QueryInterceptor::flt_objects_teaser
-	function objects_teaser($results, $src_name, $object_types, $tease_otypes, $args = '') {
-		$defaults = array('user' => '', 'use_object_roles' => -1, 'use_term_roles' => -1, 'request' => '' );
+	
+	// Manipulate the results set in various ways to prepare it for teaser filtering
+	// Determine which listed items are readabled (i.e. will not be teased). Clear private status so teased items will not be hidden completely or trigger a 404
+	function posts_teaser_prep_results($results, $tease_otypes, $args = '') {
+		$defaults = array('user' => '', 'use_object_roles' => -1, 'use_term_roles' => -1, 'request' => '', 'object_type' => '' );
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
 
 		global $wpdb, $scoper, $wp_query;
-
+		global $query_interceptor;
+		
 		if ( did_action('wp_meta') && ! did_action('wp_head') )
 			return $results;
 
-		if ( ! $src = $scoper->data_sources->get($src_name) )
-			return array();
-
 		if ( empty($request) ) {
-			if ( empty ($scoper->last_request[$src_name]) ) {
+			// TODO: teaser logs last_request itself
+			global $query_interceptor;
+			
+			if ( empty ($query_interceptor->last_request['post']) ) {
 				// try to get it from wpdb instead
 				if ( ! empty($wpdb->last_query) )
 					$request = $wpdb->last_query;
@@ -27,68 +30,37 @@ class ScoperTeaser {
 					return array();
 				}
 			} else
-				$request = $scoper->last_request[$src_name];
+				$request = $query_interceptor->last_request['post'];
 		}
 
-		
 		// Pagination could be broken by subsequent query for filtered ids, so buffer current paging parameters
 		// ( this code mimics WP_Query::get_posts() )
-		$found_posts_query = apply_filters( 'found_posts_query', 'SELECT FOUND_ROWS()' );
-		$buffer_found_posts = $wpdb->get_var( $found_posts_query );
-		
-		if ( $buffer_found_posts >= $wp_query->query_vars['posts_per_page'] ) {
-			$restore_pagination = true;
-			$buffer_found_posts = apply_filters( 'found_posts', $buffer_found_posts );
-		}
-		
-		$col_id = $src->cols->id;
-		$col_content = $src->cols->content;
-		$col_type = $src->cols->type;
-		
-		if ( isset($src->cols->excerpt) )
-			$col_excerpt = $src->cols->excerpt;
+		if ( ! empty( $wp_query->query_vars['posts_per_page'] ) ) {
+			$found_posts_query = apply_filters( 'found_posts_query', 'SELECT FOUND_ROWS()' );
+			$buffer_found_posts = $wpdb->get_var( $found_posts_query );
 			
-		if ( isset($src->cols->name) )
-			$col_name = $src->cols->name;
-		
-		if ( isset($src->cols->status) && isset($src->statuses['private']) && isset($src->statuses['published']) ) {
-			$list_private = array();
-			$col_status = $src->cols->status;
-			$status_private = $src->statuses['private'];
-			$status_published = $src->statuses['published'];
-			
-			if ( is_single() || is_page() )
-				$maybe_fudge_private = true;
-			else
-				$maybe_strip_private = true;
+			if ( $buffer_found_posts >= $wp_query->query_vars['posts_per_page'] ) {
+				$restore_pagination = true;
+				$buffer_found_posts = apply_filters( 'found_posts', $buffer_found_posts );
+			}
 		}
+
+		$list_private = array();
+		
+		if ( awp_ver( '3.0' ) )
+			$private_stati = get_post_stati( array( 'private' => true ) );
+		else
+			$private_stati = array( 'private' );
+
+		if ( is_single() || is_page() )
+			$maybe_fudge_private = true;
+		else
+			$maybe_strip_private = true;
+	
 
 		if ( ! is_object($user) ) {
 			global $current_user;
 			$user = $current_user;
-		}
-
-		$teaser_replace = array();
-		$teaser_prepend = array();
-		$teaser_append = array();
-		
-		foreach ( $tease_otypes as $object_type ) {
-			if ( isset($src->cols->content) ) {
-				$teaser_replace[$object_type][$col_content] = ScoperTeaser::get_teaser_text( 'replace', 'content', $src_name, $object_type, $user );
-				$teaser_prepend[$object_type][$col_content] = ScoperTeaser::get_teaser_text( 'prepend', 'content', $src_name, $object_type, $user );
-				$teaser_append[$object_type][$col_content] = ScoperTeaser::get_teaser_text( 'append', 'content', $src_name, $object_type, $user );
-			}
-			
-			if ( isset($src->cols->excerpt) ) {
-				$teaser_replace[$object_type][$col_excerpt] = ScoperTeaser::get_teaser_text( 'replace', 'excerpt', $src_name, $object_type, $user );
-				$teaser_prepend[$object_type][$col_excerpt] = ScoperTeaser::get_teaser_text( 'prepend', 'excerpt', $src_name, $object_type, $user );
-				$teaser_append[$object_type][$col_excerpt] = ScoperTeaser::get_teaser_text( 'append', 'excerpt', $src_name, $object_type, $user );
-			}
-			
-			if ( isset($src->cols->name) ) {
-				$teaser_prepend[$object_type][$col_name] = ScoperTeaser::get_teaser_text( 'prepend', 'name', $src_name, $object_type, $user );
-				$teaser_append[$object_type][$col_name] = ScoperTeaser::get_teaser_text( 'append', 'name', $src_name, $object_type, $user );
-			}
 		}
 		
 		// don't risk exposing hidden content if there is a problem with query parsing
@@ -96,81 +68,62 @@ class ScoperTeaser {
 			return array();
 		
 		$distinct = ( stripos( $request, " DISTINCT " ) ) ? 'DISTINCT' : ''; // RS does not add any joins, but if DISTINCT clause exists in query, retain it
-		$request = "SELECT $distinct {$src->table}.$col_id " . substr($request, $pos);
+		$request = "SELECT $distinct {$wpdb->posts}.ID " . substr($request, $pos);
 
 		if ( $limitpos = strpos($request, ' LIMIT ') )
 			$request = substr($request, 0, $limitpos);
 
 		$args['skip_teaser'] = true;
-		$filtered_request = $scoper->query_interceptor->flt_objects_request($request, $src_name, '', $args);
+		$filtered_request = $query_interceptor->flt_objects_request($request, 'post', $object_type, $args);
 		
-		$filtered_ids = scoper_get_col($filtered_request);
+		global $scoper_teaser_filtered_ids;
+
+		$scoper_teaser_filtered_ids = scoper_get_col($filtered_request);
 		
 		if ( ! isset($scoper->teaser_ids) )
 			$scoper->teaser_ids = array();
-		
-		$excerpt_teaser = array();
-		$more_teaser = array();
-		$x_chars_teaser = array();
+	
 		$hide_ungranted_private = array();
 		foreach ( $tease_otypes as $object_type ) {
-			$teaser_type = scoper_get_otype_option( 'use_teaser', $src_name, $object_type );
-			if ( 'excerpt' == $teaser_type )
-				$excerpt_teaser[$object_type] = true;
-			elseif ( 'more' == $teaser_type ) {
-				$excerpt_teaser[$object_type] = true;
-				$more_teaser[$object_type] = true;
-			} elseif ( 'x_chars' == $teaser_type ) {
-				$excerpt_teaser[$object_type] = true;
-				$more_teaser[$object_type] = true;
-				$x_chars_teaser[$object_type] = true;
-			}
-			
-			$hide_ungranted_private[$object_type] = scoper_get_otype_option('teaser_hide_private', $src_name, $object_type);
+			$hide_ungranted_private[$object_type] = scoper_get_otype_option('teaser_hide_private', 'post', $object_type);
 		}
-		
-		// strip content from all $results rows not in $items
-		$args = array( 'col_excerpt' => $col_excerpt, 		'col_content' => $col_content, 		'col_id' => $col_id,
-				'teaser_prepend' => $teaser_prepend, 		'teaser_append' => $teaser_append, 	'teaser_replace' => $teaser_replace, 
-				'excerpt_teaser' => $excerpt_teaser,		'more_teaser' => $more_teaser,		'x_chars_teaser' => $x_chars_teaser );
 
 		foreach ( array_keys($results) as $key ) {
 			if ( is_array($results[$key]) )
-				$id = $results[$key][$col_id];
+				$id = $results[$key]['ID'];
 			else
-				$id = $results[$key]->$col_id;
+				$id = $results[$key]->ID;
 				
-			if ( ! $filtered_ids || ! in_array($id, $filtered_ids) ) {
-				if ( isset($results[$key]->$col_type) )
-					$object_type = $results[$key]->$col_type;
+			if ( ! $scoper_teaser_filtered_ids || ! in_array($id, $scoper_teaser_filtered_ids) ) {
+				if ( isset($results[$key]->post_type) )
+					$object_type = $results[$key]->post_type;
 				else
-					$object_type = $scoper->data_sources->get_from_db('type', $src_name, $id);
-					
+					$object_type = $scoper->data_sources->get_from_db('type', 'post', $id);
+						
 				if ( ! in_array($object_type, $tease_otypes) )
 					continue;
-					
-				ScoperTeaser::apply_teaser( $results[$key], $src_name, $object_type, $args );
-				
+
 				// Defeat a WP core secondary safeguard so we can apply the teaser message rather than 404
-				if ( ! empty($status_private) && ( $results[$key]->$col_status == $status_private ) ) {
+				if ( in_array( $results[$key]->post_status, $private_stati ) ) {
 					// don't want the teaser message (or presence in category archive listing) if we're hiding a page from listing
-					// (not ready to abstract this yet)
-					if ( 'page' == $object_type ) {
+					$type_obj = get_post_type_object( $object_type );
+					
+					if ( $type_obj && $type_obj->hierarchical ) {  // TODO: review implementation of this option with custom types
 						if ( ! isset($list_private[$object_type]) )
-							 $list_private[$object_type] = scoper_get_otype_option('private_items_listable', $src_name, $object_type);
+							 $list_private[$object_type] = scoper_get_otype_option( 'private_items_listable', 'post', 'page' );
 					} else
 						$list_private[$object_type] = true;
-					
-					if ( ! empty($maybe_fudge_private) && $list_private[$object_type] ) {
-						$results[$key]->$col_status = $status_published;
-					} elseif ( $hide_ungranted_private[$object_type] || ( $maybe_strip_private && ! $list_private[$object_type] ) ) {
+
+					if ( $hide_ungranted_private[$object_type] || ( $maybe_strip_private && ! $list_private[$object_type] ) ) {
 						$need_reindex = true;
-						unset ($results[$key]);
+						unset ( $results[$key] );
 						
 						// Actually, don't do this because the current method of removing private items from the paged result set will not move items from one result page to another
 						//$buffer_found_posts--;	// since we're removing this item from the teased results, decrement the paging total
 		
 						continue;
+					} elseif ( ! empty( $maybe_fudge_private ) && $list_private[$object_type] ) {
+						$results[$key]->post_status = 'publish';
 					}
 				}
 			}
@@ -190,13 +143,98 @@ class ScoperTeaser {
 		return $results;
 	}
 	
-	function get_teaser_text( $teaser_operation, $variable, $src_name, $object_type, $user = '' ) {
-		if ( ! is_object($user) )
-			$user = $current_user;
+	// apply teaser modifications to the recordset.  Note: this is applied later than 
+	function posts_teaser($results, $tease_otypes, $args = '') {
+		$defaults = array('user' => '', 'use_object_roles' => -1, 'use_term_roles' => -1, 'request' => '' );
+		$args = array_merge( $defaults, (array) $args );
+		extract($args);
 
+		global $wpdb, $scoper, $wp_query;
+
+		if ( did_action('wp_meta') && ! did_action('wp_head') )
+			return $results;
+
+		if ( ! is_object($user) ) {
+			global $current_user;
+			$user = $current_user;
+		}
+
+		$teaser_replace = array();
+		$teaser_prepend = array();
+		$teaser_append = array();
+		
+		foreach ( $tease_otypes as $object_type ) {			
+			$teaser_replace[$object_type]['post_content'] = ScoperTeaser::get_teaser_text( 'replace', 'content', 'post', $object_type, $user );
+			$teaser_prepend[$object_type]['post_content'] = ScoperTeaser::get_teaser_text( 'prepend', 'content', 'post', $object_type, $user );
+			$teaser_append[$object_type]['post_content'] = ScoperTeaser::get_teaser_text( 'append', 'content', 'post', $object_type, $user );
+					
+			$teaser_replace[$object_type]['post_excerpt'] = ScoperTeaser::get_teaser_text( 'replace', 'excerpt', 'post', $object_type, $user );
+			$teaser_prepend[$object_type]['post_excerpt'] = ScoperTeaser::get_teaser_text( 'prepend', 'excerpt', 'post', $object_type, $user );
+			$teaser_append[$object_type]['post_excerpt'] = ScoperTeaser::get_teaser_text( 'append', 'excerpt', 'post', $object_type, $user );
+
+			$teaser_prepend[$object_type]['post_title'] = ScoperTeaser::get_teaser_text( 'prepend', 'name', 'post', $object_type, $user );
+			$teaser_append[$object_type]['post_title'] = ScoperTeaser::get_teaser_text( 'append', 'name', 'post', $object_type, $user );
+		}
+
+		global $scoper_teaser_filtered_ids;
+		
+		if ( ! isset($scoper->teaser_ids) )
+			$scoper->teaser_ids = array();
+		
+		$excerpt_teaser = array();
+		$more_teaser = array();
+		$x_chars_teaser = array();
+
+		foreach ( $tease_otypes as $object_type ) {
+			$teaser_type = scoper_get_otype_option( 'use_teaser', 'post', $object_type );
+			if ( 'excerpt' == $teaser_type )
+				$excerpt_teaser[$object_type] = true;
+			elseif ( 'more' == $teaser_type ) {
+				$excerpt_teaser[$object_type] = true;
+				$more_teaser[$object_type] = true;
+			} elseif ( 'x_chars' == $teaser_type ) {
+				$excerpt_teaser[$object_type] = true;
+				$more_teaser[$object_type] = true;
+				$x_chars_teaser[$object_type] = true;
+			}
+		}
+	
+		// strip content from all $results rows not in $items
+		$args = array( 'teaser_prepend' => $teaser_prepend, 		'teaser_append' => $teaser_append, 	'teaser_replace' => $teaser_replace, 
+						'excerpt_teaser' => $excerpt_teaser,		'more_teaser' => $more_teaser,		'x_chars_teaser' => $x_chars_teaser );
+							
+		foreach ( array_keys($results) as $key ) {
+			if ( is_array($results[$key]) )
+				$id = $results[$key]['ID'];
+			else
+				$id = $results[$key]->ID;
+				
+			if ( ! $scoper_teaser_filtered_ids || ! in_array($id, $scoper_teaser_filtered_ids) ) {
+				if ( isset($results[$key]->post_type) )
+					$object_type = $results[$key]->post_type;
+				else
+					$object_type = $scoper->data_sources->get_from_db('type', 'post', $id);
+					
+				if ( ! in_array($object_type, $tease_otypes) )
+					continue;
+						
+				ScoperTeaser::apply_teaser( $results[$key], 'post', $object_type, $args );
+			}
+		}
+		
+		return $results;
+	}
+	
+	
+	function get_teaser_text( $teaser_operation, $variable, $src_name, $object_type, $user = '' ) {
+		if ( ! is_object($user) ) {
+			global $current_user;	
+			$user = $current_user;
+		}
+			
 		$anon = ( $user->ID == 0 ) ? '_anon' : '';
 
-		if ( $msg = scoper_get_otype_option( "teaser_{$teaser_operation}_{$variable}{$anon}", $src_name, $object_type, CURRENT_ACCESS_NAME_RS) ) {
+		if ( $msg = scoper_get_otype_option( "teaser_{$teaser_operation}_{$variable}{$anon}", 'post', $object_type, CURRENT_ACCESS_NAME_RS) ) {
 			if ( defined('SCOPER_TRANSLATE_TEASER') ) {
 				scoper_load_textdomain(); // otherwise this is only loaded for wp-admin
 
@@ -219,12 +257,12 @@ class ScoperTeaser {
 		global $scoper;
 		
 		if ( is_array($object) )
-			$id = $object[$col_id];
+			$id = $object['ID'];
 		else
-			$id = $object->$col_id;
+			$id = $object->ID;
 
 		$object->scoper_teaser = true;
-		$scoper->teaser_ids[$src_name][$id] = true;
+		$scoper->teaser_ids['post'][$id] = true;
 
 		if ( ! empty( $object->post_password ) ) {
 			$excerpt_teaser[$object_type] = false;
@@ -244,39 +282,39 @@ class ScoperTeaser {
 		$use_excerpt_suffix = true;
 		
 		// optionally, use post excerpt as the hidden content teaser instead of a fixed replacement
-		if ( ! empty($excerpt_teaser[$object_type]) && isset($col_content) && isset($col_excerpt) && ! empty($object->$col_excerpt) ) {
-			$object->$col_content = $object->$col_excerpt;
+		if ( ! empty($excerpt_teaser[$object_type]) && ! empty($object->post_excerpt) ) {
+			$object->post_content = $object->post_excerpt;
 			
-		} elseif ( ! empty($more_teaser[$object_type]) && isset($col_content) && ( $more_pos = strpos($object->$col_content, '<!--more-->') ) ) {
-			$object->$col_content = substr( $object->$col_content, 0, $more_pos + 11 );
-			$object->$col_excerpt = $object->$col_content;
+		} elseif ( ! empty($more_teaser[$object_type]) && ( $more_pos = strpos($object->post_content, '<!--more-->') ) ) {
+			$object->post_content = substr( $object->post_content, 0, $more_pos + 11 );
+			$object->post_excerpt = $object->post_content;
 			if ( is_single() || is_page() )
-				$object->$col_content .= '<p class="scoper_more_teaser">' . $teaser_replace[$object_type][$col_content] . '</p>';
+				$object->post_content .= '<p class="scoper_more_teaser">' . $teaser_replace[$object_type]['post_content'] . '</p>';
 
 		// since no custom excerpt or more tag is stored, use first X characters as teaser - but only if the total length is more than that
-		} elseif ( ! empty($x_chars_teaser[$object_type]) && ! empty($object->$col_content) && ( strlen( strip_tags($object->$col_content) ) > $num_chars ) ) {
+		} elseif ( ! empty($x_chars_teaser[$object_type]) && ! empty($object->post_content) && ( strlen( strip_tags($object->post_content) ) > $num_chars ) ) {
 			scoper_load_textdomain(); // otherwise this is only loaded for wp-admin
 
 			// since we are stripping out img tag, also strip out image caption applied by WP
-			$object->$col_content = preg_replace( "/\[caption.*\]/", '', $object->$col_content );
-			$object->$col_content = str_replace( "[/caption]", '', $object->$col_content );
+			$object->post_content = preg_replace( "/\[caption.*\]/", '', $object->post_content );
+			$object->post_content = str_replace( "[/caption]", '', $object->post_content );
 			
-			$object->$col_content = sprintf(_x('%s...', 'teaser suffix', 'scoper'), substr( strip_tags($object->$col_content), 0, $num_chars ) );
-			$object->$col_excerpt = $object->$col_content;
+			$object->post_content = sprintf(_x('%s...', 'teaser suffix', 'scoper'), substr( strip_tags($object->post_content), 0, $num_chars ) );
+			$object->post_excerpt = $object->post_content;
 			
 			if ( is_single() || is_page() )
-				$object->$col_content .= '<p class="scoper_x_chars_teaser">' . $teaser_replace[$object_type][$col_content] . '</p>';
+				$object->post_content .= '<p class="scoper_x_chars_teaser">' . $teaser_replace[$object_type]['post_content'] . '</p>';
 		
 		} else {
-			if ( isset($teaser_replace[$object_type][$col_content]) )
-				$object->$col_content = $teaser_replace[$object_type][$col_content];
+			if ( isset($teaser_replace[$object_type]['post_content']) )
+				$object->post_content = $teaser_replace[$object_type]['post_content'];
 			else
-				$object->$col_content = '';
+				$object->post_content = '';
 
 			// Replace excerpt with a user-specified fixed teaser message, 
 			// but only if since no custom excerpt exists or teaser options aren't set to some variation of "use excerpt as teaser"
-			if ( ! empty($teaser_replace[$object_type][$col_excerpt]) )
-				$object->$col_excerpt = $teaser_replace[$object_type][$col_excerpt];
+			if ( ! empty($teaser_replace[$object_type]['post_excerpt']) )
+				$object->post_excerpt = $teaser_replace[$object_type]['post_excerpt'];
 				
 			// If SCOPER_FORCE_EXCERPT_SUFFIX is defined, use the "content" prefix and suffix only when fully replacing content with a fixed teaser 
 			$use_excerpt_suffix = false;
@@ -285,9 +323,9 @@ class ScoperTeaser {
 		// Deal with ambiguity in teaser settings.  Previously, content prefix/suffix was applied even if RS substitutes the excerpt as displayed content.  
 		// To avoid confusion with existing installations, only use excerpt prefix/suffix if a value is set or constant is defined.
 		if ( $use_excerpt_suffix && defined( 'SCOPER_FORCE_EXCERPT_SUFFIX' ) ) {
-			$teaser_prepend[$object_type][$col_content] = $teaser_prepend[$object_type][$col_excerpt];
+			$teaser_prepend[$object_type]['post_content'] = $teaser_prepend[$object_type]['post_excerpt'];
 
-			$teaser_append[$object_type][$col_content] = $teaser_append[$object_type][$col_excerpt];
+			$teaser_append[$object_type]['post_content'] = $teaser_append[$object_type]['post_excerpt'];
 		}	
 			
 		foreach ( $teaser_prepend[$object_type] as $col => $entry )
@@ -296,16 +334,15 @@ class ScoperTeaser {
 			
 		foreach ( $teaser_append[$object_type] as $col => $entry )
 			if ( isset($object->$col) ) {
-				if ( ( $col == $col_content ) && ! empty( $more_pos ) ) {  // WP will strip off anything after the more comment
+				if ( ( $col == 'post_content' ) && ! empty( $more_pos ) ) {  // WP will strip off anything after the more comment
 					$object->$col = str_replace( '<!--more-->', "$entry<!--more-->", $object->$col );
 				} else
 					$object->$col .= $entry;
 			}
 				
 		// no need to display password form if we're blocking content anyway
-		if ( 'post' == $src_name )
-			if ( ! empty( $object->post_password ) )
-				$object->post_password = '';
+		if ( ! empty( $object->post_password ) )
+			$object->post_password = '';
 	}
 } // end class
 ?>

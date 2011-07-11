@@ -16,7 +16,7 @@ function get_agents($role_bases = '') {
 	
 	if ( in_array(ROLE_BASIS_USER, $role_bases) ) {
 		global $scoper;
-		$agents[ROLE_BASIS_USER] = $scoper->users_who_can('', COLS_ID_DISPLAYNAME_RS);
+		$agents[ROLE_BASIS_USER] = $scoper->users_who_can('', COLS_ID_NAME_RS);
 	}
 	
 	if ( in_array(ROLE_BASIS_GROUPS, $role_bases) ) {
@@ -66,7 +66,7 @@ function agent_captions($role_bases) {
 function get_role_codes() {
 	global $scoper;
 	
-	$role_defs = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE);
+	$role_defs = $scoper->role_defs->get_matching('rs');
 	
 	$role_codes = array(); //generate temporary numeric id for each defined role, to reduce html bulk
 	$i = 0;
@@ -77,7 +77,7 @@ function get_role_codes() {
 	return $role_codes;
 }
 
-function display_inputs($mode, $assignment_modes, $args = '') {
+function display_inputs($mode, $assignment_modes, $args = array()) {
 	$defaults = array( 'role_bases' => '', 'agents' => '', 'agent_caption_plural' => '', 'max_scopes' => array(), 'scope' => '', 'src_or_tx_name' => '' );
 	$args = array_merge($defaults, (array) $args);
 	extract($args);
@@ -97,7 +97,7 @@ function display_inputs($mode, $assignment_modes, $args = '') {
 			$date_col_defined = ! empty( $src->cols->date );
 		} elseif ( TERM_SCOPE_RS == $scope ) {
 			$tx = $scoper->taxonomies->get($src_or_tx_name);
-			$date_col_defined = ! empty( $tx->object_source->cols->date );
+			$date_col_defined = $scoper->data_sources->member_property( $tx->object_source, 'cols', 'date' );
 		} else
 			$date_col_defined = true;
 
@@ -208,10 +208,10 @@ function role_submission($scope, $mode, $role_bases, $src_or_tx_name, $role_code
 		$date_col_defined = ! empty( $src->cols->date );
 	} elseif ( TERM_SCOPE_RS == $scope ) {
 		$tx = $scoper->taxonomies->get($src_or_tx_name);
-		$date_col_defined = ! empty( $tx->object_source->cols->date );
+		$date_col_defined = $scoper->data_sources->member_property( $tx->object_source, 'cols', 'date' );
 	} else
-		$date_col_defined = true;
-	
+		$date_col_defined = true;			
+		
 	switch ($mode) {
 		case ROLE_ASSIGNMENT_RS:
 			$assign_for = $_POST['assign_for'];
@@ -372,9 +372,9 @@ function get_objects_info($object_ids, &$object_names, &$object_status, &$unlist
 	global $wpdb;
 	
 	// buffer titles in case they are translated
-	if ( 'page' == $otype->val )
-		$titles = ScoperHardwayParent::get_page_titles();
-	
+	if ( 'page' == $otype->name ) // todo: other hierarchical types?
+		$titles = ScoperAdminBulkParent::get_page_titles();
+
 	$col_id = $src->cols->id;
 	$col_name = $src->cols->name;
 
@@ -392,8 +392,8 @@ function get_objects_info($object_ids, &$object_names, &$object_status, &$unlist
 	$unroled_count = 0;
 	$unroled_limit = ( ! empty($otype->admin_max_unroled_objects) ) ? $otype->admin_max_unroled_objects : 999999;
 
-	if ( ! empty($src->cols->type) && ! empty($otype->val) ) {
-		$otype_clause = "AND {$src->cols->type} = '$otype->val'";
+	if ( ! empty($src->cols->type) ) {
+		$otype_clause = "AND {$src->cols->type} = '$otype->name'";
 		if ( 'post' == $src->name )
 			$otype_clause .= "AND {$src->cols->status} != 'auto-draft'";
 	} else
@@ -437,7 +437,7 @@ function get_objects_info($object_ids, &$object_names, &$object_status, &$unlist
 	}
 	
 	// restore buffered page titles in case they were filtered previously
-	if ( 'page' == $otype->val ) {
+	if ( 'page' == $otype->name ) {
 		scoper_restore_property_array( $listed_objects, $titles, 'ID', 'post_title' );
 		scoper_restore_property_array( $unlisted_objects, $titles, 'ID', 'post_title' );
 	}
@@ -451,7 +451,12 @@ function filter_objects_listing($mode, &$role_settings, $src, $object_type) {
 	$filter_args = array();
 	
 	// only list role assignments which the logged-in user can administer
-	if ( isset($src->reqd_caps[OP_ADMIN_RS]) ) {
+	$filter_args['required_operation'] = OP_EDIT_RS;
+	
+	// Possible TODO: re-implement OP_ADMIN distinction with admin-specific capabilities
+	/* global $scoper;
+	
+	if ( cr_get_reqd_caps( $src->name, OP_ADMIN_RS, $object_type ) ) {
 		$filter_args['required_operation'] = OP_ADMIN_RS;
 	} else {
 		$reqd_caps = array();
@@ -462,8 +467,9 @@ function filter_objects_listing($mode, &$role_settings, $src, $object_type) {
 		}
 		$filter_args['force_reqd_caps'] = $reqd_caps;
 	}
-	
-	$qry = "SELECT $src->table.{$src->cols->id} FROM $src->table WHERE 1=1";
+	*/
+		
+	$qry = "SELECT $src->table.{$src->cols->id} FROM $src->table WHERE 1=1 AND {$src->cols->type} = '$object_type'";
 	
 	//$filter_args['require_full_object_role'] = true;
 	$qry_flt = apply_filters('objects_request_rs', $qry, $src->name, $object_type, $filter_args);
@@ -577,12 +583,12 @@ function item_tree_jslinks($mode, $args='') {
 	";
 	$style = ( $default_hide_empty ) ? '' : ' style="display:none;"';
 	
-	$display_name_plural = ( ! empty($src->display_name) ) ? agp_strtolower($src->display_name_plural) : __('items', 'scoper');
+	$src_label = ( ! empty($src->labels->name) ) ? agp_strtolower($src->labels->name) : __('items', 'scoper');
 	
 	if ( ROLE_RESTRICTION_RS == $mode )
-		$title = sprintf(__('include the newest %s with default restrictions', 'scoper'), $display_name_plural);
+		$title = sprintf(__('include the newest %s with default restrictions', 'scoper'), $src_label);
 	else
-		$title = sprintf(__('include the newest %s with no role assignments', 'scoper'), $display_name_plural);
+		$title = sprintf(__('include the newest %s with no role assignments', 'scoper'), $src_label);
 	
 	echo "<a id='rs-show_empty' href='javascript:void(0);'{$style} onclick=\"$js_call\" title='$title'>";
 	if ( ROLE_RESTRICTION_RS == $mode )
@@ -620,14 +626,14 @@ function item_tree_jslinks($mode, $args='') {
 		$display_style = ( $default_hide_empty ) ? 'style="display:none;"' : '';
 		echo "<div id='max_unroled_notice' class='rs-warning' $display_style><br />";
 		if ( ROLE_RESTRICTION_RS == $mode )
-			printf(__('Note: %1$s with default restrictions will not be listed here unless they are among the %2$s newest.', 'scoper'), $display_name_plural, $otype->admin_max_unroled_objects);
+			printf(__('Note: %1$s with default restrictions will not be listed here unless they are among the %2$s newest.', 'scoper'), $src_label, $otype->admin_max_unroled_objects);
 		else
-			printf(__('Note: %1$s with no role assignments will not be listed here unless they are among the %2$s newest.', 'scoper'), $display_name_plural, $otype->admin_max_unroled_objects);
+			printf(__('Note: %1$s with no role assignments will not be listed here unless they are among the %2$s newest.', 'scoper'), $src_label, $otype->admin_max_unroled_objects);
 		echo '</div>';
 	}
 }
 
-function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_roles, $strict_items, $role_defs_by_otype, $role_codes, $args = '') {
+function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_roles, $strict_items, $role_defs_by_otype, $role_codes, $args = array()) {
 
 	$defaults = array ( 'admin_items' => '', 	'editable_roles' => '',
 				'ul_class' => 'rs-termlist', 	'ie_link_style' => '',		'object_names' => '',		
@@ -638,12 +644,17 @@ function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_role
 	$args = array_merge($defaults, (array) $args);
 	extract($args);
 	
+	global $scoper;
+	
+	if ( ! is_object($src) )
+		$src = $scoper->data_sources->get($src);
+	
 	$col_id = $src->cols->id;
 	$col_name = $src->cols->name;
 	$col_parent = ( isset($src->cols->parent) ) ? $src->cols->parent : '';
 	
-	$display_name = $otype_or_tx->display_name;
-	
+	$item_label = $otype_or_tx->labels->singular_name;
+
 	if ( TERM_SCOPE_RS == $scope ) {
 		$src_or_tx_name = $otype_or_tx->name;
 		$edit_url_base = ( ! empty($otype_or_tx->edit_url) ) ? $otype_or_tx->edit_url : '';
@@ -702,8 +713,6 @@ function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_role
 		}
 	}
 	
-	global $scoper;
-	
 	// disregard roles that don't apply to this scope
 	foreach ( $role_defs_by_otype as $object_type => $role_defs )
 		foreach ( $role_defs as $role_handle => $role )
@@ -733,32 +742,27 @@ function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_role
 	if ( empty($all_items) )
 		$all_items = array();
 	
-	if ( ! $single_item ) {
-		if ( ('rs' == SCOPER_ROLE_TYPE) || (OBJECT_SCOPE_RS != $scope) || (ROLE_ASSIGNMENT_RS != $scope) ) {	// can't distinguish between post & page default roles with WP role type
-			if ( ROLE_ASSIGNMENT_RS == $mode )
-				$root_caption = sprintf(__('DEFAULTS for new %s', 'scoper'), $otype_or_tx->display_name_plural);
-			else
-				$root_caption = sprintf(__('DEFAULTS for all %s', 'scoper'), $otype_or_tx->display_name_plural);
-		
-			if ( TERM_SCOPE_RS == $scope ) {
-				$root_item = (object) array( $col_id => 0, $col_name => $root_caption, $col_parent => 0 );
-				array_unshift( $all_items, $root_item);
-			} else {
-				//$all_items = array( $root_caption => (object) array($col_id => 0) ) + $all_items;
-				$obj = (object) array($col_id => 0);
-				$all_items = array( $root_caption => $obj ) + $all_items;
-				
-				$object_names[0] = $root_caption;
-				
-				$status_names = ( 'post' == $src->name ) ? get_post_statuses() : array();
-			}
+	if ( ! $single_item && is_user_administrator_rs() && ( 'nav_menu' != $src_or_tx_name ) ) {		// TODO: action handler for new menu item storage
+		if ( ROLE_ASSIGNMENT_RS == $mode )
+			$root_caption = sprintf( __('DEFAULTS for new %s', 'scoper'), $otype_or_tx->labels->name );
+		else
+			$root_caption = sprintf(__('DEFAULTS for all %s', 'scoper'), $otype_or_tx->labels->name );
+	
+		if ( TERM_SCOPE_RS == $scope ) {
+			$root_item = (object) array( $col_id => 0, $col_name => $root_caption, $col_parent => 0 );
+			array_unshift( $all_items, $root_item);
+		} else {
+			$obj = (object) array($col_id => 0);
+			$all_items = array( $root_caption => $obj ) + $all_items;
+			
+			$object_names[0] = $root_caption;
+			
+			$status_objects = ( 'post' == $src->name ) ? get_post_stati( array(), 'object' ) : array();
 		}
 	}
 	
 	$title_roles = __('edit roles', 'scoper');
-	//$title_item = sprintf(_ x('edit %s', 'post/page/category/etc.', 'scoper'), agp_strtolower($display_name) );
-	$title_item = sprintf(__('edit %s', 'scoper'), agp_strtolower($display_name) );
-	//$title_term = sprintf(_ x('edit %s', 'category/link category/etc', 'scoper'), agp_strtolower($display_name) );
+	$title_item = sprintf(__('edit %s', 'scoper'), agp_strtolower($item_label) );
 
 	foreach($all_items as $key => $item) {
 		$id = $item->$col_id;
@@ -797,7 +801,7 @@ function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_role
 		
 		if ( OBJECT_SCOPE_RS == $scope ) {
 			if ( isset($object_status) && ! empty($object_status[$id]) && ('publish' != $object_status[$id] ) && ('private' != $object_status[$id] ) )
-				$status_text = isset( $status_names[ $object_status[$id] ] ) ? "{$status_names[ $object_status[$id] ]}, " : "{$object_status[$id]}, ";
+				$status_text = isset( $status_objects[ $object_status[$id] ] ) ? "{$status_objects[ $object_status[$id] ]->label}, " : "{$object_status[$id]}, ";
 			else
 				$status_text = '';
 		
@@ -830,7 +834,7 @@ function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_role
 		if (TERM_SCOPE_RS == $scope)
 			$prevlink = ( $last_id && ! $single_item && $id ) ? "<a{$ie_link_style} href='#item-" . $last_id . "'>" . $prevtext . "</a>" : '';
 			
-		if ( ! $is_administrator && ( ! isset($admin_items[$id]) ) )
+		if ( $id && ( ! $is_administrator && ( ! isset($admin_items[$id]) ) ) )
 			continue;
 		
 		$last_id = $id;
@@ -901,7 +905,7 @@ function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_role
 			echo "<a name='item-$id'></a>"
 			. "<span id='jump-$id' class='rs-termjump alignright'>{$prevlink}{$nextlink}"
 			. $top_link . '</span>'
-			. "<strong><a class='rs-link_plain_rev term-tgl' id='tgl-$id' href='javascript:void(0);' onclick=\"$js_call\" title=\"{$otype_or_tx->display_name} $id: $name\">"
+			. "<strong><a class='rs-link_plain_rev term-tgl' id='tgl-$id' href='javascript:void(0);' onclick=\"$js_call\" title=\"{$otype_or_tx->labels->singular_name} $id: $name\">"
 			. "-</a></strong> " . $item_path . '<strong>' . $name_text . '</strong>' . $id_text . ': ';
 		}
 		
@@ -988,7 +992,7 @@ function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_role
 					foreach ( $role_bases as $role_basis ) {
 						if ( isset($assigned_roles[$role_basis][$id][$role_handle]) ) {
 							$checkbox_id = ( $single_item ) ? '' : $role_basis;
-						
+
 							$assignment_names = array_intersect_key($agent_names[$role_basis], $assigned_roles[$role_basis][$id][$role_handle]);
 							$assignment_list[$role_basis] = "<span class='$role_basis-csv'><span class='rs-bold'>" . $agent_list_prefix[$role_basis] . '</span>'
 							. ScoperAdminBulkLib::role_assignment_list($assigned_roles[$role_basis][$id][$role_handle], $assignment_names, $checkbox_id, $role_basis)
@@ -1070,11 +1074,11 @@ function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_role
 		<li><table class='widefat' style='width:auto;'>
 		<thead>
 		<tr class="thead">
-		<th colspan="2"><?php printf(__('select / unselect all:', 'scoper'), agp_strtolower($otype_or_tx->display_name_plural))?></th>
+		<th colspan="2"><?php printf(__('select / unselect all:', 'scoper'), agp_strtolower( $otype_or_tx->labels->name ) )?></th>
 		<!--<th colspan="2" style="text-align: center"><?php _e('Actions') ?></th>-->
 		</tr>
 		</thead>
-		<tbody id="term_roles-<?php echo($taxonomy);?>">
+		<tbody id="bulk_roles-<?php echo($otype_or_tx->name);?>">
 <?php
 		//convert allterms stdobj to array for implosion
 		$all_items_arr = array();
@@ -1092,7 +1096,7 @@ function item_tree($scope, $mode, $src, $otype_or_tx, $all_items, $assigned_role
 
 				// $check_shorcut was displayed in first <td>
 				$id = "rs-Z-{$role_codes[$role_handle]}";
-				$caption = ' <span class="rs-subtext">' . sprintf( __('(all %s)', 'scoper'), agp_strtolower($otype_or_tx->display_name_plural) ) . '</span>'; 
+				$caption = ' <span class="rs-subtext">' . sprintf( __('(all %s)', 'scoper'), agp_strtolower( $otype_or_tx->labels->name ) ) . '</span>'; 
 				$js_call = "scoper_checkroles('$id', '$all_items_ser', '{$role_codes[$role_handle]}');";
 				echo "\n\t<tr $style>"
 					. "<td><input type='checkbox' id='$id' onclick=\"$js_call\" /></td>"

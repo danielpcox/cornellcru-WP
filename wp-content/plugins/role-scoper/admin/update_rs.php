@@ -4,12 +4,53 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 
 	
 function scoper_version_updated( $prev_version ) {
-		
 	if ( function_exists( 'wpp_cache_flush' ) )
-		wpp_cache_flush();
+		wpp_cache_flush_all_sites();
 
 	// single-pass do loop to easily skip unnecessary version checks
 	do {
+		// Delete any roles or restrictions inappropriately stored for attachments, revisions or auto-drafts
+		if ( version_compare( $prev_version, '1.3', '<') ) {
+			global $wpdb;	
+			scoper_query( "DELETE FROM $wpdb->user2role2object_rs WHERE role_type = 'wp' AND scope='blog' AND obj_or_term_id = '0'" );
+			scoper_sync_wproles();
+
+			scoper_query( "DELETE FROM $wpdb->role_scope_rs WHERE src_or_tx_name = 'post' AND obj_or_term_id IN ( SELECT ID FROM wp_posts WHERE post_type IN ('attachment', 'revision') OR post_status = 'auto-draft' )" );
+			scoper_query( "DELETE FROM $wpdb->user2role2object_rs WHERE src_or_tx_name = 'post' AND obj_or_term_id IN ( SELECT ID FROM wp_posts WHERE post_type IN ('attachment', 'revision') OR post_status = 'auto-draft' )" );
+		}
+
+		// 1.3.RC4 changed RS cache path to subfolder, so flush the root-stored cache one last time (only for MU / Multisite due to potentially large # of folders, files)
+		if ( IS_MU_RS && version_compare( $prev_version, '1.3.RC4', '<') && ! defined( 'SKIP_CACHE_MAINT_RS' ) ) {
+			global $wpp_object_cache;
+			$wpp_object_cache = new WP_Persistent_Object_Cache( false );
+			$wpp_object_cache->global_groups = array( '' );	 // forces use of cache root for this maint operation
+			$wpp_object_cache->rm_cache_dir( '' );		// will delete any files and folders in cache root except .htaccess
+			$wpp_object_cache->cache_enabled = false;	// avoid further updating cache in this http session
+		}
+		
+		// 1.2.8 Beta disabled caps for custom post type roles under some circumstances
+		if ( version_compare( $prev_version, '1.2.7', '>') && version_compare( $prev_version, '1.2.8', '<') ) {
+			if ( $disabled_role_caps = get_option( 'scoper_disabled_role_caps' ) ) {
+				$okay_role_prefix = array( 'rs_post', 'rs_page', 'rs_category', 'rs_link', 'rs_ngg' );
+				foreach ( array_keys($disabled_role_caps) as $role_handle ) {
+					$role_okay = false;
+					foreach( $okay_role_prefix as $pfx ) {
+						if ( 0 === strpos( $role_handle, $pfx ) ) {
+							$role_okay = true;
+							break;
+						}
+					}
+					if ( ! $role_okay ) {
+						unset( $disabled_role_caps[$role_handle] );
+						$_modified = true;
+					}
+				}
+				
+				if ( ! empty($_modified) )
+					update_option( 'scoper_disabled_role_caps' , $disabled_role_caps );
+			}	
+		}
+		
 		// changes to taxonomy options storage in 1.1.8
 		if ( version_compare( $prev_version, '1.1.8', '<') ) {
 			global $wp_taxonomies;
@@ -34,7 +75,7 @@ function scoper_version_updated( $prev_version ) {
 						elseif( 'link' == $src_name )	
 							$use_term_roles[$src_otype]['link_category'] = intval($val);
 						elseif ( 'ngg_gallery' == $src_name )
-							$use_term_roles[$src_otype]['ngg_album'] = intval($val);
+							$use_term_roles[$src_otype]['ngg_album'] = intval($val);	// compat workaround for old versions of Role Scoping for NGG which use old otype option key structure
 					}
 				}
 			}
@@ -81,77 +122,13 @@ function scoper_version_updated( $prev_version ) {
 			delete_option('scoper_page_children');
 		} else break;
 		
-		if ( version_compare( $prev_version, '1.0.0-rc6', '<') && version_compare( $prev_version, '1.0.0-rc2', '>=') ) {
-			// In rc2 through rc4, we forced invalid img src attribute for image attachments on servers deemed non-apache
-			// note: false === stripos( php_sapi_name(), 'apache' ) was the criteria used by the offending code
-			// Need to update all affected post_content to convert attachment_id URL to file URL
-			if ( false === stripos( php_sapi_name(), 'apache' ) && ! get_site_option('scoper_fixed_img_urls') ) {
-				global $wpdb, $wp_rewrite;
-
-				if ( ! empty($wp_rewrite) ) {
-					$blog_url = get_bloginfo('url');
-					if ( $results = $wpdb->get_results( "SELECT ID, guid, post_parent FROM $wpdb->posts WHERE post_type = 'attachment' && post_date > '2008-12-7'" ) ) {
-						foreach ( $results as $row ) {
-							$data = array();
-							$data['post_content'] = $wpdb->get_var( "SELECT post_content FROM $wpdb->posts WHERE ID = '$row->post_parent'" );
-							
-							if ( $row->guid ) {
-								$attachment_link_raw = $blog_url . "/?attachment_id={$row->ID}";
-								$data['post_content'] = str_replace('src="' . $attachment_link_raw, 'src="' . $row->guid, $data['post_content']);
-								
-								$attachment_link = get_attachment_link($row->ID);
-								$data['post_content'] = str_replace('src="' . $attachment_link, 'src="' . $row->guid, $data['post_content']);
-							}
-	
-							if ( ! empty($data['post_content']) ) {
-								$wpdb->update($wpdb->posts, $data, array("ID" => $row->post_parent) );
-							}
-						}
-					}
-				
-					update_option('scoper_fixed_img_urls', true);
-				}
-			}
-		} else break;
-
-		
-		// fixed failure to properly maintain scoper_page_ancestors options in 1.0.0-rc5
-		if ( version_compare( $prev_version, '1.0.0-rc5', '<') ) {
-			delete_option('scoper_page_ancestors');
-		} else break;
-
-		
-		// changed default teaser_hide_private otype option to separate entries for posts, pages in v1.0.0-rc4
-		if ( version_compare( $prev_version, '1.0.0-rc4', '<') ) {
-			$teaser_hide_private = get_option('scoper_teaser_hide_private');
-
-			if ( isset($teaser_hide_private['post']) && ! is_array($teaser_hide_private['post']) ) {
-				if ( $teaser_hide_private['post'] )
-					// despite "for posts and pages" caption, previously this option caused pages to be hidden but posts still teased
-					update_option( 'scoper_teaser_hide_private', array( 'post:post' => 0, 'post:page' => 1 ) );
-				else
-					update_option( 'scoper_teaser_hide_private', array( 'post:post' => 0, 'post:page' => 0 ) );
-			}
-		} else break;
-		
-		// 0.9.15 eliminated ability to set recursive page parents
-		if ( version_compare( $prev_version, '0.9.15', '<') ) { 
-			scoper_fix_page_parent_recursion();
-		} else break;
-		
-		
-		// added WP role metagroups in v0.9.9
-		if ( ( ! empty($prev_version) && version_compare( $prev_version, '0.9.9', '<') ) ) {
-			global $wp_roles;
-			
-			if ( ! empty($wp_roles) )
-				scoper_sync_wproles();
-				
-		} else break;
-	
+		if ( version_compare( $prev_version, '1.0.0', '<') ) {
+			include( 'update-legacy_rs.php' );
+			scoper_version_updated_from_legacy( $prev_version );
+		}
 	} while ( 0 ); // end single-pass version check loop
 }
-		
+
 
 function scoper_sync_wproles($user_ids = '', $role_name_arg = '', $blog_id_arg = '' ) {
 	global $wpdb, $wp_roles;
@@ -348,31 +325,34 @@ function scoper_sync_wproles($user_ids = '', $role_name_arg = '', $blog_id_arg =
 		
 		// add any missing roles
 		foreach ( array_keys($user_roles) as $role_type ) {
-			if ( $stored_roles[$role_type] )
+			if ( ! empty($stored_roles[$role_type]) )
 				$user_roles[$role_type] = array_diff($user_roles[$role_type], $stored_roles[$role_type]);
 			
-			if ( $user_roles[$role_type] )
+			if ( ! empty($user_roles[$role_type]) ) {
 				foreach ( $user_roles[$role_type] as $role_name ) {
 					//rs_errlog("INSERT INTO $uro_table (user_id, role_name, role_type, scope) VALUES ('$user_id', '$role_name', '$role_type', 'blog')");
 					scoper_query("INSERT INTO $uro_table (user_id, role_name, role_type, scope) VALUES ('$user_id', '$role_name', '$role_type', 'blog')");	
 				}
+			}
 		}
 		
 	} // end foreach WP usermeta
 
+	// disable orphaned role deletion until we can recreate and eliminate improper deletion as reported in support forum (http://agapetry.net/forum/role-scoper/permissions-reset-randomly-for-a-section-of-pages/page-1/post-3513/)
 	
 	// Delete any role assignments for users which no longer exist
-	delete_roles_orphaned_from_user();
+	//delete_roles_orphaned_from_user();
 	
 	// Delete any role assignments for WP groups which no longer exist
-	delete_roles_orphaned_from_group();
+	//delete_roles_orphaned_from_group();
 	
 	// Delete any role assignments for posts/pages which no longer exist
-	delete_roles_orphaned_from_item( OBJECT_SCOPE_RS, 'post' );
+	//delete_roles_orphaned_from_item( OBJECT_SCOPE_RS, 'post' );
 	//delete_restrictions_orphaned_from_item( OBJECT_SCOPE_RS, 'post' );	// hold off on this until delete_roles_orphaned_from_item() call has a long, clear track record
 	
 	// Delete any role assignments for categories which no longer exist
-	delete_roles_orphaned_from_item( TERM_SCOPE_RS, 'category' );
+	//delete_roles_orphaned_from_item( TERM_SCOPE_RS, 'category' );
+	
 	//delete_restrictions_orphaned_from_item( TERM_SCOPE_RS, 'category' );
 	
 	//rs_errlog("finished syncroles "');
@@ -472,30 +452,6 @@ function delete_restrictions_orphaned_from_item( $scope, $src_or_tx_name ) {
 */
 
 
-// legacy function called when upgrading from versions older than 0.9.15
-function scoper_fix_page_parent_recursion() {
-	global $wpdb;
-	$arr_parent = array();
-	$arr_children = array();
-	
-	if ( $results = scoper_get_results("SELECT ID, post_parent FROM $wpdb->posts WHERE post_type = 'page'") ) {
-		foreach ( $results as $row ) {
-			$arr_parent[$row->ID] = $row->post_parent;
-			
-			if ( ! isset($arr_children[$row->post_parent]) )
-				$arr_children[$row->post_parent] = array();
-				
-			$arr_children[$row->post_parent] []= $row->ID;
-		}
-		
-		// if a page's parent is also one of its children, set parent to Main
-		foreach ( $arr_parent as $page_id => $parent_id )
-			if ( isset($arr_children[$page_id]) && in_array($parent_id, $arr_children[$page_id]) )
-				scoper_query("UPDATE $wpdb->posts SET post_parent = '0' WHERE ID = '$page_id'");
-	}
-}
-
-
 // On first-time install, prevent WP/RS role mismatch by disabling RS rolecaps that are missing from corresponding default WP roles
 function scoper_set_default_rs_roledefs() {
 	global $wp_roles, $scoper;
@@ -505,7 +461,7 @@ function scoper_set_default_rs_roledefs() {
 	if ( scoper_get_option( 'disabled_role_caps', $sitewide ) || scoper_get_option( 'default_disabled_role_caps', $sitewide ) )
 		return;
 
-	$default_role_caps = scoper_core_role_caps();
+	$default_role_caps = cr_role_caps();
 
 	$wp_role_sync = array( 
 		'rs_post_contributor' 	=> 'contributor',

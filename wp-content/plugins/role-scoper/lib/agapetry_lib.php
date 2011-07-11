@@ -28,6 +28,16 @@ function agp_implode( $delim, $arr, $wrap_open, $wrap_close, $array_unique = tru
 		if ( $array_unique )
 			$arr = array_unique($arr);
 
+		/*
+		if ( defined( 'RS_DEBUG' ) ) {
+			$test = implode($delim, $arr);
+			if ( strpos( $test, 'Array' ) ) {
+				dump($test);
+				agp_bt_die();
+			}
+		}
+		*/
+			
 		return $wrap_open . implode($delim, $arr) . $wrap_close;
 	} else {
 		if ( $wrap_single_item )
@@ -74,24 +84,4 @@ function agp_get_lambda_argstring($num_args) {
 	return $arg_str;
 }
 
-function agp_strpos_any($haystack, $needles, $any_substr_pos = true) {
-	if ( ! $needles )
-		return false;
-
-	if ( ! is_array($needles) )
-		$needle = array($needles);
-	
-	if ( ! $any_substr_pos )
-		$haystack_length = strlen($haystack);
-
-	foreach($needles as $needle) {
-		$pos = strpos($haystack, $needle);
-		if ( is_numeric($pos) && ( $any_substr_pos || ( $pos == ( $haystack_length - strlen($needle) ) ) ) )
-			return true;
-	}
-}
-
-function agp_string_ends_in($haystack, $needles, $any_substr_pos = false) {
-	agp_strpos_any( $haystack, $needles, $any_substr_pos );
-}
 ?>

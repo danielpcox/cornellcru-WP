@@ -2,9 +2,9 @@
 Contributors: shinephp
 Donate link: http://www.shinephp.com/donate/
 Tags: user, role, editor, security, access, permission, capability
-Requires at least: 2.8.
-Tested up to: 3.0.1
-Stable tag: 2.1.10
+Requires at least: 3.0
+Tested up to: 3.1
+Stable tag: 3.0.1
 
 User Role Editor WordPress plugin makes the role capabilities changing easy. You can change any standard WordPress user role (except administrator).
 
@@ -21,35 +21,26 @@ To read more about 'User Role Editor' visit this link at <a href="http://www.shi
 
 Installation procedure:
 
+Attention! Starting from version 2.2 plugin works with WordPress 3.0 and higher only. For earlier WordPress versions use plugin version 2.1.10 from http://downloads.wordpress.org/plugin/user-role-editor.2.1.10.zip
 1. Deactivate plugin if you have the previous version installed.
 2. Extract "user-role-editor.x.x.x.zip" archive content to the "/wp-content/plugins/user-role-editor" directory.
 3. Activate "User Role Editor" plugin via 'Plugins' menu in WordPress admin menu. 
 4. Go to the "Settings"-"User Role Editor" menu item and change your WordPress standard roles capabilities according to your needs.
 
 == Frequently Asked Questions ==
-- Does it work with WordPress 3.0 in multi-site environment?
-Yes, it works with WordPress 3.0 multi-site. Current version works for every blog from your multi-site network as for locally installed blog.
-Network feature, something like super-admin global role editor will be added in the nearest release.
+- Does it work with WordPress 3.1 in multi-site environment?
+Yes, it works with WordPress 3.1 multi-site. By default plugin works for every blog from your multi-site network as for locally installed blog.
+To update selected role globally for the Network you should turn on the "Apply to All Sites" checkbox.
 
 
 == Screenshots ==
 1. screenshot-1.png User Role Editor main form
+1. screenshot-2.png User Role Editor main form under multi-site environment
 
 
 == Special Thanks to ==
-* [Whiler](http://blogs.wittwer.fr/whiler/) for the help with French translation and useful ideas.
-* [Peter](http://www.red-socks-reinbek.de) - for the help with German translation.
-* [Dario Ferrer](http://www.darioferrer.com) - for the help with the Spanish translation.
-* [Talksina](http://www.iadkiller.org) - for the help with Italian translation.
-* [Technolog.jp](http://technolog.jp/) - for the help with Japanese translation.
-* [Marsis G.](http://pc.de/) for the help with Belorussian translation.
-* [TagSite](http://www.tagsite.eu) for the help with Polish translation.
-* [István](http://www.blacksnail.hu) for the help with Hungarian translation.
-* [Rémi Bruggeman](http://www.remisan.be) for the help with Dutch translation.
-* [Yackytsu](http://www.jackytsu.com) for the help with Chinese translation.
-* [Rafael Galdencio](http://www.arquiteturailustrada.com.br/) for the help with Brasilian Portuguese translation.
-* [Good Life](http://good-life.ir) for the help with Persian translation.
 * [FullThrottle](http://fullthrottledevelopment.com/how-to-hide-the-adminstrator-on-the-wordpress-users-screen) - For the code to hide administrator role at admin backend.
+* Marcin - For the code enhancement. This contribution allows to not lose new custom capability if it is added to other than 'Administrator' role.
 
 = Translations =
 * Belorussian: [Marsis G.](http://pc.de)
@@ -59,12 +50,13 @@ Network feature, something like super-admin global role editor will be added in 
 * French: [Whiler](http://blogs.wittwer.fr/whiler)
 * German: [Peter](http://www.red-socks-reinbek.de)
 * Hungarian: [István](http://www.blacksnail.hu)
-* Italian: [Talksina](http://www.iadkiller.org)
+* Italian: [Talksina](http://www.iadkiller.org), [Alessandro Mariani](http://technodin.org)
 * Japanese: [Technolog.jp](http://technolog.jp)
 * Persian: [Good Life](http://good-life.ir)
 * Polish: [TagSite](http://www.tagsite.eu)
 * Russian: [Vladimir Garagulya](http://shinephp.com)
 * Spanish: [Dario Ferrer](http://www.darioferrer.com)
+* Turkish: [Sadri Ercan](http://www.faydaliweb.com), [Can KAYA](http://www.kartaca.com)
 
 Dear plugin User!
 If you wish to help me with this plugin translation I very appreciate it. Please send your language .po and .mo files to vladimir[at-sign]shinephp.com email. Do not forget include you site link in order I can show it with greetings for the translation help at shinephp.com, plugin settings page and in this readme.txt file.
@@ -73,6 +65,39 @@ Share with me new ideas about plugin further development and link to your site w
 
 
 == Changelog ==
+
+= 3.0.1 =
+* 27.02.2011
+* Spanish translation is updated. Thanks to [Dario Ferrer](http://www.darioferrer.com). Other language translation wait for update too. You are welcome :).
+
+= 3.0 =
+* 06.02.2011
+* Compatibility with WordPress 3.1 Release Candidate 3 and real multi-site feature are provided.
+* Role capabilities list are sorted now in the alphabetical order. Easier to find - easier to manage.
+* Code fix: allows to not lose new custom capability if it is added to other than 'Administrator' role. Thanks to Marcin for the contribution to the code of this plugin.
+* Under multi-site environment:
+* 1) URE has additional option 'Apply to All Sites' which allows you to apply updates to the selected role at all sites of your network. If some site has not such role, it will be added. You should know, that this option works for the role update only. All other actions as 'Add' or 'Delete' role still works for the currently selected blog/site only.
+* 2) URE plugin settings page is available only to user with network superadministrator rights.
+
+= 2.2.3 =
+* 08.11.2010
+* It is the security update. Old problem returned after 2.2.2 update and was discovered by saharusa. You can read this [thread](http://wordpress.org/support/topic/plugin-user-role-editor-editor-can-edit-admin).
+Only user with Administrator role and superadmin user under multi-site environment have access to the User Role Editor Settings page now.
+
+= 2.2.2 =
+* 07.11.2010
+* URE plugin Settings page was unavailable for some installations in multi-site environment. It is fixed by changing 'add_users' capability for administrator access to the 'edit_users'.
+* Turkish translation is added.
+
+= 2.2.1 =
+* 09.10.2010
+* Critical bug "Fatal error: Class 'SimplePie' not found in /" is fixed. This is a required update as URE plugin Settings page did not opened in previous version if you have not some of other my plugins installed :).
+
+= 2.2 =
+* 08.10.2010
+* Technical update for WordPress 3.0 full compatibility. Staff deprecated since WordPress v.3.0 is excluded. If you use earlier WordPress versions, do not update URE plugin to v.2.2 or higher.
+* Italian translation update. Thanks to [Alessandro Mariani](http://technodin.org).
+
 = 2.1.10 =
 * 21.09.2010
 * German translation is updated. Thanks to [Peter](http://www.red-socks-reinbek.de).

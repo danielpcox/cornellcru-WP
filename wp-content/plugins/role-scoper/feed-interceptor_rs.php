@@ -91,18 +91,19 @@ class FeedInterceptor_RS {
 	}
 	
 	function replace_feed_teaser_placeholder($content) {
-		global $post;
-
-		$search[] = PERMALINK_PLACEHOLDER_RS;
-		$replace[] = get_permalink($post->ID);
-		$content = str_replace($search, $replace, $content);
+		if ( ! empty( $GLOBALS['post'] ) ) {
+			$search[] = PERMALINK_PLACEHOLDER_RS;
+			$replace[] = get_permalink($GLOBALS['post']->ID);
+			$content = str_replace($search, $replace, $content);
+		}
+		
 		return $content;
 	}
 
 	function filter_rss( $text, $subject = 'content' ) {
 		global $post;
 
-		if ( ! empty( $post->scoper_teaser ) )
+		if ( ! empty($post) && ! empty($post->scoper_teaser) )
 			return $text;
 
 		if ( $post->post_status == 'private')
@@ -133,7 +134,7 @@ class FeedInterceptor_RS {
 				
 					return $this->replace_feed_teaser_placeholder( $msg );
 				}
-		}
+		} // end switch
 	}
 	
 	// Called when using HTTP auth -- changes the article content for items which are not already filtered by Hidden Content Teaser

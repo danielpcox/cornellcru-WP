@@ -3,7 +3,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die( 'This page cannot be called directly.' );
 
 function scoper_admin_section_restrictions($taxonomy) {
-global $scoper;
+global $scoper, $scoper_admin;
 
 $tx = $scoper->taxonomies->get($taxonomy);
 if ( empty($tx) || empty($tx->requires_term) )
@@ -11,7 +11,7 @@ if ( empty($tx) || empty($tx->requires_term) )
 
 $is_administrator = is_administrator_rs($tx, 'user');
 
-if ( ! $scoper->admin->user_can_admin_terms($taxonomy) )
+if ( ! $scoper_admin->user_can_admin_terms($taxonomy) )
 	wp_die(__awp('Cheatin&#8217; uh?'));
 
 require_once( 'admin-bulk_rs.php' );
@@ -40,8 +40,9 @@ if ( isset($_POST['rs_submit']) ) {
 
 
 // =========================== Prepare Data ===============================
+$tx_src = $scoper->data_sources->get( $tx->source );
 
-if ( $col_id = $scoper->taxonomies->member_property($taxonomy, 'source', 'cols', 'id') ) {
+if ( $col_id = $tx_src->cols->id ) {
 	// determine which terms current user can admin
 	if ( $admin_terms = $scoper->get_terms($taxonomy, ADMIN_TERMS_FILTER_RS, COL_ID_RS) ) {
 		$admin_terms = array_fill_keys( $admin_terms, true );
@@ -54,14 +55,17 @@ if ( $col_id = $scoper->taxonomies->member_property($taxonomy, 'source', 'cols',
 
 <div class="wrap agp-width97">
 <?php 
-echo '<h2>' . sprintf(__('%s Restrictions', 'scoper'), $tx->display_name); 
+$tx_label = $tx->labels->singular_name;
+$src_label = $scoper->data_sources->member_property( $tx->object_source, 'labels', 'singular_name' );
+
+echo '<h2>' . sprintf(__('%s Restrictions', 'scoper'), $tx_label ); 
 echo '&nbsp;&nbsp;<span style="font-size: 0.6em; font-style: normal">(<a href="#scoper_notes">' . __('see notes', 'scoper') . '</a>)</span></h2>';
 if ( scoper_get_option('display_hints') ) {
 	echo '<div class="rs-hint">';
 	if ( 'category' == $taxonomy && scoper_get_otype_option('use_object_roles', 'post', 'post') )
-		printf(__('Reduce access by requiring some role(s) to be %1$s%2$s-assigned%3$s (or %4$s-assigned). Corresponding General Roles (whether assigned by WordPress or Role Scoper) are ignored.', 'scoper'), "<a href='admin.php?page=rs-$taxonomy-roles_t'>", $tx->display_name, '</a>', $tx->object_source->display_name);
+		printf(__('Reduce access by requiring some role(s) to be %1$s%2$s-assigned%3$s (or %4$s-assigned). Corresponding General Roles (whether assigned by WordPress or Role Scoper) are ignored.', 'scoper'), "<a href='admin.php?page=rs-$taxonomy-roles_t'>", $tx_label, '</a>', $src_label );
 	else
-		printf(__('Reduce access by requiring some role(s) to be %1$s%2$s-assigned%3$s. Corresponding General Role assignments are ignored.', 'scoper'), "<a href='admin.php?page=rs-$taxonomy-roles'>", $tx->display_name, '</a>');
+		printf(__('Reduce access by requiring some role(s) to be %1$s%2$s-assigned%3$s. Corresponding General Role assignments are ignored.', 'scoper'), "<a href='admin.php?page=rs-$taxonomy-roles_t'>", $tx_label, '</a>');
 	echo '</div>';
 }
 
@@ -72,7 +76,7 @@ if ( ! $role_defs_by_otype = $scoper->role_defs->get_for_taxonomy($tx->object_so
 }
 
 if ( empty($admin_terms) ) {
-	echo '<br />' . sprintf(__( 'Either you do not have permission to administer any %s, or none exist.', 'scoper'), $tx->display_name_plural);
+	echo '<br />' . sprintf(__( 'Either you do not have permission to administer any %s, or none exist.', 'scoper'),  $tx->labels->name );
 	echo '</div>';
 	return;
 }
@@ -87,19 +91,20 @@ echo ScoperAdminBulkLib::taxonomy_scroll_links($tx, $all_terms, $admin_terms);
 echo '</div><hr />';
 
 // ============ Assignment Mode Selection Display ================
-// little hack to avoid awkward caption with "link category" {
-$display_name_plural = ( 'link_category' == $taxonomy ) ? agp_strtolower( $scoper->taxonomies->member_property('category', 'display_name_plural') ) : agp_strtolower($tx->display_name_plural);
-$display_name = ( 'link_category' == $taxonomy ) ? agp_strtolower( $scoper->taxonomies->member_property('category', 'display_name') ) : agp_strtolower($tx->display_name);
+// TODO: is Link Category label handled without workaround now?
+$tx_label = agp_strtolower( $tx->labels->name );
+$tx_label_singular = agp_strtolower( $tx->labels->singular_name );
 
-if ( empty($tx->source->cols->parent) || ( ! empty($tx->uses_standard_schema) && empty($tx->hierarchical) ) )
+$parent_col = $tx_src->cols->parent;
+if ( ! $parent_col || ( ! empty($tx->uses_standard_schema) && empty($tx->hierarchical) ) )
 	$assignment_modes = array( 
-		ASSIGN_FOR_ENTITY_RS => sprintf(__('for selected %s', 'scoper'), $display_name_plural)
+		ASSIGN_FOR_ENTITY_RS => sprintf(__('for selected %s', 'scoper'), $tx_label)
 	);
 else
 	$assignment_modes = array(
-		ASSIGN_FOR_ENTITY_RS => sprintf(__('for selected %s', 'scoper'), $display_name_plural), 
-		ASSIGN_FOR_CHILDREN_RS => sprintf(__('for sub-%s of selected', 'scoper'), $display_name_plural), 
-		ASSIGN_FOR_BOTH_RS => sprintf(__('for selected and sub-%s', 'scoper'), $display_name_plural)
+		ASSIGN_FOR_ENTITY_RS => sprintf(__('for selected %s', 'scoper'), $tx_label), 
+		ASSIGN_FOR_CHILDREN_RS => sprintf(__('for sub-%s of selected', 'scoper'), $tx_label), 
+		ASSIGN_FOR_BOTH_RS => sprintf(__('for selected and sub-%s', 'scoper'), $tx_label)
 	);
 
 $max_scopes = array( 'term' => __('Restrict selected roles', 'scoper'), 'blog' => __('Unrestrict selected roles', 'scoper')  );
@@ -111,7 +116,7 @@ ScoperAdminBulk::item_tree_jslinks(ROLE_RESTRICTION_RS);
 // IE (6 at least) won't obey link color directive in a.classname CSS
 $ie_link_style = (strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE') !== false) ? ' style="color:white;"' : '';
 
-$args = array( 'include_child_restrictions' => true, 'return_array' => true, 'role_type' => SCOPER_ROLE_TYPE, 'force_refresh' => true );
+$args = array( 'include_child_restrictions' => true, 'return_array' => true, 'role_type' => 'rs', 'force_refresh' => true );
 $strict_terms = $scoper->get_restrictions(TERM_SCOPE_RS, $taxonomy, $args );
 //strict_terms[taxonomy][role name][term_id] = array: terms which require Role Scoper assignment for specified role (user blog roles ignored, required caps may be supplied by scoper term role or object-specific assignment)
 											// (for other terms, Role Scoper role assignment is optional (term role assignments will supplement blog caps)
@@ -122,7 +127,7 @@ foreach ( $all_terms as $term ) {
 
 	foreach ( $role_defs_by_otype as $object_type => $role_defs )
 		foreach ( array_keys($role_defs) as $role_handle )
-			if ( $role_assigner->user_has_role_in_term( array($role_handle=>1), $taxonomy, $id, '', array('src_name' => $tx->object_source->name, 'object_type' => $object_type) ) )
+			if ( $role_assigner->user_has_role_in_term( $role_handle, $taxonomy, $id, '', array('src_name' => $tx->object_source, 'object_type' => $object_type) ) )
 				$editable_roles[$id][$role_handle] = true;
 }
 
@@ -130,7 +135,7 @@ $default_restrictions = $scoper->get_default_restrictions(TERM_SCOPE_RS);
 
 $default_strict_roles = ( ! empty($default_restrictions[$taxonomy] ) ) ? array_flip(array_keys($default_restrictions[$taxonomy])) : array();
 
-$table_captions = ScoperAdminUI::restriction_captions(TERM_SCOPE_RS, $tx, $display_name, $display_name_plural);
+$table_captions = ScoperAdminUI::restriction_captions(TERM_SCOPE_RS, $tx, $tx_label_singular, $tx_label);
 
 $args = array( 
 'admin_items' => $admin_terms, 	'editable_roles' => $editable_roles,	'default_strict_roles' => $default_strict_roles,
@@ -138,18 +143,16 @@ $args = array(
 'table_captions' => $table_captions
 );
 
-ScoperAdminBulk::item_tree( TERM_SCOPE_RS, ROLE_RESTRICTION_RS, $tx->source, $tx, $all_terms, '', $strict_terms, $role_defs_by_otype, $role_codes, $args);
+ScoperAdminBulk::item_tree( TERM_SCOPE_RS, ROLE_RESTRICTION_RS, $tx_src, $tx, $all_terms, '', $strict_terms, $role_defs_by_otype, $role_codes, $args);
 
 echo '<a href="#scoper_top">' . __('top', 'scoper') . '</a>';
 echo '<hr />';
 echo '<h4 style="margin-bottom:0.1em"><a name="scoper_notes"></a>' . __("Notes", 'scoper') . ':</h4><ul class="rs-notes">';	
-
-if ( ('category' == $taxonomy) && ( ! scoper_get_otype_option('use_term_roles', 'post', 'page') ) )
-	ScoperAdminBulkLib::common_ui_msg( 'pagecat_plug' );
 	
-if ( empty($tx->object_source->no_object_roles) ) {
+$osrc = $scoper->data_sources->get( $tx->object_source );
+if ( empty($osrc->no_object_roles) ) {
 	echo '<li>';
-	printf(__('Any %1$s Restriction causes the specified role to be granted only via %1$s Role assignment, regardless of these %2$s settings.', 'scoper'), $tx->object_source->display_name, $tx->display_name);
+	printf( __( 'Any %1$s Restriction causes the specified role to be granted only via %1$s Role assignment, regardless of these %2$s settings.', 'scoper'), $osrc->labels->singular_name, $tx->labels->singular_name );
 	echo '</li></ul>';
 }
 ?>

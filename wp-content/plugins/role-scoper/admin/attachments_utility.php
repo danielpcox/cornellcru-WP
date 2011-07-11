@@ -22,7 +22,10 @@ function scoper_attach_linked_uploads( $echo = false ) {
 		return false;
 	}
 	
-	if ( $post_ids = scoper_get_col( "SELECT ID FROM $wpdb->posts WHERE post_type IN ('post', 'page') ORDER BY post_type, post_title" ) ) {
+	$post_types = array_diff( get_post_types( array( 'public' => true ) ), array( 'attachment' ) );
+	$post_type_in = "'" . implode( "','", $post_types ) . "'";
+	
+	if ( $post_ids = scoper_get_col( "SELECT ID FROM $wpdb->posts WHERE post_type IN ($post_type_in) ORDER BY post_type, post_title" ) ) {
 		$stored_attachments = array();
 		if ( $results = scoper_get_results( "SELECT post_parent, guid FROM $wpdb->posts WHERE post_type = 'attachment'" ) ) {
 			foreach ( $results as $row ) {

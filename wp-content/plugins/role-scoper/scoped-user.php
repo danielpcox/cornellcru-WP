@@ -22,7 +22,7 @@ class WP_Scoped_User extends WP_User {
 	var $assigned_term_roles = array();	//	$assigned_term_roles[taxonomy][role_handle] = array of term ids 
 	var $qualified_terms = array();		//  $qualified_terms[taxonomy][$capreqs_key] = previous result for qualify_terms call on this set of capreqs
 	
-	function WP_Scoped_User($id = 0, $name = '', $args = '') {
+	function WP_Scoped_User($id = 0, $name = '', $args = array()) {
 		//log_mem_usage_rs( 'begin WP_Scoped_User' );
 		
 		$this->WP_User($id, $name);
@@ -35,32 +35,11 @@ class WP_Scoped_User extends WP_User {
 		$this->assigned_blog_roles[ANY_CONTENT_DATE_RS] = array();
 		$this->blog_roles[ANY_CONTENT_DATE_RS] = array();
 
-		//dump($id);
-		//dump($this);
-		
 		//log_mem_usage_rs( 'called this->WP_User' );
 		
 		$defaults = array( 'disable_user_roles' => false, 'disable_group_roles' => false, 'disable_wp_roles' => false );
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
-
-		/*
-		global $scoper;
-		
-		if ( empty($scoper) || empty($scoper->role_defs) ) {
-			require_once('role-scoper_main.php');
-			
-			//log_mem_usage_rs( 'Scoped User: require role-scoper_main.php' );
-			
-			// todo: review this
-			//$temp = new Scoper();
-			//$scoper =& $temp;
-			
-			$scoper = new Scoper();
-
-			//log_mem_usage_rs( 'Scoped User: new Scoper' );
-		}
-		*/
 
 		if ( $this->ID ) {
 			if ( ! $disable_wp_roles ) {
@@ -84,8 +63,8 @@ class WP_Scoped_User extends WP_User {
 					$this->groups = array_intersect_key($this->groups, $args['filter_usergroups']);
 			}
 			
-			if ( 'rs' == SCOPER_ROLE_TYPE ) { // && RS_BLOG_ROLES ) {  // rs_blog_roles option has never been active in any RS release; leave commented here in case need arises
-				if ( $rs_blogroles = $this->get_blog_roles_daterange( SCOPER_ROLE_TYPE ) ) {
+			// if ( RS_BLOG_ROLES ) {  // rs_blog_roles option has never been active in any RS release; leave commented here in case need arises
+				if ( $rs_blogroles = $this->get_blog_roles_daterange( 'rs' ) ) {
 					foreach ( array_keys($rs_blogroles) as $date_key ) {
 						if ( isset($this->assigned_blog_roles[$date_key]) )
 							$this->assigned_blog_roles[$date_key] = array_merge($this->assigned_blog_roles[$date_key], $rs_blogroles[$date_key]);
@@ -93,21 +72,15 @@ class WP_Scoped_User extends WP_User {
 							$this->assigned_blog_roles[$date_key] = $rs_blogroles[$date_key];
 					}
 				}
+			//}
 
-				//$this->merge_scoped_blogcaps();
-			}
-
-			//foreach ( array_keys($this->assigned_blog_roles) as $date_key )
-			//	$this->blog_roles[$date_key] = $scoper->role_defs->add_contained_roles( $this->assigned_blog_roles[$date_key] );
-			
 			// note: The allcaps property still governs current_user_can calls when the cap requirements do not pertain to a specific object.
-			// If WP roles fail to provide all required caps, the Role Scoper has_cap filter validate the current_user_can check 
-			// if any RS blogrole has all the required caps.
+			// If WP roles fail to provide all required caps, the Role Scoper has_cap filter validates the current_user_can check if any RS blogrole has all the required caps.
 			//
 			// The blog_roles array also comes into play for object permission checks such as page or post listing / edit.  
-			// In such cases, roles in the Scoper_User::blog_roles array supplement any pertinent taxonomy or role assignments,
+			// In such cases, roles in the Scoped_User->blog_roles array supplement any pertinent taxonomy or role assignments,
 			// as long as the object or its terms are not configured to require that role to be term-assigned or object-assigned.
-			
+
 			//log_mem_usage_rs( 'new Scoped User done' );
 		}
 	}
@@ -118,8 +91,7 @@ class WP_Scoped_User extends WP_User {
 		
 		global $wpdb;
 		
-		$role_type = SCOPER_ROLE_TYPE;
-		return scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE role_type = '$role_type' AND user_id = '$this->ID' LIMIT 1");
+		return scoper_get_var("SELECT assignment_id FROM $wpdb->user2role2object_rs WHERE role_type = 'rs' AND user_id = '$this->ID' LIMIT 1");
 	}
 	
 	function get_user_clause($table_alias) {
@@ -154,7 +126,7 @@ class WP_Scoped_User extends WP_User {
 		return wpp_cache_get($cache_id, $cache_flag, $append_blog_suffix);
 	}
 	
-	function cache_set($entry, $cache_flag, $append_blog_suffix = true ) {
+	function cache_set($entry, $cache_flag, $append_blog_suffix = true, $force_update = false ) {
 		if ( GROUP_ROLES_RS && $this->groups ) {
 			$cache_id = $this->ID;	
 			$cache_flag = $cache_flag . '_for_' . ROLE_BASIS_USER_AND_GROUPS;
@@ -162,13 +134,16 @@ class WP_Scoped_User extends WP_User {
 			$cache_id = $this->ID;
 			$cache_flag = $cache_flag . '_for_' . ROLE_BASIS_USER;
 		}
-		
-		return wpp_cache_set($cache_id, $entry, $cache_flag, $append_blog_suffix);
+
+		return wpp_cache_set($cache_id, $entry, $cache_flag, 0, $append_blog_suffix, $force_update );
 	}
 		
+	function cache_force_set( $entry, $cache_flag, $append_blog_suffix = true ) {
+		return $this->cache_set( $entry, $cache_flag, $append_blog_suffix, true );
+	}
 
 	// can be called statically by external modules
-	function get_groups_for_user( $user_id, $args = '' ) {
+	function get_groups_for_user( $user_id, $args = array() ) {
 		if ( empty($args['status']) )
 			$status = 'active';
 		elseif ( 'any' == $args['status'] ) {
@@ -181,6 +156,7 @@ class WP_Scoped_User extends WP_User {
 	
 		if ( empty($args['no_cache']) ) {
 			$cache = wpp_cache_get($user_id, 'group_membership_for_user');
+			
 			if ( is_array($cache) )
 				return $cache;
 		}
@@ -189,7 +165,7 @@ class WP_Scoped_User extends WP_User {
 		
 		if ( ! $wpdb->user2group_rs )
 			return array();
-			
+
 		$status_clause = ( $status ) ? "AND status = '$status'" : '';	
 
 		$query = "SELECT $wpdb->user2group_gid_col FROM $wpdb->user2group_rs WHERE $wpdb->user2group_uid_col = '$user_id' $status_clause ORDER BY $wpdb->user2group_gid_col";
@@ -224,12 +200,11 @@ class WP_Scoped_User extends WP_User {
 	}
 	
 	// return group_id as array keys
-	function _get_usergroups($args = '') {
+	function _get_usergroups($args = array()) {
 		if ( ! $this->ID )
 			return array();
-		
-		if ( ! is_array($args) )
-			$args = array();
+
+		$args = (array) $args;
 		
 		if ( ! empty($this->assigned_blog_roles) )
 			$args['metagroup_roles'] = $this->assigned_blog_roles[ANY_CONTENT_DATE_RS];
@@ -242,14 +217,14 @@ class WP_Scoped_User extends WP_User {
 	// wrapper for back compat with callin code that does not expect date_key dimension
 	function get_blog_roles( $role_type = 'rs' ) {
 		$blog_roles = $this->get_blog_roles_daterange( $role_type );
-		
+
 		if ( isset($blog_roles[ANY_CONTENT_DATE_RS]) && is_array($blog_roles[ANY_CONTENT_DATE_RS]) )
 			return $blog_roles[ANY_CONTENT_DATE_RS];
 		else
 			return array();
 	}
 	
-	function get_blog_roles_daterange( $role_type = 'rs', $args = '' ) {
+	function get_blog_roles_daterange( $role_type = 'rs', $args = array() ) {
 		$defaults = array( 'enforce_duration_limits' => true, 'retrieve_content_date_limits' => true, 'include_role_duration_key' => false );
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
@@ -257,8 +232,9 @@ class WP_Scoped_User extends WP_User {
 		if ( $enforce_duration_limits && $retrieve_content_date_limits && ! $include_role_duration_key ) {
 			$cache_flag = "{$role_type}_blog-roles";		// changed cache key from "blog_roles" to "blog-roles" to prevent retrieval of arrays stored without date_key dimension
 			$cache = $this->cache_get( $cache_flag );
-			if ( is_array($cache) )
+			if ( is_array($cache) ) {
 				return $cache;
+			}
 		}
 
 		global $wpdb;
@@ -290,7 +266,7 @@ class WP_Scoped_User extends WP_User {
 		return $role_handles;
 	}
 	
-	// wrapper for back compat with callin code that does not expect date_key dimension
+	// wrapper for back compat with calling code that does not expect date_key dimension
 	function get_term_roles( $taxonomy = 'category', $role_type = 'rs' ) {
 		$term_roles = $this->get_term_roles_daterange( $taxonomy, $role_type );
 		
@@ -301,11 +277,11 @@ class WP_Scoped_User extends WP_User {
 	}
 
 	// returns array[role name] = array of term ids for which user has the role assigned (based on current role basis)
-	function get_term_roles_daterange( $taxonomy = 'category', $role_type = 'rs', $args = '' ) {
+	function get_term_roles_daterange( $taxonomy = 'category', $role_type = 'rs', $args = array() ) {
 		$defaults = array( 'enforce_duration_limits' => true, 'retrieve_content_date_limits' => true, 'include_role_duration_key' => false );
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
-		
+			
 		global $wpdb;
 		
 		if ( $enforce_duration_limits && $retrieve_content_date_limits && ! $include_role_duration_key ) {
@@ -317,8 +293,6 @@ class WP_Scoped_User extends WP_User {
 			
 		if ( ! is_array($tx_term_roles) ) {
 			// no need to check for this on cache retrieval, since a role_type change results in a rol_defs change, which triggers a full scoper cache flush
-			$role_type = SCOPER_ROLE_TYPE;
-			
 			$tx_term_roles = array( '' => array() );
 			
 			$duration_clause = ( $enforce_duration_limits ) ? scoper_get_duration_clause() : '';
@@ -328,13 +302,13 @@ class WP_Scoped_User extends WP_User {
 			$extra_cols = ( $include_role_duration_key ) ? ", uro.date_limited, uro.start_date_gmt, uro.end_date_gmt" : '';
 			
 			$qry = "SELECT uro.obj_or_term_id, uro.role_name, uro.assignment_id, uro.content_date_limited, uro.content_min_date_gmt, uro.content_max_date_gmt $extra_cols FROM $wpdb->user2role2object_rs AS uro ";
-			$qry .= "WHERE uro.scope = 'term' AND uro.assign_for IN ('entity', 'both') AND uro.role_type = '$role_type' AND uro.src_or_tx_name = '$taxonomy' $duration_clause $u_g_clause";
+			$qry .= "WHERE uro.scope = 'term' AND uro.assign_for IN ('entity', 'both') AND uro.role_type = 'rs' AND uro.src_or_tx_name = '$taxonomy' $duration_clause $u_g_clause";
 							
 			if ( $results = scoper_get_results($qry) ) {
 				foreach($results as $termrole) {
 					$date_key = ( $retrieve_content_date_limits && $termrole->content_date_limited ) ? serialize( (object) array( 'content_min_date_gmt' => $termrole->content_min_date_gmt, 'content_max_date_gmt' => $termrole->content_max_date_gmt ) ) : '';
 					
-					$role_handle = SCOPER_ROLE_TYPE . '_' . $termrole->role_name;
+					$role_handle = 'rs_' . $termrole->role_name;
 					
 					if ( $include_role_duration_key ) {
 						$role_duration_key = ( $termrole->date_limited ) ? serialize( (object) array( 'start_date_gmt' => $termrole->start_date_gmt, 'end_date_gmt' => $termrole->end_date_gmt ) ) : '';
@@ -352,8 +326,14 @@ class WP_Scoped_User extends WP_User {
 			$this->assigned_term_roles[$taxonomy] = $tx_term_roles;
 		
 			global $scoper;
-			foreach( array_keys($this->assigned_term_roles[$taxonomy]) as $date_key )
-				$this->term_roles[$taxonomy][$date_key] = $scoper->role_defs->add_contained_roles( $this->assigned_term_roles[$taxonomy][$date_key], true );  //arg: is term array
+			if ( ! empty($scoper) ) { // this method is only called after Scoper is initialized, but include this sanity check
+				foreach( array_keys($this->assigned_term_roles[$taxonomy]) as $date_key ) {
+					// strip out any assignments for roles which are no longer defined (such as Revisionary roles after Revisionary is deactivated)
+					$this->assigned_term_roles[$taxonomy][$date_key] = array_intersect_key( $this->assigned_term_roles[$taxonomy][$date_key], $scoper->role_defs->role_caps );
+					
+					$this->term_roles[$taxonomy][$date_key] = $scoper->role_defs->add_contained_term_roles( $this->assigned_term_roles[$taxonomy][$date_key] );
+				}
+			}
 		}
 				
 		return $tx_term_roles;
@@ -362,100 +342,25 @@ class WP_Scoped_User extends WP_User {
 	
 	function merge_scoped_blogcaps() {	
 		global $scoper;
-					
+
+		// strip out any assignments for roles which are no longer defined (such as Revisionary roles after Revisionary is deactivated)
+		foreach( array_keys($this->assigned_blog_roles) as $date_key ) 
+			$this->assigned_blog_roles[$date_key] = array_intersect_key( $this->assigned_blog_roles[$date_key], $scoper->role_defs->role_caps );
+
 		foreach( array_keys($this->assigned_blog_roles[ANY_CONTENT_DATE_RS]) as $role_handle ) {
+			if ( ! is_array($scoper->role_defs->role_caps[$role_handle]) )
+				continue;
 			
 			$role_spec = scoper_explode_role_handle($role_handle);
 
-			if ( ! empty($role_spec->role_type) && ( 'rs' == $role_spec->role_type ) && $scoper->role_defs->is_member($role_handle) )
-				$this->allcaps = array_merge($this->allcaps, $scoper->role_defs->role_caps[$role_handle]);
+			if ( ! empty($role_spec->role_type) && ( 'rs' == $role_spec->role_type ) && ! empty($scoper->role_defs->role_caps[$role_handle]) )
+				$this->allcaps = ( is_array($this->allcaps) ) ? array_merge($this->allcaps, $scoper->role_defs->role_caps[$role_handle]) : $scoper->role_defs->role_caps[$role_handle];	
 		}
 		
 		$this->allcaps['is_scoped_user'] = true; // use this to detect when something tampers with scoped allcaps array
 	}
+
 } // end class WP_Scoped_User
 }
-
-if ( ! function_exists('is_administrator_rs') ) {
-function is_administrator_rs( $src_or_tx = '', $admin_type = 'content', $user = '' ) {
-	if ( ! $user ) {
-		global $current_user;
-		$user = $current_user;
-		
-		if ( IS_MU_RS && function_exists('is_super_admin') && is_super_admin() )
-			return true;
-	}
-
-	if ( empty($user->ID) )
-		return false;
-		
-	$return = '';
-
-	$admin_cap_name = scoper_get_administrator_cap( $admin_type );
-	$return = ! empty( $user->allcaps[$admin_cap_name] );
-	
-	if ( ! $return && $src_or_tx ) {	
-		// user is not a universal administrator, but are they an administrator for the specified source / taxonomy ?
-		
-		if ( ! is_object($src_or_tx) ) {
-			global $scoper;
-			if ( ! $obj = $scoper->data_sources->get($src_or_tx) )
-				$obj = $scoper->taxonomies->get($src_or_tx);
-				
-			if ( $obj )
-				$src_or_tx = $obj;
-		}
-
-		if ( ! in_array( $src_or_tx->name, array( 'post', 'category', 'term', 'link', 'group' ) ) ) {
-		
-			if ( ! empty($src_or_tx->defining_module_name) ) {
-				$defining_module_name = $src_or_tx->defining_module_name;
-				if ( ('wordpress' != $defining_module_name) && ('role-scoper' != $defining_module_name) ) {
-					static $admin_caps;
-					
-					if ( ! isset($admin_caps) )
-						$admin_caps = apply_filters( 'define_administrator_caps_rs', array() );
-		
-					if ( ! empty( $admin_caps[$defining_module_name] ) ) {
-						$module_admin_cap = $admin_caps[$defining_module_name];
-						$return = ! empty( $user->allcaps[$module_admin_cap] );
-					}
-				}
-			}
-		}
-	}
-	
-	return $return;
-}
-
-function is_option_administrator_rs( $user = '' ) {
-	return is_administrator_rs( '', 'option', $user );
-}
-
-function is_user_administrator_rs( $user = '' ) {
-	return is_administrator_rs( '', 'user', $user );
-} 
-
-function is_content_administrator_rs( $user = '' ) {
-	return is_administrator_rs( '', 'content', $user );
-}
-
-function scoper_get_administrator_cap( $admin_type ) {
-	if ( ! $admin_type )
-		$admin_type = 'content';
-	
-	// Note: to differentiate content administrator role, define a custom cap such as "administer_all_content", add it to a custom Role, and add the following line to wp-config.php: define( 'SCOPER_CONTENT_ADMIN_CAP', 'cap_name' );
-	$default_cap = array( 'option' => 'manage_options', 'user' => 'edit_users', 'content' => 'activate_plugins' );
-
-	$constant_name = 'SCOPER_' . strtoupper($admin_type) . '_ADMIN_CAP';
-	$cap_name = ( defined( $constant_name ) ) ? constant( $constant_name ) : $default_cap[$admin_type];
-	
-	if ( 'read' == $cap_name )	// avoid catostrophic mistakes
-		$cap_name = $default_cap[$admin_type];
-		
-	return $cap_name;
-} 
-
-} // endif is_administrator_rs function not defined
 
 ?>

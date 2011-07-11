@@ -18,26 +18,26 @@ class ScoperHardwayFront
 			return;
 	
 		$readable_cats = apply_filters( 'get_terms', array(), 'category', array('fields' => 'ids', 'skip_teaser' => true) );
-	
+
 		foreach ( $cats as $key => $cat )
-			if ( ! in_array($cat->cat_ID, $readable_cats) )
+			if ( ! in_array($cat->term_id, $readable_cats) )
 				unset( $cats[$key] );
 	
 		return $cats;
 	}
 
 	function flt_recent_comments($query) {
-		
-		//d_echo "<br />$query<br />";
-		
 		// Due to missing get_comments hook, this filter operates on every front-end query.
 		// If query doesn't pertain to comments, skip out with as little overhead as possible.
-		if ( strpos($query, 'comment') 
+		if ( strpos($query, 'comment')
 		&& strpos($query, "ELECT") && ! strpos($query, 'posts as parent') && ! strpos($query, "COUNT") && strpos($query, "comment_approved") )
 		{
 			if ( ! is_attachment() && ! is_content_administrator_rs() ) {
 				
 				global $wpdb;
+
+				if ( strpos($query, " $wpdb->posts " ) )
+					return $query;
 
 				if ( awp_is_plugin_active( 'wp-wall') ) {
 					$options = WPWall_GetOptions();
@@ -47,8 +47,8 @@ class ScoperHardwayFront
 				}
 				
 				if ( strpos($query, $wpdb->comments) ) {
-					$query = str_replace( "post_status = 'publish'", "$wpdb->posts.post_status = 'publish'", $query );
-					
+					$query = str_replace( " post_status = 'publish'", " $wpdb->posts.post_status = 'publish'", $query );
+
 					// theoretically, a slight performance enhancement if we can simplify the query to skip filtering of attachment comments
 					if ( defined('SCOPER_NO_ATTACHMENT_COMMENTS') || ( false !== strpos( $query, 'comment_post_ID =') ) ) {
 						
@@ -60,7 +60,7 @@ class ScoperHardwayFront
 						$query = str_replace( "user_id ", "$wpdb->comments.user_id ", $query);
 						
 						// WP < 2.9
-						$query = str_replace( "SELECT * FROM $wpdb->comments", "SELECT DISTINCT $wpdb->comments.* FROM $wpdb->comments", $query);
+						//$query = str_replace( "SELECT * FROM $wpdb->comments", "SELECT DISTINCT $wpdb->comments.* FROM $wpdb->comments", $query);
 
 						// WP 2.9+
 						$query = str_replace( "SELECT $wpdb->comments.* FROM $wpdb->comments", "SELECT DISTINCT $wpdb->comments.* FROM $wpdb->comments", $query);
@@ -68,21 +68,28 @@ class ScoperHardwayFront
 						if ( ! strpos( $query, ' DISTINCT ' ) )
 							$query = str_replace( "SELECT ", "SELECT DISTINCT ", $query);
 						
-						$join = "LEFT JOIN $wpdb->posts as parent ON parent.ID = {$wpdb->posts}.post_parent AND parent.post_type IN ('post', 'page') AND $wpdb->posts.post_type = 'attachment'";
-
-						$where_post = apply_filters('objects_where_rs', '', 'post', 'post', array('skip_teaser' => true) );
-						$where_page = apply_filters('objects_where_rs', '', 'post', 'page', array('skip_teaser' => true) );
-
-						$where_post_att = str_replace( "$wpdb->posts.", "parent.", $where_post );
-						$where_page_att = str_replace( "$wpdb->posts.", "parent.", $where_page );
-
-						$where = " ( ( $wpdb->posts.post_type = 'post' $where_post )"
-								. " OR ( $wpdb->posts.post_type = 'page' $where_page )"
-								. " OR ( $wpdb->posts.post_type = 'attachment' AND parent.post_type = 'post' $where_post_att )"
-								. " OR ( $wpdb->posts.post_type = 'attachment' AND parent.post_type = 'page' $where_page_att ) )";
-
+						$post_types = array_diff( get_post_types( array( 'public' => true ) ), array( 'attachment' ) );
+						$post_type_in = "'" . implode( "','", $post_types ) . "'";
+	
+						$join = "LEFT JOIN $wpdb->posts as parent ON parent.ID = {$wpdb->posts}.post_parent AND parent.post_type IN ($post_type_in) AND $wpdb->posts.post_type = 'attachment'";
+						
+						$use_post_types = scoper_get_option( 'use_post_types' );
+						
+						$where = array();
+						foreach( $post_types as $type ) {
+							if ( ! empty( $use_post_types[$type] ) )
+								$where_post = apply_filters('objects_where_rs', '', 'post', $type, array('skip_teaser' => true) );
+							else
+								$where_post = "AND 1=1";
+							
+							$where[]= "$wpdb->posts.post_type = '$type' $where_post";
+							$where[]= "$wpdb->posts.post_type = 'attachment' AND parent.post_type = '$type' " . str_replace( "$wpdb->posts.", "parent.", $where_post );
+						}
+						
+						$where = agp_implode( ' ) OR ( ', $where, ' ( ', ' ) ' );
+						
 						if ( ! strpos( $query, "JOIN $wpdb->posts" ) )	
-							$query = str_replace( "WHERE ", "INNER JOIN $wpdb->posts ON {$wpdb->posts}.ID = {$wpdb->comments}.comment_post_ID $join WHERE $where AND ", $query);
+							$query = str_replace( "WHERE ", "INNER JOIN $wpdb->posts ON {$wpdb->posts}.ID = {$wpdb->comments}.comment_post_ID $join WHERE ( $where ) AND ", $query);
 						else
 							$query = str_replace( "WHERE ", "$join WHERE $where AND ", $query);
 					}
@@ -95,6 +102,8 @@ class ScoperHardwayFront
 	
 	function flt_snazzy_archives( $query ) {
 		if ( strpos( $query, "posts WHERE post_status = 'publish' AND post_password = '' AND post_type IN (" ) ) {
+			
+			// TODO: update this to deal with custom types
 			
 			// query parsing currently does not deal with IN syntax for post_type
 			if ( strpos( $query, "('post','page')" ) ) {
@@ -111,7 +120,7 @@ class ScoperHardwayFront
 			}
 			
 			$query = str_replace( "post_status = 'publish' AND ", '', $query );
-			
+
 			$query = apply_filters( 'objects_request_rs', $query, 'post', $object_type );
 		}
 		
@@ -160,7 +169,7 @@ class ScoperHardwayFront
 
 		$filter_key = ( has_filter('list_terms_exclusions') ) ? serialize($GLOBALS['wp_filter']['list_terms_exclusions']) : '';
 		$ckey = md5( serialize( compact(array_keys($defaults)) ) . serialize( $taxonomies ) . $filter_key );
-		$cache_flag = SCOPER_ROLE_TYPE . '_get_terms';
+		$cache_flag = 'rs_get_terms';
 
 		if ( $cache = $current_user->cache_get( $cache_flag ) )
 			if ( isset( $cache[ $ckey ] ) )
@@ -233,10 +242,11 @@ class ScoperHardwayFront
 		}
 		// ------------- end get_terms() argument application code --------------
 		
+		$post_type = cr_find_post_type();
 		
 		// embedded select statement for posts ID IN clause
 		$posts_qry = "SELECT $wpdb->posts.ID FROM $wpdb->posts WHERE 1=1";
-		$posts_qry = apply_filters('objects_request_rs', $posts_qry, 'post', 'post', array('skip_teaser' => true));
+		$posts_qry = apply_filters('objects_request_rs', $posts_qry, 'post', $post_type, array('skip_teaser' => true));
 
 		$qry = "SELECT DISTINCT t.*, tt.*, COUNT(p.ID) AS count FROM $wpdb->terms AS t"
 			. " INNER JOIN $wpdb->term_taxonomy AS tt ON tt.term_id = t.term_id AND tt.taxonomy = 'post_tag'"

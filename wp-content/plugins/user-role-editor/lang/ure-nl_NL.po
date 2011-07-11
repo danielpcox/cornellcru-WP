@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: User Role Editor 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-09-17 21:41+0700\n"
+"POT-Creation-Date: 2010-10-08 22:47+0700\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Vladimir <vladimir@shinephp.com>\n"
 "Language-Team: ShinePHP.com <vladimir@shinephp.com>\n"
@@ -54,163 +54,168 @@ msgid "Donate"
 msgstr "Doneer"
 
 #: ../ure-options.php:172
+msgid "More plugins from"
+msgstr ""
+
+#: ../ure-options.php:175
 msgid "Greetings:"
 msgstr "Begroetingen:"
 
-#: ../ure-options.php:173
+#: ../ure-options.php:176
 msgid "It's me, the author"
 msgstr "Dit ben Ik, De Auteur."
 
-#: ../ure-options.php:174
+#: ../ure-options.php:177
 msgid "For the help with Belorussian translation"
 msgstr "voor hulp met de Belorussische vertaling"
 
-#: ../ure-options.php:175
+#: ../ure-options.php:178
 msgid "For the help with Brasilian translation"
 msgstr ""
 
-#: ../ure-options.php:176
+#: ../ure-options.php:179
 msgid "For the help with Chinese translation"
 msgstr "voor hulp met de Chinese vertaling"
 
-#: ../ure-options.php:177
+#: ../ure-options.php:180
 msgid "For the help with Dutch translation"
 msgstr "voor het vertalen naar het Nederlands en een nuttig idee"
 
-#: ../ure-options.php:178
+#: ../ure-options.php:181
 msgid "For the help with French translation"
 msgstr "voor hulp met de Franse vertaling"
 
-#: ../ure-options.php:179
+#: ../ure-options.php:182
 msgid "For the help with German translation"
 msgstr "voor hulp met de Duitse vertaling"
 
-#: ../ure-options.php:180
+#: ../ure-options.php:183
 msgid "For the help with Hungarian translation"
 msgstr "voor hulp met de Honghaarse vertaling"
 
-#: ../ure-options.php:181
+#: ../ure-options.php:184
+#: ../ure-options.php:185
 msgid "For the help with Italian translation"
 msgstr "voor hulp met de Italiaanse vertaling"
 
-#: ../ure-options.php:182
+#: ../ure-options.php:186
 msgid "For the help with Japanese translation"
 msgstr "voor hulp met de Japanse vertaling"
 
-#: ../ure-options.php:183
+#: ../ure-options.php:187
 msgid "For the help with Persian translation"
 msgstr ""
 
-#: ../ure-options.php:184
+#: ../ure-options.php:188
 msgid "For the help with Polish translation"
 msgstr "voor hulp met de Poolse vertaling"
 
-#: ../ure-options.php:185
+#: ../ure-options.php:189
 msgid "For the help with Spanish translation"
 msgstr "Voor hulp met de Spaanse vertaling"
 
-#: ../ure-options.php:186
+#: ../ure-options.php:190
 msgid "For the code to hide administrator role"
 msgstr "voor de code om de administratie rol te verbergen"
 
-#: ../ure-options.php:187
+#: ../ure-options.php:191
 msgid "Do you wish to see your name with link to your site here? You are welcome! Your help with translation and new ideas are very appreciated."
 msgstr "Wenst u uw naam met link naar uw website hier te zien? Geen probleem! Uw hulp met het vertalen en nieuwe ideen wordt sterk geappricieerd."
 
-#: ../ure-options.php:203
+#: ../ure-options.php:207
 msgid "Role Name can not be empty!"
 msgstr "Rol Naam mag niet leeg zijn!"
 
-#: ../ure-options.php:207
+#: ../ure-options.php:211
 msgid "Role Name must contain latin characters and digits only!"
 msgstr "Rol Naam mag enkel latijnse letters en cijfers bevatten!"
 
-#: ../ure-options.php:212
-#: ../ure-options.php:331
+#: ../ure-options.php:216
+#: ../ure-options.php:343
 msgid "Delete Role"
 msgstr "Verwijder Rol"
 
-#: ../ure-options.php:214
+#: ../ure-options.php:218
 msgid "Change Default Role"
 msgstr "Pas de standaard rol aan"
 
-#: ../ure-options.php:216
-#: ../ure-options.php:299
+#: ../ure-options.php:220
+#: ../ure-options.php:303
 msgid "Restore Roles from backup copy"
 msgstr "Herstel rollen vanaf herstelkopie."
 
-#: ../ure-options.php:218
+#: ../ure-options.php:222
 msgid "Please confirm to continue"
 msgstr "Bevestig om verder te gaan"
 
-#: ../ure-options.php:243
+#: ../ure-options.php:247
 #, php-format
 msgid "Role \"%s\" update: please confirm to continue"
 msgstr "Rol \"%s\" update: Gelieve te bevestigen om verder te gaan."
 
-#: ../ure-options.php:251
+#: ../ure-options.php:255
 msgid "Select Role and change its capabilities list"
 msgstr "Selecteer de rol en pas de mogelijkheden lijst aan"
 
-#: ../ure-options.php:255
+#: ../ure-options.php:259
 msgid "Select Role:"
 msgstr "Selecteer de Rol"
 
-#: ../ure-options.php:297
+#: ../ure-options.php:301
 msgid "Update"
 msgstr "Vernieuw"
 
-#: ../ure-options.php:297
+#: ../ure-options.php:301
 msgid "Save Changes"
 msgstr "Opslaa"
 
-#: ../ure-options.php:298
+#: ../ure-options.php:302
 msgid "Cancel"
 msgstr "Annuleer"
 
-#: ../ure-options.php:298
+#: ../ure-options.php:302
 msgid "Cancel not saved changes"
 msgstr "Annuleer zonder op te slaan"
 
-#: ../ure-options.php:299
+#: ../ure-options.php:303
 msgid "Reset"
 msgstr "herstel"
 
-#: ../ure-options.php:310
+#: ../ure-options.php:314
 msgid "Show capabilities in human readable form"
 msgstr "Toon de mogelijkheden in menselijke taal"
 
-#: ../ure-options.php:321
+#: ../ure-options.php:324
 msgid "Add New Role"
 msgstr "Voeg nieuwe rol toe"
 
-#: ../ure-options.php:326
+#: ../ure-options.php:329
 msgid "Add"
 msgstr "Voeg Toe"
 
-#: ../ure-options.php:326
+#: ../ure-options.php:329
 msgid "Add New User Role"
 msgstr "Voeg Nieuwe Gebruikersrol Toe"
 
-#: ../ure-options.php:336
-msgid "Delete"
-msgstr "Verwijder"
-
-#: ../ure-options.php:336
-msgid "Delete User Role"
-msgstr "Verwijder Gebruikersrol"
-
-#: ../ure-options.php:341
+#: ../ure-options.php:333
 msgid "Default Role for New User"
 msgstr "Standaard rol voor nieuwe gebruiker"
 
-#: ../ure-options.php:346
+#: ../ure-options.php:338
 msgid "Change"
 msgstr "Pas Aan"
 
-#: ../ure-options.php:346
+#: ../ure-options.php:338
 msgid "Set as Default User Role"
 msgstr "Stel in als Standaard Gebruikers Rol"
+
+#: ../ure-options.php:348
+msgid "Delete"
+msgstr "Verwijder"
+
+#: ../ure-options.php:348
+msgid "Delete User Role"
+msgstr "Verwijder Gebruikersrol"
 
 #: ../user-role-editor.php:38
 msgid "User Role Editor requires WordPress 2.8 or newer."
@@ -541,5 +546,14 @@ msgstr ""
 
 #: ../ure-lib.php:419
 msgid "Export"
+msgstr ""
+
+#: ../ure-lib.php:440
+#: ../ure-lib.php:455
+msgid "No items found."
+msgstr ""
+
+#: ../ure-lib.php:443
+msgid "Recent Posts:"
 msgstr ""
 

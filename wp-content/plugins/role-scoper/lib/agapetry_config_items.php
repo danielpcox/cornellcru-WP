@@ -8,11 +8,25 @@ class AGP_Config_Items {
 	var $members = array();		// collection array used by each base class	
 	var $locked = 0;			// used to prevent inappropriate calls to the add method
 	
-	// accepts array of objects - either an instance the class collected by calling child class, or stdObject objects with matching properties 
-	function &add( $name, $defining_module_name, $args = '' ) {
+	function AGP_Config_Items( $arr = '', $action_hook = '' ) {
+		$this->init( $arr, $action_hook );
+	}
+
+	function init( $arr = '', $action_hook = '' ) {
+		if ( $arr ) {
+			$this->members = $arr;
+			$this->process_added_members($arr);
+		}
+
+		//if ( $action_hook ) {
+			//do_action_ref_array( $action_hook, array(&$this) );	
+		//}
+	}
+
+	function &add( $name, $defining_module, $args = array() ) {
 		if ( ! empty($this->locked) ) {
-			$notice = sprintf(__('%1$s attempted to define a configuration item (%2$s) after the collection was locked.'), $defining_module_name, $name)
-			. '<br /><br />' . sprintf(__('The calling function probably needs to be registered to a hook.  Consult %s developer documentation.', 'scoper'), $defining_module_name);
+			$notice = sprintf(__('%1$s attempted to define a configuration item (%2$s) after the collection was locked.'), $defining_module, $name)
+			. '<br /><br />' . sprintf(__('The calling function probably needs to be registered to a hook.  Consult %s developer documentation.', 'scoper'), $defining_module);
 			rs_notice($notice);
 			return;
 		}
@@ -21,20 +35,17 @@ class AGP_Config_Items {
 		$name = preg_replace( '/[^0-9_a-zA-Z]/', '_', $name );
 	
 		if ( ! isset($this->members[$name]) )
-			$this->members[$name] = new AGP_Config_Item($name, $defining_module_name, $args);
+			$this->members[$name] = new AGP_Config_Item($name, $defining_module, $args);
 		
 		return $this->members[$name];
 	}
-	
-	function process( &$src ) {		
-		return;
-	}
-	
+
 	function remove($name) {
 		if ( isset($this->members[$name]) )
 			unset ($this->members[$name]);
 	}
 	
+	// accepts array of objects - either an instance the class collected by calling child class, or stdObject objects with matching properties 
 	function add_member_objects($arr) {
 		if ( ! is_array($arr) )
 			return;
@@ -43,27 +54,27 @@ class AGP_Config_Items {
 			rs_notice('Config items cannot not be added at this time.  Maybe the calling function must be registered to a hook.  Consult developer documentation.');
 			return;
 		}
-			
-		foreach ( array_keys($arr) as $key ) {
-			// Restrict characters in member key / object name.  A display_name property is available where applicable.
-			$key = preg_replace( '/[^0-9_a-zA-Z]/', '_', $key );
-		
-			if ( ! isset($arr[$key]->name) )
-				// copy key into name property
-				$arr[$key]->name = $key;
-			else
-				$arr[$key]->name = preg_replace('/[^0-9_a-zA-Z]/', '_', $arr[$key]->name);
-		}
-		
+
 		$this->members = array_merge($this->members, $arr);
 		
 		$this->process_added_members($arr);
 	}
 	
-	function process_added_members($arr) {
-		if ( method_exists($this, 'process') )	// call descendant method, if it exists
-			foreach (array_keys($arr) as $name )
-				$this->process($this->members[$name]);
+	function process( &$src ) {		
+		return;
+	}
+
+	function process_added_members(&$arr) {
+		$will_process = method_exists($this, 'process');
+		
+		foreach ( array_keys($arr) as $name ) {
+			// copy key into name property
+			if ( empty($this->members[$name]->name) )
+				$this->members[$name]->name = $name;
+
+			if ( $will_process )
+				$this->process( $this->members[$name] );
+		}
 	}
 	
 	// accepts object or name as argument, returns valid object or null
@@ -71,6 +82,9 @@ class AGP_Config_Items {
 		if ( is_object($obj_or_name) )
 			return $obj_or_name;
 		
+		//if ( ! is_string($obj_or_name) )
+		//	agp_bt_die();
+			
 		// $obj_or_name must actually be the object name
 		if ( isset($this->members[$obj_or_name]) )
 			return $this->members[$obj_or_name];
@@ -92,6 +106,47 @@ class AGP_Config_Items {
 	
 	function get_all_keys() {
 		return array_keys($this->members);
+	}
+	
+	// $subset_keys: array of keys corresponding to member objects
+	function filter_keys( $subset_keys = '', $args = array(), $output = 'keys', $operator = 'and' ) {
+		if ( -1 === $subset_keys )
+			$subset_keys = array_keys($this->members);
+
+		$filtered = array();
+		
+		$count = count($args);
+
+		if ( ! $subset_keys )
+			$subset_keys = array_keys($this->members);
+
+		foreach ( $subset_keys as $key ) {
+			$matched = 0;
+			foreach( $args as $check_property => $check_val ) {
+				if ( isset($this->members[$key]->$check_property) && ( $this->members[$key]->$check_property == $check_val ) )
+					$matched++;
+			}
+			
+			if ( ( ( 'and' == $operator ) && ( $matched == $count ) ) || ( ( 'or' == $operator ) && $matched ) ) {
+				if ( ( 'keys' == $output ) || ( 'names' == $output ) )
+					$filtered[] = $key;
+				elseif ( 'names_as_key' == $output )
+					$filtered[$key] = 1;
+				elseif ( $output && ( 'objects' != $output ) )
+					$filtered[] = $this->members[$key]->$output;
+				else
+					$filtered[$key] = $this->members[$key];
+			}
+		}
+
+		return $filtered;
+	}
+	
+	// $subset: array of objects which are a subset of members array
+	function filter( $subset = '', $args = array(), $output = 'objects', $operator = 'and' ) {
+		$subset_keys = ( ! empty( $subset ) ) ? array_keys( $subset ) : array();
+
+		return $this->filter_keys( $subset_keys, $args, $output, $operator );
 	}
 	
 	function is_member($name) {
@@ -168,12 +223,15 @@ class AGP_Config_Items {
 
 class AGP_Config_Item {
 	var $name;
-	var $defining_module_name;
+	var $defining_module;
+	var $labels;
 	
-	function AGP_Config_Item ( $name, $defining_module_name, $args = '' ) {
+	function AGP_Config_Item ( $name, $defining_module, $args = array() ) {
 		$this->name = $name;
-		$this->defining_module_name = $defining_module_name;
+		$this->defining_module = $defining_module;
 		
+		$this->labels = (object) array( 'name' => '', 'singular_name' => '' );
+
 		if ( is_array($args) )
 			foreach($args as $key => $val)
 				$this->$key = $val;

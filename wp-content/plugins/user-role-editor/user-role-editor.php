@@ -3,7 +3,7 @@
 Plugin Name: User Role Editor
 Plugin URI: http://www.shinephp.com/user-role-editor-wordpress-plugin/
 Description: It allows you to change any standard WordPress user roles (except administrator) capabilities list with a few clicks.
-Version: 2.1.10
+Version: 3.0.1
 Author: Vladimir Garagulya
 Author URI: http://www.shinephp.com
 Text Domain: ure
@@ -11,7 +11,7 @@ Domain Path: /lang/
 */
 
 /*
-Copyright 2010  Vladimir Garagulya  (email: vladimir@shinephp.com)
+Copyright 2010-2011  Vladimir Garagulya  (email: vladimir@shinephp.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -28,16 +28,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-
 if (!function_exists("get_option")) {
   die;  // Silence is golden, direct call is prohibited
 }
 
-global $wp_version;
+global $wp_version, $current_user;
 
-$exit_msg = __('User Role Editor requires WordPress 2.8 or newer.', 'ure').'<a href="http://codex.wordpress.org/Upgrading_WordPress">'.__('Please update!', 'ure').'</a>';
+$exit_msg = __('User Role Editor requires WordPress 3.0 or newer.', 'ure').'<a href="http://codex.wordpress.org/Upgrading_WordPress">'.__('Please update!', 'ure').'</a>';
 
-if (version_compare($wp_version,"2.8","<"))
+if (version_compare($wp_version,"3.0","<"))
 {
 	return ($exit_msg);
 }
@@ -50,10 +49,20 @@ load_plugin_textdomain('ure','', $urePluginDirName.'/lang');
 
 function ure_optionsPage() {
   
-  global $wpdb, $ure_OptionsTable;
+  global $wpdb, $current_user, $ure_OptionsTable, $ure_roles, $ure_capabilitiesToSave, $ure_toldAboutBackup, $ure_currentRole, $ure_apply_to_all;
 
-  if (!current_user_can('activate_plugins')) {
-    die('action is forbidden');
+  if (!empty($current_user)) {
+    $user_id = $current_user->ID;
+  } else {
+    $user_id = false;
+  }
+  if (!ure_is_admin($user_id)) {
+    if (is_multisite()) {
+      $admin = 'SuperAdministrator';
+    } else {
+      $admin = 'Administrator';
+    }
+    die('Only '.$admin.' is allowed to use this plugin');
   }
   
 ?>
@@ -71,7 +80,7 @@ function ure_optionsPage() {
 
 // Install plugin
 function ure_install() {
-	delete_option('ure_auto_monitor');
+
   add_option('ure_caps_readable', 0);
 
 }
@@ -92,7 +101,7 @@ function ure_excludeAdminRole($roles) {
 
 function ure_admin_jquery(){
 	global $pagenow;
-	if ('users.php'==$pagenow){
+	if (URE_PARENT==$pagenow){
 		wp_enqueue_script('jquery');
 	}
 }
@@ -100,7 +109,16 @@ function ure_admin_jquery(){
 
 
 function ure_admin_user_hide(){
-	if (!current_user_can('level_10')) {
+
+  global $current_user;
+
+  if (!empty($current_user->ID)) {
+    $user_id = $current_user->ID;
+  } else {
+    $user_id = 0;
+  }
+
+	if (!ure_is_admin($user_id)) {
 ?>
 		<script type='text/javascript' >
 			jQuery(document).ready(function(){
@@ -154,7 +172,7 @@ function ure_not_edit_admin($allcaps, $caps, $name) {
       } else {
         if (!isset($ure_userToEdit[$ure_UserId])) {
           // check if user_id has Administrator role
-          $accessDeny = ure_is_admin($ure_UserId);
+          $accessDeny = ure_has_administrator_role($ure_UserId);
         } else {
           // user_id was checked already, get result from cash
           $accessDeny = $ure_userToEdit[$ure_UserId];
@@ -173,10 +191,18 @@ function ure_not_edit_admin($allcaps, $caps, $name) {
 
 
 function ure_init() {
- 
+
+  global $current_user;
+
+  if (!empty($current_user->ID)) {
+    $user_id = $current_user->ID;
+  } else {
+    $user_id = 0;
+  }
+
   // these filters and actions should prevent editing users with administrator role
   // by other users with 'edit_users' capabilities
-  if (!current_user_can('level_10')) {
+	if (!ure_is_admin($user_id)) {
     // Exclude administrator role from edit list.
     add_filter('editable_roles', 'ure_excludeAdminRole');
     // Enqueue jQuery
@@ -193,7 +219,7 @@ function ure_init() {
 
 function ure_plugin_action_links($links, $file) {
     if ($file == plugin_basename(dirname(__FILE__).'/user-role-editor.php')){
-        $settings_link = "<a href='users.php?page=user-role-editor.php'>".__('Settings','ure')."</a>";
+        $settings_link = "<a href='".URE_PARENT."?page=user-role-editor.php'>".__('Settings','ure')."</a>";
         array_unshift( $links, $settings_link );
     }
     return $links;
@@ -210,8 +236,14 @@ function ure_plugin_row_meta($links, $file) {
 
 
 function ure_settings_menu() {
-	if ( function_exists('add_users_page') ) {
-    $ure_page = add_users_page('User Role Editor', 'User Role Editor', 9, basename(__FILE__), 'ure_optionsPage');
+
+	if ( function_exists('add_submenu_page')) {
+    if (!is_multisite()) {
+      $keyCapability = 'edit_users';
+    } else {
+      $keyCapability = 'manage_network_users';
+    }
+    $ure_page = add_submenu_page('users.php', __('User Role Editor'), __('User Role Editor'), $keyCapability, basename(__FILE__), 'ure_optionsPage');
 		add_action( "admin_print_styles-$ure_page", 'ure_adminCssAction' );
 	}
 }
@@ -225,7 +257,6 @@ function ure_adminCssAction() {
 // end of ure_adminCssAction()
 
 
-
 if (is_admin()) {
   // activation action
   register_activation_hook(__FILE__, "ure_install");
@@ -235,10 +266,6 @@ if (is_admin()) {
   add_filter('plugin_action_links', 'ure_plugin_action_links', 10, 2);
   add_filter('plugin_row_meta', 'ure_plugin_row_meta', 10, 2);
   add_action('admin_menu', 'ure_settings_menu');
-  
 }
-
-
-
-
+  
 ?>

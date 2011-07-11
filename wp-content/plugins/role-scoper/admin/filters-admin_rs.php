@@ -10,7 +10,7 @@ require_once( 'admin_lib_rs.php' );
  * filters-admin_rs.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  */
 class ScoperAdminFilters
@@ -69,12 +69,13 @@ class ScoperAdminFilters
 					$rs_filters[$original_hook] = (object) array( 'name' => "{$rs_hook}_rs", 'rs_args' => "'$taxonomy', '' " );
 		}
 		
+		
 		// call our abstract handlers with a lambda function that passes in original hook name
 		$hook_order = ( defined('WPCACHEHOME') ) ? -1 : 50; // WP Super Cache's early create_post / edit_post handlers clash with Role Scoper
 		
 		foreach ( $rs_actions as $original_hook => $rs_hook ) {
 			if ( ! $original_hook ) continue;
-			$orig_hook_numargs = 1;
+			$orig_hook_numargs = ( 'save_post' == $original_hook ) ? 2 : 1;	// TODO: abstract
 			$arg_str = agp_get_lambda_argstring($orig_hook_numargs);
 			$comma = ( $rs_hook->rs_args ) ? ',' : '';
 			$func = "do_action( '$rs_hook->name', $rs_hook->rs_args $comma $arg_str );";
@@ -91,11 +92,11 @@ class ScoperAdminFilters
 			//echo "adding filter: $original_hook -> $func <br />";
 			add_filter( $original_hook, create_function( $arg_str, $func ), 50, $orig_hook_numargs );	
 		}
-		
+
 		
 		// WP 2.5 throws a notice if plugins add their own hooks without prepping the global array
 		// Source or taxonomy-specific hooks are mapped to these based on config member properties
-		// in WP_Scoped_Data_Sources::process() and WP_Scoped_Taxonomies:process()
+		// in CR_Data_Sources::process() and CR_Taxonomies:process()
 		$setargs = array( 'is_global' => true );
 		$setkeys = array (
 			'create_object_rs',	'edit_object_rs',	'save_object_rs',	'delete_object_rs',
@@ -120,32 +121,39 @@ class ScoperAdminFilters
 		add_filter('editable_roles', array(&$this, 'flt_editable_roles'), 99 );
 
 		if ( IS_MU_RS ) {
-			add_action('add_user_to_blog', array(&$this, 'act_add_user_to_blog'), 10, 3);
 			add_action('remove_user_from_blog', array('ScoperAdminLib', 'delete_users'), 10, 2 );
+			add_action('add_user_to_blog', array(&$this, 'act_schedule_user_sync'), 10, 3 );	// WP 3.0 multisite fires add_user_to_blog too early for us
 		} else {
-			add_action('user_register', array(&$this, 'act_user_register') ); // applies default group(s), calls sync_wproles
+			//add_action('user_register', array('ScoperAdminLib', 'add_user') );
+			add_action('user_register', array(&$this, 'act_schedule_user_sync'), 10, 3 );
 			add_action('delete_user', array('ScoperAdminLib', 'delete_users') );
 		}
 		
 		if ( GROUP_ROLES_RS )
 			add_action('profile_update',  array(&$this, 'act_update_user_groups'));
 				
-		// log previous post status (or other properties) prior to update
-		add_action( 'pre_post_update', array(&$this, 'act_log_post_status') );
+		// log post status transition to recognize new posts and status change to/from private
+		add_action( 'transition_post_status', array(&$this, 'act_log_post_status'), 10, 3 );
+
+		add_action( 'edit_post', array(&$this, 'act_log_updated_post') );
 
 		// Filtering of Page Parent selection:
 		add_filter('pre_post_status', array(&$this, 'flt_post_status'), 50, 1);
 		add_filter('pre_post_parent', array(&$this, 'flt_page_parent'), 50, 1);
 			
+		add_filter( 'pre_post_tax_input', array(&$this, 'flt_tax_input'), 50, 1);
+
 		// Filtering of terms selection:
 		add_action('check_admin_referer', array(&$this, 'act_detect_post_presave')); // abuse referer check to work around a missing hook
 
 		add_filter('pre_object_terms_rs', array(&$this, 'flt_pre_object_terms'), 50, 3);
 		
-		// added this with WP 2.7 because QuickPress does not call pre_post_category
-		if ( strpos($_SERVER['SCRIPT_NAME'], 'p-admin/index.php' ) && ! is_content_administrator_rs() && awp_ver('2.7-dev') ) // this conflicts with filter_terms_for_status if it runs on post save. TODO: why?
-			add_filter('pre_option_default_category', array(&$this, 'flt_default_category') );
-			
+		add_filter( 'save_post', array(&$this, 'custom_taxonomies_helper'), 5, 2); 
+		
+		// TODO: also hook to "pre_option_default_{$taxonomy}"
+		if ( ( 'options-writing.php' != $GLOBALS['pagenow'] ) && ! is_content_administrator_rs() )
+			add_filter('pre_option_default_category', array(&$this, 'flt_default_term') );
+
 		// Follow up on role creation / deletion by Role Manager, Capability Manager or other equivalent plugin
 		// Role Manager / Capability Manager don't actually modify the stored role def until after the option update we're hooking on, so defer our maintenance operation
 		global $wpdb;
@@ -167,9 +175,18 @@ class ScoperAdminFilters
 		}
 	}
 	
-	function act_log_post_status( $post_id ) {
-		if ( $post = get_post( $post_id ) )
-			$this->last_post_status[$post->ID] = $post->post_status;
+	// make sure pre filter is applied for all custom taxonomies regardless of term selection
+	function custom_taxonomies_helper( $post_id, $post ) {
+		require_once( 'filters-admin-save_rs.php' );
+		scoper_force_custom_taxonomy_filters( $post_id, $post );	
+	}	
+	
+	function act_log_post_status( $new_status, $old_status, $post ) {
+		$this->last_post_status[$post->ID] = $old_status;
+	}
+
+	function act_log_updated_post( $post_id ) {
+		$this->logged_post_update[$post_id] = true;
 	}
 	
 	function new_group_user_notification ( $user_id, $group_id, $status ) {
@@ -207,10 +224,9 @@ class ScoperAdminFilters
 		return ScoperUserEdit::editable_roles( $roles );
 	}	
 	
-
+	// Optionally, prevent anyone from editing or deleting a user whose level is higher than their own
 	function flt_has_edit_user_cap($wp_blogcaps, $orig_reqd_caps, $args) {
-		// Optionally, prevent anyone from editing a user whose level is higher than their own
-		if ( ! defined( 'DISABLE_QUERYFILTERS_RS' ) && in_array( 'edit_users', $orig_reqd_caps ) && ! empty($args[2]) ) {
+		if ( ! defined( 'DISABLE_QUERYFILTERS_RS' ) && ( in_array( 'edit_users', $orig_reqd_caps ) || in_array( 'delete_users', $orig_reqd_caps ) ) && ! empty($args[2]) ) {
 			if ( scoper_get_option('limit_user_edit_by_level') ) {
 				require_once( 'user_lib_rs.php' );
 				$wp_blogcaps = ScoperUserEdit::has_edit_user_cap( $wp_blogcaps, $orig_reqd_caps, $args );
@@ -224,10 +240,8 @@ class ScoperAdminFilters
 		if ( defined( 'DISABLE_QUERYFILTERS_RS' ) )
 			return $cols;
 		
-		if (   // possible TODO: reinstate support for separate activation of pages / posts lean (as of WP 2.9, all post types us edit.php)
-		( ( defined( 'SCOPER_EDIT_PAGES_LEAN' ) || defined( 'SCOPER_EDIT_POSTS_LEAN' ) ) && 
-		  ( strpos(urldecode($_SERVER['REQUEST_URI']), 'wp-admin/edit-pages.php') || strpos(urldecode($_SERVER['REQUEST_URI']), 'wp-admin/edit.php') ) )
-	    ) {
+		// possible TODO: reinstate support for separate activation of pages / posts lean (as of WP 2.9, all post types us edit.php)
+		if ( ( defined( 'SCOPER_EDIT_PAGES_LEAN' ) || defined( 'SCOPER_EDIT_POSTS_LEAN' ) ) && ( 'edit.php' == $GLOBALS['pagenow'] ) ) {
 			global $wpdb;
 			$cols = "$wpdb->posts.ID, $wpdb->posts.post_author, $wpdb->posts.post_date, $wpdb->posts.post_date_gmt, $wpdb->posts.post_title, $wpdb->posts.post_status, $wpdb->posts.comment_status, $wpdb->posts.ping_status, $wpdb->posts.post_password, $wpdb->posts.post_name, $wpdb->posts.to_ping, $wpdb->posts.pinged, $wpdb->posts.post_parent, $wpdb->posts.post_modified, $wpdb->posts.post_modified_gmt, $wpdb->posts.guid, $wpdb->posts.post_type, $wpdb->posts.post_mime_type, $wpdb->posts.menu_order, $wpdb->posts.comment_count";
 		}
@@ -274,7 +288,21 @@ class ScoperAdminFilters
 		}
 	}
 	
-	function flt_pre_object_terms ($selected_terms, $taxonomy, $args = '') {
+	function flt_tax_input( $tax_input ) {
+		if ( $tax_input && is_array($tax_input) ) {
+			foreach( $tax_input as $taxonomy => $terms ) {
+				if ( is_string($terms) )  // currently, don't restrict non-hierarchical tag assignments / removals per-user
+					continue;
+					//$terms = explode( ",", $terms );
+
+				$tax_input[$taxonomy] = $this->flt_pre_object_terms( $terms, $taxonomy );
+			}
+		}
+				
+		return $tax_input;
+	}
+	
+	function flt_pre_object_terms ($selected_terms, $taxonomy, $args = array()) {
 		if ( defined( 'DISABLE_QUERYFILTERS_RS' ) || did_action('tdomf_create_post_start') )  // don't filter out a category that was added by TDO Mini Forms
 			return $selected_terms;
 		
@@ -286,7 +314,6 @@ class ScoperAdminFilters
 	// If the client does use such a hook, we will force it by calling internally from mnt_create and mnt_edit
 	function mnt_save_object($src_name, $args, $object_id, $object = '') {
 		//rs_errlog( 'mnt_save_object' );
-		
 		if ( defined( 'RVY_VERSION' ) ) {
 			global $revisionary;
 		
@@ -331,13 +358,15 @@ class ScoperAdminFilters
 		$this->item_deletion_aftermath( OBJECT_SCOPE_RS, $src_name, $object_id );
 
 		if ( empty($object_type) )
-			$object_type = scoper_determine_object_type($src_name, $object_id);
+			$object_type = cr_find_object_type($src_name, $object_id);
 			
-		if ( 'page' == $object_type ) {
-			delete_option('scoper_page_ancestors');
-			scoper_flush_cache_groups('get_pages');
+		if ( 'post' == $src_name ) {
+			$post_type_obj = get_post_type_object( $object_type );
+			
+			if ( $post_type_obj->hierarchical )
+				scoper_flush_cache_groups('get_pages');
 		}
-		
+			
 		scoper_flush_roles_cache(OBJECT_SCOPE_RS);
 	}
 	
@@ -355,18 +384,15 @@ class ScoperAdminFilters
 		if ( isset($inserted_objects[$src_name][$object_id]) )
 			return;
 	
-			
-		global $scoper;
-			
 		if ( empty($object_type) )
-			if ( $col_type = $scoper->data_sources->member_property($src_name, 'cols', 'type') )
+			if ( $col_type = $GLOBALS['scoper']->data_sources->member_property($src_name, 'cols', 'type') )
 				$object_type = ( isset($object->$col_type) ) ? $object->$col_type : '';
-			
+				
 		if ( empty($object_type) ) {
 			if ( ! isset( $object ) )
 				$object = '';
 				
-			$object_type = scoper_determine_object_type($src_name, $object_id, $object);
+			$object_type = cr_find_object_type($src_name, $object_id, $object);
 		}
 			
 		if ( $object_type == 'revision' )
@@ -374,9 +400,11 @@ class ScoperAdminFilters
 			
 		$inserted_objects[$src_name][$object_id] = 1;
 		
-		if ( 'page' == $object_type ) {
-			delete_option('scoper_page_ancestors');
-			scoper_flush_cache_groups('get_pages');
+		if ( 'post' == $src_name ) {
+			$post_type_obj = get_post_type_object( $object_type );
+			
+			if ( $post_type_obj->hierarchical )
+				scoper_flush_cache_groups('get_pages');
 		}
 	}
 	
@@ -385,7 +413,6 @@ class ScoperAdminFilters
 		
 		scoper_term_cache_flush();
 		delete_option( "{$taxonomy}_children_rs" );
-		delete_option( "{$taxonomy}_ancestors_rs" );
 	}
 	
 	function mnt_edit_term($taxonomy, $args, $term_ids, $term = '') {
@@ -395,8 +422,7 @@ class ScoperAdminFilters
 			$edited_terms = array();
 	
 		// bookmark edit passes an array of term_ids
-		if ( ! is_array($term_ids) )
-			$term_ids = array($term_ids);
+		$term_ids = (array) $term_ids;
 		
 		foreach ( $term_ids as $term_id ) {
 			// so this filter doesn't get called by hook AND internally
@@ -427,7 +453,6 @@ class ScoperAdminFilters
 		$this->item_deletion_aftermath( TERM_SCOPE_RS, $taxonomy, $term_id );
 
 		delete_option( "{$taxonomy}_children_rs" );
-		delete_option( "{$taxonomy}_ancestors_rs" );
 		
 		scoper_term_cache_flush();
 		scoper_flush_roles_cache(TERM_SCOPE_RS, '', '', $taxonomy);
@@ -521,7 +546,7 @@ class ScoperAdminFilters
 			$stored_groups = array_diff_key( $stored_groups, array( 'active' => true ) );
 			
 		if ( $can_moderate ) {
-			$posted_groups['recommended'] = explode( ',', trim($_POST['recommended_agents_rs_csv'], '') );
+			$posted_groups['recommended'] = ! empty($_POST['recommended_agents_rs_csv']) ? explode( ',', trim($_POST['recommended_agents_rs_csv'], '') ) : array();
 
 			$stored_groups['recommended'] = $current_user->get_groups_for_user( $current_user->ID, array( 'status' => 'recommended' ) );
 			
@@ -538,7 +563,7 @@ class ScoperAdminFilters
 		if ( isset($editable_group_ids['recommended']) )
 			$editable_group_ids['requested'] = array_unique( $editable_group_ids['requested'] + $editable_group_ids['recommended'] );
 
-		$posted_groups['requested'] = explode( ',', trim($_POST['requested_agents_rs_csv'], '') );
+		$posted_groups['requested'] = ! empty($_POST['requested_agents_rs_csv']) ? explode( ',', trim($_POST['requested_agents_rs_csv'], '') ) : array();
 		
 		$all_posted_groups = agp_array_flatten( $posted_groups );
 		
@@ -584,49 +609,60 @@ class ScoperAdminFilters
 		}
 	}
 
-	function act_add_user_to_blog( $user_id, $role_name = '', $blog_id = '' ) {
-		// enroll user in default group(s)
-		if ( $default_groups = scoper_get_option( 'default_groups' ) )
-			foreach ($default_groups as $group_id)
-				ScoperAdminLib::add_group_user($group_id, $user_id);
-		
-		global $scoper_role_types;
-	
-		foreach ( $scoper_role_types as $role_type ) {	
-			wpp_cache_flush_group("{$role_type}_users_who_can");
-			wpp_cache_flush_group("{$role_type}_groups_who_can");
-		}
-	
-		ScoperAdminLib::sync_wproles( $user_id, $role_name, $blog_id );
+	function act_schedule_user_sync( $user_id, $role_name = '', $blog_id = '' ) {
+		// ScoperAdminLib::add_user applies default group(s), calls sync_wproles
+		$func = create_function( '', "ScoperAdminLib::add_user('" . $user_id . "');" );
+		add_action( 'shutdown', $func );
 	}
 	
-	function act_user_register( $user_id ) {
-		$this->act_add_user_to_blog( $user_id );
-	}
-
-	// added this with WP 2.7 because QuickPress does not call pre_post_category
-	function flt_default_category($default_cat_id) {
-		require_once('filters-admin-save_rs.php');
+	function flt_default_term( $default_term_id, $taxonomy = 'category' ) {
+		require_once('filters-admin-term-selection_rs.php');
 
 		// support an array of default IDs (but don't require it)
-		$filtered_default_cat_ids = (array) $default_cat_id;
+		$term_ids = (array) $default_term_id;
 		
 		$user_terms = array(); // will be returned by filter_terms_for_status
 		
-		$filtered_default_cat_ids = scoper_filter_terms_for_status('category', $filtered_default_cat_ids, $user_terms);
+		$term_ids = scoper_filter_terms_for_status($taxonomy, $term_ids, $user_terms);
 
-		//rs_errlog( 'flt_default_category' );
-		//rs_errlog( serialize($filtered_default_cat_ids) );
-		
 		// if the default term is not in user's subset of usable terms, substitute first available	
-		if ( ( ! $filtered_default_cat_ids || ! $filtered_default_cat_ids[0] ) && $user_terms )
-			return $user_terms[0];
+		if ( ( ( ! $term_ids ) || ! $term_ids[0] ) && $user_terms ) {
+			if ( $GLOBALS['scoper']->taxonomies->member_property( $taxonomy, 'requires_term' )  )
+				return $user_terms[0];
+			else
+				return;
+		}
 		
-		if ( count($filtered_default_cat_ids) > 1 )	// won't return an array unless an array was passed in and more than one of its elements is usable by this user
-			return $filtered_default_cat_ids;
-		else
-			return $filtered_default_cat_ids[0];	// if a single cat ID was passed in and is permitted, it is returned here
+		if ( count($term_ids) > 1 )	// won't return an array unless an array was passed in and more than one of its elements is usable by this user
+			return $term_ids;
+		elseif( $term_ids )
+			return reset( $term_ids );	// if a single term ID was passed in and is permitted, it is returned here
 	}
+	
+	function user_can_associate_main( $post_type ) {
+		if ( is_content_administrator_rs() )
+			return true;
+
+		if ( ! $post_type_obj = get_post_type_object($post_type) )
+			return true;
+			
+		if ( ! $post_type_obj->hierarchical )
+			return true;
+			
+		// currently used only for page type, or for all if constant is set
+		$top_pages_locked = scoper_get_option( 'lock_top_pages' );
+			
+		if ( ( 'page' == $post_type ) || defined( 'SCOPER_LOCK_OPTION_ALL_TYPES' ) ) {
+			if ( '1' === $top_pages_locked ) {
+				// only administrators can change top level structure
+				return false;
+			} else {
+				$reqd_caps = ( 'author' === $top_pages_locked ) ? array( $post_type_obj->cap->publish_posts ) : array( $post_type_obj->cap->edit_others_posts );
+				$roles = $GLOBALS['scoper']->role_defs->qualify_roles($reqd_caps);
+				return array_intersect_key($roles, $GLOBALS['current_user']->blog_roles[ANY_CONTENT_DATE_RS]);
+			}
+		}
+	}		
 } // end class
 
 
@@ -655,7 +691,7 @@ function scoper_flush_cache_flag_once ($cache_flag) {
 
 // flush a specified portion of Role Scoper's persistant cache
 function scoper_flush_cache_groups($base_cache_flag) {
-	global $scoper_role_types;
+	$scoper_role_types = array('rs', 'wp', 'wp_cap');
 	
 	foreach ( $scoper_role_types as $role_type ) {
 		scoper_flush_cache_flag_once($role_type . '_' . $base_cache_flag . '_for_groups' );
@@ -671,26 +707,9 @@ function scoper_term_cache_flush() {
 
 	scoper_flush_cache_flag_once('all_terms');
 		
-	// TODO: don't flush get_pages cache on modification of taxonomies other than category
-	if ( scoper_get_otype_option( 'use_term_roles', 'post', 'page' ) ) 
-		scoper_flush_cache_groups('get_pages');
-}
-
-function scoper_determine_object_type($src_name, $object_id, $object = '') {
-	global $scoper;
-	
-	if ( is_object($object) ) {
-		$col_type = $scoper->data_sources->member_property($src_name, 'cols', 'type');
-		if ( $col_type && isset($object->$col_type) ) {
-			$object_type_val = $object->$col_type;
-			$object_type = $scoper->data_sources->get_from_val('type', $object_type_val, $src_name);
-		}
-	}
-	
-	if ( empty($object_type) )
-		$object_type = $scoper->data_sources->detect('type', $src_name, $object_id);
-		
-	return $object_type;
+	// TODO: implement this for custom taxonomies that are hierarchical and use taxonomies?
+	//if ( scoper_get_otype_option( 'use_term_roles', 'post', 'page' ) ) 
+	//	scoper_flush_cache_groups('get_pages');
 }
 
 // modifies WP core _update_post_term_count to include private posts in the count, since RS roles can grant access to them

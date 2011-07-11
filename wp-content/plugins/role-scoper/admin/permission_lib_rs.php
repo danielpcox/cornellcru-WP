@@ -1,6 +1,6 @@
 <?php
 
-	function user_can_admin_role_rs($role_handle, $item_id, $src_name = '', $object_type = '', $user = '' ) {
+	function user_can_admin_role_rs($role_handle, $item_id, $src_name = '', $object_type = '' ) {
 		if ( is_user_administrator_rs() )
 			return true;
 
@@ -10,7 +10,7 @@
 			
 		if ( ! isset($require_blogwide_editor) )
 			$require_blogwide_editor = scoper_get_option('role_admin_blogwide_editor_only');
-			
+
 		if ( 'admin' == $require_blogwide_editor )
 			return false;  // User Admins already returned true
 		
@@ -23,7 +23,7 @@
 			$role_ops = array();
 		
 		if ( ! isset($role_ops[$role_handle]) )
-			$role_ops[$role_handle] = $scoper->role_defs->get_role_ops($role_handle);
+			$role_ops[$role_handle] = $scoper->cap_defs->get_cap_ops( array_keys($scoper->role_defs->role_caps[$role_handle]) );
 
 		// user can't view or edit role assignments unless they have all rolecaps
 		// however, if this is a new post, allow read role to be assigned even if contributor doesn't have read_private cap blog-wide
@@ -36,9 +36,14 @@
 			if ( ! isset($reqd_caps[$role_handle]) )
 				$reqd_caps[$role_handle] = $scoper->role_defs->role_caps[$role_handle];
 
-			if ( ! awp_user_can(array_keys($reqd_caps[$role_handle]), $item_id) )
-				return false;
+			$type_caps = $scoper->cap_defs->get_matching( $src_name, $object_type );
+			$reqd_caps[$role_handle] = array_intersect_key( $reqd_caps[$role_handle], $type_caps );
 
+			if ( is_null($item_id) )
+				$item_id = 0;
+
+			if ( ! cr_user_can( array_keys($reqd_caps[$role_handle]), $item_id ) )
+				return false;
 			
 			// are we also applying the additional requirement (based on RS Option setting) that the user is a blog-wide editor?
 			if ( $require_blogwide_editor ) {
@@ -68,23 +73,16 @@
 			global $current_user;
 			$user = $current_user;
 		}
-			
-		if ( awp_ver( '3.0' ) && ( 'post' == $src_name ) ) {
-			global $post;
-			$new_object = ( 'auto-draft' == $post->post_status );
-		} else
-			$new_object = ! $object_id && ( false !== $object_id );
-			
-		if ( $new_object ) {
-			//for new objects, default to requiring caps for 1st defined status (=published for posts)
-			$src = $scoper->data_sources->get($src_name);
-			reset ($src->statuses);
-			$status_name = key($src->statuses);
+																	// TODO: is this necessary?
+		$is_new_object = ( ! $object_id && ( false !== $object_id ) ) || ( ( 'post' == $src_name ) && ! empty($GLOBALS['post']) && ( 'auto-draft' == $GLOBALS['post']->post_status ) );
+		
+		if ( $is_new_object ) {
+			$status_name = ( 'post' == $src_name ) ? 'draft' : '';
 		} else {
 			$status_name = $scoper->data_sources->detect('status', $src_name, $object_id);
 		}
-		
-		// insert_role_assignments passes array from get_role_attributes
+
+		// TODO: is multi-value array ever passed?
 		if ( is_array($object_type) ) {
 			if ( count($object_type) == 1 )
 				$object_type = reset($object_type);
@@ -93,46 +91,39 @@
 				$object_type = $scoper->data_sources->get_from_db('type', $src_name, $object_id);
 		}
 
-		if ( ! $new_object && isset($src->reqd_caps[OP_ADMIN_RS][$object_type][$status_name]) )
-			$reqd_caps = $src->reqd_caps[OP_ADMIN_RS][$object_type][$status_name];
-		else {
-			$base_caps_only = $new_object;
-			$admin_caps = $scoper->cap_defs->get_matching($src_name, $object_type, OP_ADMIN_RS, $status_name, $base_caps_only);
-			$delete_caps = $scoper->cap_defs->get_matching($src_name, $object_type, OP_DELETE_RS, $status_name, $base_caps_only);
-			$reqd_caps = array_merge( array_keys($admin_caps), array_keys($delete_caps) );
-		}
+		$base_caps_only = $is_new_object;
+		
+		// Possible TODO: re-implement OP_ADMIN distinction with admin-specific capabilities	
+		//$admin_caps = $scoper->cap_defs->get_matching($src_name, $object_type, OP_ADMIN_RS, $status_name, $base_caps_only);
+		$admin_caps = $scoper->cap_defs->get_matching($src_name, $object_type, OP_EDIT_RS, $status_name, $base_caps_only);
+		
+		$delete_caps = $scoper->cap_defs->get_matching($src_name, $object_type, OP_DELETE_RS, $status_name, $base_caps_only);
+		$reqd_caps = array_merge( array_keys($admin_caps), array_keys($delete_caps) );
 
 		if ( ! $reqd_caps )
 			return true;	// apparantly this src/otype has no admin caps, so no restriction to apply
 			
-		// pass this parameter the ugly way because I'm afraid to include it in user_has_cap args array
+		// Note on 'require_full_object_role' argument: 
 		// Normally we want to disregard "others" cap requirements if a role is assigned directly for an object
 		// This is an exception - we need to retain a "delete_others" cap requirement in case it is the
 		// distinguishing cap of an object administrator
-
-		$scoper->cap_interceptor->require_full_object_role = true;
-		
-		if ( defined( 'RVY_VERSION' ) ) {
-			global $revisionary;
-			$revisionary->skip_revision_allowance = true;
-		}
-			
-		$return = awp_user_can($reqd_caps, $object_id);
-		
-		$scoper->cap_interceptor->require_full_object_role = false;
-		
-		if ( defined( 'RVY_VERSION' ) )
-			$revisionary->skip_revision_allowance = false;
+		$return = cr_user_can($reqd_caps, $object_id, 0, array( 'require_full_object_role' => true, 'skip_revision_allowance' => true ) );
 
 		if ( ! $return && ! $object_id && $any_obj_role_check ) {
 			// No object ID was specified, and current user does not have the cap blog-wide.  Credit user for capability on any individual object.
 			
-			$admin_caps = $scoper->cap_defs->get_matching($src_name, $object_type, OP_ADMIN_RS, STATUS_ANY_RS);
+			// Possible TODO: re-implement OP_ADMIN distinction with admin-specific capabilities	
+			//$admin_caps = $scoper->cap_defs->get_matching($src_name, $object_type, OP_ADMIN_RS, STATUS_ANY_RS);
+			$admin_caps = $scoper->cap_defs->get_matching($src_name, $object_type, OP_EDIT_RS, STATUS_ANY_RS);
 			$delete_caps = $scoper->cap_defs->get_matching($src_name, $object_type, OP_DELETE_RS, STATUS_ANY_RS);
 			
 			if ( $reqd_caps = array_merge( array_keys($admin_caps), array_keys($delete_caps) ) ) {
-				if ( ! defined('DISABLE_QUERYFILTERS_RS') && $scoper->cap_interceptor->user_can_for_any_object( $reqd_caps ) )
-					$return = true;
+				if ( ! defined('DISABLE_QUERYFILTERS_RS') ) {
+					global $cap_interceptor;
+
+					if ( $cap_interceptor->user_can_for_any_object( $reqd_caps ) )
+						$return = true;
+				}
 			}
 		}
 		
@@ -154,10 +145,14 @@
 		
 		$taxonomies = array();
 		foreach ( $scoper->cap_defs->get_all() as $cap_name => $capdef )
-			if ( (OP_ADMIN_RS == $capdef->op_type) && $scoper->taxonomies->is_member($capdef->object_type) ) {
-				if ( ! $taxonomy || ( $capdef->object_type == $taxonomy ) ) {
-					$qualifying_caps[$cap_name] = 1;
-					$taxonomies[$capdef->object_type] = 1;
+			if ( isset($capdef->op_type) && (OP_ADMIN_RS == $capdef->op_type) && ! empty($capdef->object_types) ) {
+				foreach ( $capdef->object_types as $_object_type ) {
+					if ( isset( $scoper->taxonomies->members[$_object_type] ) ) {		 
+						if ( ! $taxonomy || ( $_object_type == $taxonomy ) ) {
+							$qualifying_caps[$cap_name] = 1;
+							$taxonomies[$_object_type] = 1;
+						}
+					}
 				}
 			}
 
@@ -165,7 +160,7 @@
 			return false;
 
 		// does current user have any blog-wide admin caps for term admin?
-		$qualifying_roles = $scoper->role_defs->qualify_roles(array_flip($qualifying_caps), SCOPER_ROLE_TYPE);
+		$qualifying_roles = $scoper->role_defs->qualify_roles(array_flip($qualifying_caps), 'rs');
 		
 		if ( $user_blog_roles = array_intersect_key( $user->blog_roles[ANY_CONTENT_DATE_RS], $qualifying_roles) ) {
 			if ( $term_id ) {
@@ -204,7 +199,7 @@
 	} // end function
 	
 	
-	function user_can_edit_blogwide_rs( $src_name = '', $object_type = '', $args = '' ) {
+	function user_can_edit_blogwide_rs( $src_name = '', $object_type = '', $args = array() ) {
 		if ( is_administrator_rs($src_name) )
 			return true;
 
@@ -218,7 +213,7 @@
 
 		if ( $status )
 			$cap_defs = array_merge( $cap_defs, $scoper->cap_defs->get_matching( $src_name, $object_type, OP_EDIT_RS, $status, ! $require_others_cap ) );
-
+			
 		foreach ( array_keys($current_user->blog_roles[ANY_CONTENT_DATE_RS]) as $role_handle )
 			if ( isset($scoper->role_defs->role_caps[$role_handle]) )
 				if ( ! array_diff_key( $cap_defs, $scoper->role_defs->role_caps[$role_handle] ) )

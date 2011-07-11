@@ -19,8 +19,6 @@ echo "<a href='$groups_url'>Back to Groups</a>";
 require_once('groups-support.php');
 wp_nonce_field( 'scoper-assign-termroles' );
 
-global $scoper;
-
 if ( isset($_POST['rs_submit']) ) {
 	$groups = ( isset($_POST['group']) ) ? $_POST['group'] : array();
 

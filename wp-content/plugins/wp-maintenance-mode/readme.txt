@@ -7,10 +7,10 @@ Author URI: http://bueltge.de/
 Donate link: http://bueltge.de/wunschliste/
 Tags: maintenance, mode, admin, administration, unavailable, coming soon
 Requires at least: 2.6
-Tested up to: 3.1-alpha
-Stable tag: 1.0
+Tested up to: 3.1-RC2
+Stable tag: 1.6.7
 
-After activation in the options of the plugins it adds a splash page to your blog that lets visitors know your blog is down for maintenance. Logged in administrators get full access to the blog including the front-end.
+Adds a splash page to your site that lets visitors know your site is down for maintenance. Full access to the back- & front-end is optional.
 
 == Description ==
 Adds a maintenance-page to your blog that lets visitors know your blog is down for maintenancetime. User with rights for theme-options get full access to the blog including the frontend.
@@ -110,6 +110,9 @@ Please visit [the official website](http://www.mysqldumper.de/) for general info
 = How to: Backup with maintenance mode and MySQLDumper (illustrated Tutorial in german language) =
 Please visit [Automatisches Backup der WordPress-Datenbank](http://www.beedy.de/2010/05/09/automatisches-backup-der-wordpress-datenbank/)
 
+= How to: Use a contact form inside the Maintenance Message =
+Please use a plugin for the form-function with the possibility Shortcode, like [Contact Form 7](http://wordpress.org/extend/plugins/contact-form-7/). Use a Shortcode of the plugin inside the teyt on the options of the plugin WP Maintenance Mode, thats all.
+
 = Localizations =
 * Thanks to [H&uuml;seyin &Uuml;lk&uuml;](http://www.salsabar.org/ "H&uuml;seyin &Uuml;lk&uuml;") for turkey language file
 * Thanks to [Gilles WALET](http://www.nevermindfr.com/ "Gilles WALET") for frensh language file
@@ -123,6 +126,10 @@ Please visit [Automatisches Backup der WordPress-Datenbank](http://www.beedy.de/
 * Thanks to [Jakub Dirska](http://www.bellartis.com "bellartis.com") for polish languge files
 * Thanks to [Rene](http://wpwebshop.com/blog/ "wpwebshop.com/blog") for durch translation files and hints to my errors on my bad english.
 * Thanks to [Alejandro Garcia](http://blog.wrsmexico.com "blog.wrsmexico.com") for a spanish flash-file for the style "Animate"
+* Thanks to [Yaser Maadan](http://www.englize.com "www.englize.com") for a arabic language files
+
+= More Plugins = 
+Please see also my [Premium Plugins](http://wpplugins.com/author/malo.conny/). Maybe you find an solution for your requirement.
 
 = Interested in WordPress tips and tricks =
 You may also be interested in WordPress tips and tricks at [WP Engineer](http://wpengineer.com/) or for german people [bueltge.de](http://bueltge.de/) 
@@ -158,7 +165,58 @@ Please visit [the official website](http://bueltge.de/wp-wartungsmodus-plugin/10
 = I love this plugin! How can I show the developer how much I appreciate his work? =
 Please visit [the official website](http://bueltge.de/wp-wartungsmodus-plugin/101/ "WP Maintenance Mode") and let him know your care or see the [wishlist](http://bueltge.de/wunschliste/ "Wishlist") of the author.
 
+= Frequently Asked Questions for MySQLDumper =
+Please visit [the official website](http://www.mysqldumper.de/) for general informations about MySQLDumper.
+
+= How to: Backup with maintenance mode and MySQLDumper (illustrated Tutorial in german language) =
+Please visit [Automatisches Backup der WordPress-Datenbank](http://www.beedy.de/2010/05/09/automatisches-backup-der-wordpress-datenbank/)
+
+= How to: Use a contact form inside the Maintenance Message =
+Please use a plugin for the form-function with the possibility Shortcode, like [Contact Form 7](http://wordpress.org/extend/plugins/contact-form-7/). Use a Shortcode of the plugin inside the teyt on the options of the plugin WP Maintenance Mode, thats all.
+
 == Other Notes ==
+= Work with MySQLDumper =
+This option is designed for users, who backups their database with "MySQLDumper".
+With this option you can switch your Wordpress into maintenance mode, when you create a database-backup with MySQLDumper. This is very usefull especially for larger blogs, because their backup takes a longer time. With this option enabled, you have the guarantee of a clean and full backup of your database. All other requests to your database from other resources were blocked in the time of the backup and all the performance of the MySQL-Server will be taken for the backup. 
+
+= How to use =
+* MySQLDumper must be installed and has to run full funtionally. This includes the crontab, MySQLDumper uses. 
+
+How to install MySQLDumper:
+Please visit [the official website](http://www.mysqldumper.de/tutorials/) for several tutorials and videotutorials where you can see, how to install MySQLDumper.
+
+To configure the automatic backup with MySQLDumper: 
+Please visit [the official website](http://forum.mysqldumper.de/features-perl-cronscript-einstellungen-von-konfiguration-cron-t502.html) for informations about the full automatic backup of your database with perl and crontab.
+
+* Maintenance Mode must be installed and all needed options must be set.
+* After that, go to your Dumper-settings -> Configuration -> Databases. There you have two options
+->Command before Dump
+->Command after Dump
+* On the right you find a link named "SQL Commands", after you click this link, you can set the two queries for the automatic backup. 
+* Click the link "new command", give it a name like "activate maintenance mode"  and paste the code below in the required field and finally save this command:
+
+	`UPDATE `wp-database`.`wp-prefix_options` SET `option_value` = '1' WHERE `wp-prefix_options`.`option_name` = 'wp-maintenance-mode-msqld';`
+
+* Now you can set the second command to deactivate the maintenance mode like the first one with this code:
+
+	`UPDATE `wp-database`.`wp-prefix_options` SET `option_value` = '0' WHERE `wp-prefix_options`.`option_name` = 'wp-maintenance-mode-msqld';`
+
+= Note! =
+You must edit three places of the code to your options:
+
+* `wp-database` -> put here the name of your database.
+*  `wp-prefix_options` -> put here the name of your options-table with the prefix you use (normally wp_options). This you must edit twice in the code!
+
+When you have edited the code, save the two commands and go back to the MySQLDumper Configuration. Now you can choose the commands in the required field. For "Command before Dump" use the Command you named like "activate maintenance mode" and for "Command after Dump" use the other, named like "deactivate maintenance mode".
+
+Don't forget to save these settings! After that, your Wordpress will be switch in maintenance mode, when Dumper is backup your database!
+
+= Frequently Asked Questions for MySQLDumper =
+Please visit [the official website](http://www.mysqldumper.de/) for general informations about MySQLDumper.
+
+= How to: Backup with maintenance mode and MySQLDumper (illustrated Tutorial in german language) =
+Please visit [Automatisches Backup der WordPress-Datenbank](http://www.beedy.de/2010/05/09/automatisches-backup-der-wordpress-datenbank/)
+
 = Acknowledgements =
 * Thanks to [David Hellmann](http://www.davidhellmann.com/ "David Hellmann") for the design "The Truck"
 * Thanks to [Nicki Steiger](http://mynicki.net/ "Nicki Steiger") for the design "The Sun"
@@ -185,9 +243,28 @@ Please visit [the official website](http://bueltge.de/wp-wartungsmodus-plugin/10
 * Thanks to [Georg](http://wordpress.blogos.dk/s%C3%B8g-efter-downloads/?did=250 "wordpress.blogos.dk") for danish languge files
 * Thanks to [Jakub Dirska](http://www.bellartis.com "bellartis.com") for polish languge files
 * Thanks to [Rene](http://wpwebshop.com/blog/ "wpwebshop.com/blog") for durch translation files and hints to my errors on my bad english.
+* Thanks to [Yaser Maadan](http://www.englize.com "www.englize.com") for a arabic language files
 
 
 == Changelog ==
+= 1.6.7 (01/05/2011) =
+* Bugfix: new check for files for different themes; hope this fix the server errors
+* Bugfix: fix add default settings
+* Maintenance: different changes on the syntax
+* Feature: add check for Super Admin on WP Multisite; has allways the rights for access
+* Feature: now it is possible to exclude feed from maintenance mode
+* Maintenance: check with 3.0.4 and 3.1-RC2
+* Maintenance: update language file: .pot, de_DE
+* Bugfix: JavaScript error on Bulk Actions on plugins fixed
+* Maintenance: fix all notice, if set no values
+
+= 1.6.6. (10/09/2010) =
+* Maintenance: many changes on the code; $locale and hook in side frontend
+* Maintenance: change attribute_escaped to esc_attr with custom method for WP smaller 2.8
+* Maintenance: Update german language files
+* Feature: Shortcodes is now possible in the "Text" option
+* Feature: no cache header rewrite
+
 = 1.6.5 (09/16/2010) =
 * add new design "Chemistry" by [elmastudio.de](http://www.elmastudio.de/ "elmastudio.de")
 * changes for include methods od class for preview

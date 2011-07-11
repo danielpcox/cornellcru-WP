@@ -1,0 +1,497 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: user-role-editor\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-06-18 22:21+0700\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Can KAYA <can.kaya@kartaca.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Turkish\n"
+"X-Poedit-Country: TURKEY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-Basepath: /home/cankaya/ortak/Gecici/cankaya/pukkalar/pukka/plugins/user-role-editor\n"
+"X-Poedit-SearchPath-0: /home/cankaya/ortak/Gecici/cankaya/pukkalar/pukka/plugins/user-role-editor\n"
+
+#: ../ure-options.php:111
+msgid "Backup record is created for the current role capabilities"
+msgstr "Güncel rol yeterlilikleri için yedek kayıt yaratıldı"
+
+#: ../ure-options.php:120
+msgid "Role"
+msgstr "Rol:"
+
+#: ../ure-options.php:120
+msgid "is updated successfully"
+msgstr "başarıyla güncellendi"
+
+#: ../ure-options.php:164
+msgid "About this Plugin:"
+msgstr "Bu eklenti hakkında:"
+
+#: ../ure-options.php:165
+msgid "Author's website"
+msgstr "Hazırlayanın websitesi"
+
+#: ../ure-options.php:166
+msgid "Plugin webpage"
+msgstr "Eklentinin websitesi"
+
+#: ../ure-options.php:167
+#: ../user-role-editor.php:206
+msgid "Changelog"
+msgstr "Changelog"
+
+#: ../ure-options.php:168
+msgid "FAQ"
+msgstr "SSS"
+
+#: ../ure-options.php:169
+msgid "Donate"
+msgstr "Bağış Yapın"
+
+#: ../ure-options.php:171
+msgid "Greetings:"
+msgstr "Teşekkürlerimle:"
+
+#: ../ure-options.php:172
+msgid "It's me, the author"
+msgstr "Ben, hazırlayan"
+
+#: ../ure-options.php:173
+msgid "For the help with Belorussian translation"
+msgstr "Beyaz Rusça tercümesi için"
+
+#: ../ure-options.php:174
+msgid "For the help with French translation"
+msgstr "Fransızca tercümesi için"
+
+#: ../ure-options.php:175
+msgid "For the help with German translation"
+msgstr "Almanca tercümesi için"
+
+#: ../ure-options.php:176
+msgid "For the help with Hungarian translation"
+msgstr "Macarca tercümesi için"
+
+#: ../ure-options.php:177
+msgid "For the help with Italian translation"
+msgstr "İtalyanca tercümesi için"
+
+#: ../ure-options.php:178
+msgid "For the help with Japanese translation"
+msgstr "Japonca tercümesi için"
+
+#: ../ure-options.php:179
+msgid "For the help with Polish translation"
+msgstr "Lehçe tercümesi için"
+
+#: ../ure-options.php:180
+msgid "For the help with Spanish translation"
+msgstr "İspanyolca tercümesi için"
+
+#: ../ure-options.php:181
+msgid "For the code to hide administrator role"
+msgstr "Yönetici rolünü saklayan kod katkısı için"
+
+#: ../ure-options.php:182
+msgid "Do you wish to see your name with link to your site here? You are welcome! Your help with translation and new ideas are very appreciated."
+msgstr "İsminizi websitenize bir link ile birlikte burada görmek ister misiniz? Bu elbette mümkün! Tercüme yardımlarınız ve yeni fikirlerinize her zaman açığım."
+
+#: ../ure-options.php:198
+msgid "Role Name can not be empty!"
+msgstr "Rol Adı boş bırakılamaz!"
+
+#: ../ure-options.php:202
+msgid "Role Name must contain latin characters and digits only!"
+msgstr "Rol Adı, yalnızca latin karakterleri ve sayılardan oluşabilir!"
+
+#: ../ure-options.php:207
+#: ../ure-options.php:325
+msgid "Delete Role"
+msgstr "Rolü Sil"
+
+#: ../ure-options.php:209
+msgid "Change Default Role"
+msgstr "Varsayılan Rolü Değiştir"
+
+#: ../ure-options.php:211
+#: ../ure-options.php:293
+msgid "Restore Roles from backup copy"
+msgstr "Rolleri yedekten geri yükle"
+
+#: ../ure-options.php:213
+msgid "Please confirm to continue"
+msgstr "Devam etmek için lütfen onaylayın"
+
+#: ../ure-options.php:238
+#, php-format
+msgid "Role \"%s\" update: please confirm to continue"
+msgstr "\"%s\" rolü güncellendi: Devam etmek için lütfen onaylayın"
+
+#: ../ure-options.php:246
+msgid "Select Role and change its capabilities list"
+msgstr "Rolü seçin ve rolün yetki listesini değiştirin"
+
+#: ../ure-options.php:250
+msgid "Select Role:"
+msgstr "Rolü Seçin:"
+
+#: ../ure-options.php:291
+msgid "Update"
+msgstr "Güncelle"
+
+#: ../ure-options.php:291
+msgid "Save Changes"
+msgstr "Değişiklikleri Kaydet"
+
+#: ../ure-options.php:292
+msgid "Cancel"
+msgstr "İptal"
+
+#: ../ure-options.php:292
+msgid "Cancel not saved changes"
+msgstr "Kaydedilmemiş değişiklikleri iptal et"
+
+#: ../ure-options.php:293
+msgid "Reset"
+msgstr "Geri al"
+
+#: ../ure-options.php:304
+msgid "Show capabilities in human readable form"
+msgstr "Yetkileri insan tarafından okunabilir biçimde göster"
+
+#: ../ure-options.php:315
+msgid "Add New Role"
+msgstr "Yeni Rol Ekle"
+
+#: ../ure-options.php:320
+msgid "Add"
+msgstr "Ekle"
+
+#: ../ure-options.php:320
+msgid "Add New User Role"
+msgstr "Yeni Kullanıcı Rolü Ekle"
+
+#: ../ure-options.php:330
+msgid "Delete"
+msgstr "Sil"
+
+#: ../ure-options.php:330
+msgid "Delete User Role"
+msgstr "Kullanıcı Rolünü Sil"
+
+#: ../ure-options.php:335
+msgid "Default Role for New User"
+msgstr "Yeni Kullanıcılar için Varsayılan Rol"
+
+#: ../ure-options.php:340
+msgid "Change"
+msgstr "Değiştir"
+
+#: ../ure-options.php:340
+msgid "Set as Default User Role"
+msgstr "Varsayılan Kullanıcı Rolü olarak Seç"
+
+#: ../user-role-editor.php:38
+msgid "User Role Editor requires WordPress 2.8 or newer."
+msgstr "User Role Editor eklentisi en az WordPress 2.8 sürümüne ihtiyaç duymaktadır."
+
+#: ../user-role-editor.php:38
+msgid "Please update!"
+msgstr "Lütfen güncelleyin!"
+
+#: ../user-role-editor.php:63
+msgid "User Role Editor"
+msgstr "Kullanıcı Rol Editörü"
+
+#: ../user-role-editor.php:196
+msgid "Settings"
+msgstr "Ayarlar"
+
+#: ../ure-lib.php:52
+msgid "Error is occur. Please check the log file."
+msgstr "Bir hata oluştu. Lütfen günlük dosyasını kontrol edin."
+
+#: ../ure-lib.php:108
+msgid "Database operation error. Check log file."
+msgstr "Veritabanı operasyonu hatası. Günlük dosyasını kontrol edin."
+
+#: ../ure-lib.php:130
+msgid "Roles capabilities are restored from the backup data"
+msgstr "Rol yetkileri yedek verilerden geri yüklendi"
+
+#: ../ure-lib.php:132
+msgid "No backup data. It is created automatically before the first role data update."
+msgstr "Henüz yedekleme yapılmamış. İlk yedekleme, ilk rol verisi güncellemesi öncesi otomatik olarak yapılacaktır."
+
+#: ../ure-lib.php:173
+msgid "Error: Role name must contain latin characters and digits only!"
+msgstr "Hata: Rol adı yalnızca latin karakterleri ve sayılardan oluşabilir."
+
+#: ../ure-lib.php:181
+msgid "Roles list reading error is encountered"
+msgstr "Rol listesi okunurken hata"
+
+#: ../ure-lib.php:187
+msgid "Error is encountered during new role create operation"
+msgstr "Yeni rol yaratma işlemi sırasında hata"
+
+#: ../ure-lib.php:189
+#, php-format
+msgid "Role %s is created successfully"
+msgstr "%s rolü başarıyla yaratıldı"
+
+#: ../ure-lib.php:273
+msgid "Error encountered during role delete operation"
+msgstr "Rol silme işlemi sırasında hata"
+
+#: ../ure-lib.php:275
+#, php-format
+msgid "Role %s is deleted successfully"
+msgstr "%s rolü başarıyla silindi"
+
+#: ../ure-lib.php:293
+msgid "Error encountered during default role change operation"
+msgstr "Varsayılan rolü değiştirme işlemi sırasında hata"
+
+#: ../ure-lib.php:299
+#, php-format
+msgid "Default role for new users is set to %s successfully"
+msgstr "Yeni kullanıcılar için varsayılan rol %s olarak başarıyla değiştirildi"
+
+#: ../ure-lib.php:353
+msgid "Editor"
+msgstr "Editör"
+
+#: ../ure-lib.php:354
+msgid "Author"
+msgstr "Yazar"
+
+#: ../ure-lib.php:355
+msgid "Contributor"
+msgstr "İçerik Sağlayıcı"
+
+#: ../ure-lib.php:356
+msgid "Subscriber"
+msgstr "Üye"
+
+#: ../ure-lib.php:358
+msgid "Switch themes"
+msgstr "Temaları değiştir"
+
+#: ../ure-lib.php:359
+msgid "Edit themes"
+msgstr "Temaları düzenle"
+
+#: ../ure-lib.php:360
+msgid "Activate plugins"
+msgstr "Eklentileri aktive et"
+
+#: ../ure-lib.php:361
+msgid "Edit plugins"
+msgstr "Eklentileri düzenlemek"
+
+#: ../ure-lib.php:362
+msgid "Edit users"
+msgstr "Kullanıcıları düzenlemek"
+
+#: ../ure-lib.php:363
+msgid "Edit files"
+msgstr "Dosyaları düzenlemek"
+
+#: ../ure-lib.php:364
+msgid "Manage options"
+msgstr "Seçenekleri yönetmek"
+
+#: ../ure-lib.php:365
+msgid "Moderate comments"
+msgstr "Yorumları yönetmek"
+
+#: ../ure-lib.php:366
+msgid "Manage categories"
+msgstr "Kategorileri yönetmek"
+
+#: ../ure-lib.php:367
+msgid "Manage links"
+msgstr "Linkleri yönetmek"
+
+#: ../ure-lib.php:368
+msgid "Upload files"
+msgstr "Dosya yüklemek"
+
+#: ../ure-lib.php:369
+msgid "Import"
+msgstr "İçeri aktarmak"
+
+#: ../ure-lib.php:370
+msgid "Unfiltered html"
+msgstr "Filtrelenmemiş HTML"
+
+#: ../ure-lib.php:371
+msgid "Edit posts"
+msgstr "Yazıları düzenlemek"
+
+#: ../ure-lib.php:372
+msgid "Edit others posts"
+msgstr "Başkalarının yazılarını düzenlemek"
+
+#: ../ure-lib.php:373
+msgid "Edit published posts"
+msgstr "Yayınlanmış yazıları düzenlemek"
+
+#: ../ure-lib.php:374
+msgid "Publish posts"
+msgstr "Yazıları yayınlamak"
+
+#: ../ure-lib.php:375
+msgid "Edit pages"
+msgstr "Sayfaları düzenlemek"
+
+#: ../ure-lib.php:376
+msgid "Read"
+msgstr "Okumak"
+
+#: ../ure-lib.php:377
+msgid "Level 10"
+msgstr "Seviye 10"
+
+#: ../ure-lib.php:378
+msgid "Level 9"
+msgstr "Seviye 9"
+
+#: ../ure-lib.php:379
+msgid "Level 8"
+msgstr "Seviye 8"
+
+#: ../ure-lib.php:380
+msgid "Level 7"
+msgstr "Seviye 7"
+
+#: ../ure-lib.php:381
+msgid "Level 6"
+msgstr "Seviye 6"
+
+#: ../ure-lib.php:382
+msgid "Level 5"
+msgstr "Seviye 5"
+
+#: ../ure-lib.php:383
+msgid "Level 4"
+msgstr "Seviye 4"
+
+#: ../ure-lib.php:384
+msgid "Level 3"
+msgstr "Seviye 3"
+
+#: ../ure-lib.php:385
+msgid "Level 2"
+msgstr "Seviye 2"
+
+#: ../ure-lib.php:386
+msgid "Level 1"
+msgstr "Seviye 1"
+
+#: ../ure-lib.php:387
+msgid "Level 0"
+msgstr "Seviye 0"
+
+#: ../ure-lib.php:388
+msgid "Edit others pages"
+msgstr "Başkalarının sayfalarını düzenlemek"
+
+#: ../ure-lib.php:389
+msgid "Edit published pages"
+msgstr "Yayınlanmış sayfaları düzenlemek"
+
+#: ../ure-lib.php:390
+msgid "Publish pages"
+msgstr "Sayfaları yayınlamak"
+
+#: ../ure-lib.php:391
+msgid "Delete pages"
+msgstr "Sayfaları silmek"
+
+#: ../ure-lib.php:392
+msgid "Delete others pages"
+msgstr "Başkalarının sayfalarını silmek"
+
+#: ../ure-lib.php:393
+msgid "Delete published pages"
+msgstr "Yayınlanmış sayfaları silmek"
+
+#: ../ure-lib.php:394
+msgid "Delete posts"
+msgstr "Yazıları silmek"
+
+#: ../ure-lib.php:395
+msgid "Delete others posts"
+msgstr "Başkalarının yazılarını silmek"
+
+#: ../ure-lib.php:396
+msgid "Delete published posts"
+msgstr "Yayınlanmış yazıları silmek"
+
+#: ../ure-lib.php:397
+msgid "Delete private posts"
+msgstr "Özel yazıları silmek"
+
+#: ../ure-lib.php:398
+msgid "Edit private posts"
+msgstr "Özel yazıları düzenlemek"
+
+#: ../ure-lib.php:399
+msgid "Read private posts"
+msgstr "Özel yazıları okumak"
+
+#: ../ure-lib.php:400
+msgid "Delete private pages"
+msgstr "Özel sayfaları silmek"
+
+#: ../ure-lib.php:401
+msgid "Edit private pages"
+msgstr "Özel sayfaları düzenlemek"
+
+#: ../ure-lib.php:402
+msgid "Read private pages"
+msgstr "Özel yazıları okumak"
+
+#: ../ure-lib.php:403
+msgid "Delete users"
+msgstr "Kullanıcı silmek"
+
+#: ../ure-lib.php:404
+msgid "Create users"
+msgstr "Kullanıcı yaratmak"
+
+#: ../ure-lib.php:405
+msgid "Unfiltered upload"
+msgstr "Filtrelenmemiş dosya yüklemek"
+
+#: ../ure-lib.php:406
+msgid "Edit dashboard"
+msgstr "Paneli düzenlemek"
+
+#: ../ure-lib.php:407
+msgid "Update plugins"
+msgstr "Eklentileri güncellemek"
+
+#: ../ure-lib.php:408
+msgid "Delete plugins"
+msgstr "Eklenti silmek"
+
+#: ../ure-lib.php:409
+msgid "Install plugins"
+msgstr "Eklenti yüklemek"
+
+#: ../ure-lib.php:410
+msgid "Update themes"
+msgstr "Temaları güncellemek"
+
+#: ../ure-lib.php:411
+msgid "Install themes"
+msgstr "Temal yüklemek"
+

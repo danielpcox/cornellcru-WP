@@ -4,20 +4,22 @@
  * analyst_rs.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  */
   
  
 class ScoperAnalyst {
 
-	function identify_protected_attachments( $attachment_id = 0, $guid = '', $cols = '', $args = '' ) {
-		$args = array( 'guid' => $guid );
+	function identify_protected_attachments( $attachment_id = 0, $guid = '', $cols = '', $args = array() ) {
+		if ( $guid && empty( $args['guid'] ) )
+			$args = array_merge( $args, array( 'guid' => $guid ) );
+
 		return ScoperAnalyst::identify_protected_posts( $attachment_id, true, $cols, $args );
 	}
 	
 	
-	function identify_protected_posts( $attachment_id = 0, $attachments = false, $cols = '',  $args = '' ) {
+	function identify_protected_posts( $attachment_id = 0, $attachments = false, $cols = '',  $args = array() ) {
 		$defaults = array( 'use_object_restrictions' => true, 'use_term_restrictions' => true, 'use_private_status' => true, 'guid' => '' );
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
@@ -32,8 +34,6 @@ class ScoperAnalyst {
 		if ( empty($scoper->taxonomies) )
 			$scoper->load_config();
 
-		$role_type = SCOPER_ROLE_TYPE;
-
 		$restricted_roles = array();
 		$unrestricted_roles = array();				// TODO: also protect uploads based on restriction of other taxonomies
 		
@@ -45,19 +45,30 @@ class ScoperAnalyst {
 		$limit_clause = '';
 		$unattached_clause = '';
 		
-		if ( $use_private_status )
-			$role_clause = ( 'rs' == SCOPER_ROLE_TYPE ) ? "AND rs.role_name IN ('post_reader', 'page_reader')" : '';	// if also checking for private status, don't need to check for restriction of private_reader roles
-		else
-			$role_clause = ( 'rs' == SCOPER_ROLE_TYPE ) ? "AND rs.role_name IN ('post_reader', 'page_reader', 'private_post_reader', 'private_page_reader')" : '';
-			
-		
+		global $scoper;
+				
+		$reader_roles = array();
+		foreach( $scoper->role_defs->role_caps as $role_handle => $role_caps ) {
+			$caps_by_op = $scoper->cap_defs->organize_caps_by_op( array_keys($role_caps) );
+			if ( ( count( $caps_by_op ) == 1 ) &&( 'read' == key($caps_by_op ) ) )
+				$reader_roles[]= $role_handle;
+		}
+
+		$role_clause = "AND rs.role_name IN ('" . implode( "','", scoper_role_handles_to_names($reader_roles) ) . "')";
+
+		//if ( $use_private_status )
+		//	$role_clause = ( 'rs' == SCOPER_ROLE_TYPE ) ? "AND rs.role_name IN ('post_reader', 'page_reader')" : '';	// if also checking for private status, don't need to check for restriction of private_reader roles
+		//else
+		//	$role_clause = ( 'rs' == SCOPER_ROLE_TYPE ) ? "AND rs.role_name IN ('post_reader', 'page_reader', 'private_post_reader', 'private_page_reader')" : '';
+
+	
 		if ( $use_term_restrictions ) {
 			$term_restriction_query = "SELECT rs.obj_or_term_id AS term_id, rs.role_name, rs.max_scope FROM $wpdb->role_scope_rs AS rs "
 									. "INNER JOIN $wpdb->term_taxonomy AS tt ON tt.taxonomy = rs.src_or_tx_name AND tt.taxonomy = 'category' AND tt.term_taxonomy_id = rs.obj_or_term_id "
-									. "WHERE rs.role_type = '$role_type' AND rs.require_for IN ('entity', 'both') AND rs.topic = 'term' $role_clause";
+									. "WHERE rs.role_type = 'rs' AND rs.require_for IN ('entity', 'both') AND rs.topic = 'term' $role_clause";
 			
 			$term_default_restriction_query = "SELECT rs.role_name FROM $wpdb->role_scope_rs AS rs "
-											. "WHERE rs.role_type = '$role_type' AND rs.require_for IN ('entity', 'both') AND rs.topic = 'term' AND rs.max_scope = 'term' AND rs.src_or_tx_name = 'category' AND rs.obj_or_term_id = '0' $role_clause";
+											. "WHERE rs.role_type = 'rs' AND rs.require_for IN ('children', 'both') AND rs.topic = 'term' AND rs.max_scope = 'term' AND rs.src_or_tx_name = 'category' AND rs.obj_or_term_id = '0' $role_clause";
 			
 			$all_terms = array();
 			
@@ -71,7 +82,6 @@ class ScoperAnalyst {
 						$restricted_roles['category'][$row->role_name] []= $row->term_id;
 				}
 			}
-			
 			
 			// if there a role is default-restricted, mark all terms as restricted (may be unrestricted later)
 			if ( $results = scoper_get_col( $term_default_restriction_query ) ) {
@@ -116,17 +126,16 @@ class ScoperAnalyst {
 			$attachment_query = "SELECT $wpdb->posts.ID FROM $wpdb->posts WHERE $wpdb->posts.ID IN ( SELECT post_parent FROM $wpdb->posts WHERE post_type = 'attachment' $id_clause ) ";
 		}
 		
-	
 		if ( $use_object_restrictions ) {
 			$object_restriction_query = "SELECT rs.obj_or_term_id AS obj_id, rs.role_name, rs.max_scope FROM $wpdb->role_scope_rs AS rs "
-									. "WHERE rs.role_type = '$role_type' AND rs.require_for IN ('entity', 'both') AND rs.topic = 'object' AND rs.src_or_tx_name = 'post' $role_clause AND rs.obj_or_term_id IN ( $attachment_query )";
+									. "WHERE rs.role_type = 'rs' AND rs.require_for IN ('entity', 'both') AND rs.topic = 'object' AND rs.src_or_tx_name = 'post' $role_clause AND rs.obj_or_term_id IN ( $attachment_query )";
 			
 			$object_default_restriction_query = "SELECT rs.role_name FROM $wpdb->role_scope_rs AS rs "
-											. "WHERE rs.require_for IN ('entity', 'both') AND rs.topic = 'object' AND rs.max_scope = 'object' AND rs.src_or_tx_name = 'post' AND rs.obj_or_term_id = '0' $role_clause";
+											. "WHERE rs.require_for IN ('children', 'both') AND rs.topic = 'object' AND rs.max_scope = 'object' AND rs.src_or_tx_name = 'post' AND rs.obj_or_term_id = '0' $role_clause";
 			
 			$all_objects = array();
 			$all_objects['post'] = scoper_get_col( $attachment_query );
-									
+								
 			$restricted_roles = array();
 			$unrestricted_roles = array();
 							
@@ -138,8 +147,7 @@ class ScoperAnalyst {
 						$restricted_roles['post'][$row->role_name] []= $row->obj_id;
 				}
 			}
-	
-		
+
 			// if there a role is default-restricted, mark all terms as restricted (may be unrestricted later)
 			if ( $results = scoper_get_col( $object_default_restriction_query ) ) {
 				foreach ( $results as $role_name ) {
@@ -197,7 +205,6 @@ class ScoperAnalyst {
 		}
 		
 		$query = "SELECT $query_cols FROM $wpdb->posts WHERE $attachment_type_clause ( 1=1 $status_query $term_restriction_clause $object_restriction_clause $unattached_clause ) $id_clause ORDER BY ID DESC $limit_clause";
-		
 		
 		if ( $id_clause && ! is_array( $attachment_id ) ) {
 			if ( $single_col )

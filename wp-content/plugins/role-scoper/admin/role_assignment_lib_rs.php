@@ -36,7 +36,7 @@ class ScoperRoleAssignments {
 
 	// Return all assigned term or object roles for specified arguments
 	// (NOTE: key order differs from front end implementation)
-	function get_assigned_roles($scope, $role_basis, $src_or_tx_name, $args = '') {
+	function get_assigned_roles($scope, $role_basis, $src_or_tx_name, $args = array()) {
 		global $wpdb;
 
 		$defaults = array( 'id' => false, 'ug_id' => 0, 'join' => '', 'role_handles' => '' );
@@ -45,8 +45,6 @@ class ScoperRoleAssignments {
 		
 		if ( BLOG_SCOPE_RS == $scope )
 			return ScoperRoleAssignments::get_assigned_blog_roles($role_basis);
-		
-		$SCOPER_ROLE_TYPE = SCOPER_ROLE_TYPE;
 		
 		$roles = array();
 		
@@ -71,12 +69,12 @@ class ScoperRoleAssignments {
 			$role_clause = '';
 		
 		$qry = "SELECT $col_ug_id, obj_or_term_id, role_name, assign_for, assignment_id, inherited_from, date_limited, start_date_gmt, end_date_gmt, content_date_limited, content_min_date_gmt, content_max_date_gmt FROM $wpdb->user2role2object_rs AS uro "
-			. "$join WHERE role_type = '$SCOPER_ROLE_TYPE' $role_clause AND scope = '$scope' AND src_or_tx_name = '$src_or_tx_name' $id_clause $ug_clause";
+			. "$join WHERE role_type = 'rs' $role_clause AND scope = '$scope' AND src_or_tx_name = '$src_or_tx_name' $id_clause $ug_clause";
 
 		$results = scoper_get_results($qry);
 		
 		foreach($results as $role) {
-			$role_handle = SCOPER_ROLE_TYPE . '_' . $role->role_name;
+			$role_handle = 'rs_' . $role->role_name;
 			$roles [$role->obj_or_term_id] [$role_handle] [$role->$col_ug_id] = (array) $role;	
 		}
 		

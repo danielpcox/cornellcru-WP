@@ -17,11 +17,14 @@ function scoper_new_version_notice() {
 		update_option( 'scoper_version_info', $vcheck );
 	}
 
-	if ( ( (time() - $last_check) > ( $check_minutes * 60 ) ) || ( ! $vcheck_ext = get_site_option('scoper_extension_info') ) ) {
-		$vcheck_ext = awp_remote_fopen( 'http://agapetry.net/downloads/role-scoper-extensions.chk', 5 );
-		$rechecked = true;
-		update_option( 'scoper_extension_info', $vcheck_ext );
-	}
+	if ( $vcheck ) {
+		if ( ( (time() - $last_check) > ( $check_minutes * 60 ) ) || ( ! $vcheck_ext = get_site_option('scoper_extension_info') ) ) {
+			$vcheck_ext = awp_remote_fopen( 'http://agapetry.net/downloads/role-scoper-extensions.chk', 5 );
+			$rechecked = true;
+			update_option( 'scoper_extension_info', $vcheck_ext );
+		}
+	} else
+		$vcheck_ext = false;
 	
 	if ( $rechecked )
 		update_option( 'scoper_last_version_update_check', time() );

@@ -6,6 +6,9 @@ require_once( 'admin_ui_lib_rs.php' );
 require_once( 'role_assignment_lib_rs.php' );
 
 class ScoperItemRolesUI {
+	var $scoper;
+	var $scoper_admin;
+	
 	var $loaded_src_name;
 	var $loaded_object_type;
 	var $loaded_object_id;
@@ -28,18 +31,21 @@ class ScoperItemRolesUI {
 	
 	var $drew_objroles_marker;
 	
+	function ScoperItemRolesUI() {
+		$this->scoper =& $GLOBALS['scoper'];
+		$this->scoper_admin =& $GLOBALS['scoper_admin'];
+	}
+	
 	function load_roles($src_name, $object_type, $object_id) {
-		global $scoper;
-		
 		//log_mem_usage_rs( 'start ItemRolesUI::load_roles()' );
 		
-		if ( strpos( $_SERVER['SCRIPT_NAME'], 'p-admin/edit.php') || strpos( $_SERVER['SCRIPT_NAME'], 'p-admin/edit-pages.php') )
+		if ( 'edit.php' == $GLOBALS['pagenow'] )
 			return;
-	
+
 		if ( ! scoper_get_otype_option('use_object_roles', $src_name, $object_type) )
 			return;
 			
-		if ( ! $src = $scoper->data_sources->get($src_name) )
+		if ( ! $src = $this->scoper->data_sources->get($src_name) )
 			return;
 			
 		$this->loaded_src_name = $src_name;
@@ -58,7 +64,7 @@ class ScoperItemRolesUI {
 		$get_defaults = ! $object_id;
 		$obj_roles = array();
 		
-		$role_defs = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $src_name, $object_type);
+		$role_defs = $this->scoper->role_defs->get_matching('rs', $src_name, $object_type);
 		$this->role_handles = array_keys($role_defs);
 		
 		// for default roles, distinguish between various object types
@@ -98,22 +104,23 @@ class ScoperItemRolesUI {
 			// note: all users are eligible for a reading role assignment, but we may not be displaying user checkboxes
 			
 			$user_csv_input = scoper_get_option("user_role_assignment_csv");
-			
+
 			if ( ! $user_csv_input )
-				$this->all_agents[ROLE_BASIS_USER] = $scoper->users_who_can( '', COLS_ID_DISPLAYNAME_RS);
+				$this->all_agents[ROLE_BASIS_USER] = $this->scoper->users_who_can( '', COLS_ID_NAME_RS);
 			elseif( $object_id ) {
 				$assignees = array();
+
 				if ( $this->current_roles[ROLE_BASIS_USER] )
 					foreach ( array_keys($this->current_roles[ROLE_BASIS_USER]) as $role_handle )
-						$assignees = $assignees + array_keys( $this->current_roles[ROLE_BASIS_USER][$role_handle]['assigned'] );
-						
+						$assignees = array_merge( $assignees, array_keys( $this->current_roles[ROLE_BASIS_USER][$role_handle]['assigned'] ) );
+
 				$assignees = array_unique( $assignees );
 				
 				global $wpdb;
 				$this->all_agents[ROLE_BASIS_USER] = scoper_get_results( "SELECT ID, display_name FROM $wpdb->users WHERE ID IN ('" . implode("','", $assignees) . "')" );
 			} else
 				$this->all_agents[ROLE_BASIS_USER] = array();
-
+				
 			//log_mem_usage_rs( 'load_roles: users_who_can for all_agents' );
 			
 			//users eligible for an editing role assignments are those who have the basic edit cap via taxonomy or blog role
@@ -123,9 +130,9 @@ class ScoperItemRolesUI {
 				// It's more useful to exclude Blog Subscribers while including all others
 				$role_object_type = ( 'page' == $object_type ) ? 'post' : $object_type;
 				
-				$reqd_caps = $scoper->cap_defs->get_matching($src_name, $role_object_type, OP_EDIT_RS, '', BASE_CAPS_RS);	// status-specific and 'others' caps will not be returned
+				$reqd_caps = $this->scoper->cap_defs->get_matching($src_name, $role_object_type, OP_EDIT_RS, '', BASE_CAPS_RS);	// status-specific and 'others' caps will not be returned
 				$args = array( 'ignore_strict_terms' => true, 'ignore_group_roles' => true, 'skip_object_roles' => true );
-				$this->eligible_agent_ids[ROLE_BASIS_USER][OP_EDIT_RS] = $scoper->users_who_can( array_keys($reqd_caps), COL_ID_RS, '',  0, $args );
+				$this->eligible_agent_ids[ROLE_BASIS_USER][OP_EDIT_RS] = $this->scoper->users_who_can( array_keys($reqd_caps), COL_ID_RS, '',  0, $args );
 				
 				//log_mem_usage_rs( 'load_roles: users_who_can for eligible_agent_ids' );
 			}
@@ -140,7 +147,7 @@ class ScoperItemRolesUI {
 				
 				// might need to check term/blog assignment of a different role to reflect object's current status
 				if ( ! empty( $role_def->other_scopes_check_role) && ! empty($src->cols->status) ) {
-					$status = $scoper->data_sources->detect('status', $src, $object_id);
+					$status = $this->scoper->data_sources->detect('status', $src, $object_id);
 				
 					if ( isset($role_def->other_scopes_check_role[$status]) ) 
 						$blog_term_role_handle = $role_def->other_scopes_check_role[$status];
@@ -152,25 +159,25 @@ class ScoperItemRolesUI {
 					$blog_term_role_handle = $role_handle;
 				
 				$this_args = array('skip_object_roles' => true, 'object_type' => $object_type, 'ignore_group_roles' => true );
-					
+				
 				if ( empty( $user_csv_input ) ) {
-					$this->blog_term_roles[ROLE_BASIS_USER][$role_handle] = $scoper->users_who_can($blog_term_role_handle, COL_ID_RS, $src_name, $object_id, $this_args );
+					$this->blog_term_roles[ROLE_BASIS_USER][$role_handle] = $this->scoper->users_who_can($blog_term_role_handle, COL_ID_RS, $src_name, $object_id, $this_args );
 					//log_mem_usage_rs( "load_roles: users_who_can for $role_handle users" );
 				} else
 					$this->blog_term_roles[ROLE_BASIS_USER][$role_handle] = array();
 					
-				$this->blog_term_roles[ROLE_BASIS_GROUPS][$role_handle] = $scoper->groups_who_can($blog_term_role_handle, COL_ID_RS, $src_name, $object_id, $this_args );
+				$this->blog_term_roles[ROLE_BASIS_GROUPS][$role_handle] = $this->scoper->groups_who_can($blog_term_role_handle, COL_ID_RS, $src_name, $object_id, $this_args );
 				//log_mem_usage_rs( "load_roles: groups_who_can for $role_handle groups" );
 			}
 		}
 
-		$this->do_propagation_cboxes = ( ! empty($src->cols->parent) && ! $scoper->data_sources->member_property($src_name, 'object_types', $object_type, 'ignore_object_hierarchy') );
+		$this->do_propagation_cboxes = ( ! empty($src->cols->parent) && ! $this->scoper->data_sources->member_property($src_name, 'object_types', $object_type, 'ignore_object_hierarchy') );
 	
 		$this->object_strict_roles = array();
 		$this->child_strict_roles = array();
 
 		$args = array( 'id' => $object_id, 'include_child_restrictions' => true  );
-		if ( $restrictions = $scoper->get_restrictions(OBJECT_SCOPE_RS, $src_name, $args) ) {
+		if ( $restrictions = $this->scoper->get_restrictions(OBJECT_SCOPE_RS, $src_name, $args) ) {
 			
 			//log_mem_usage_rs( "load_roles: get_restrictions" );
 			
@@ -224,26 +231,27 @@ class ScoperItemRolesUI {
 	}
 	
 	function draw_object_roles_content($src_name, $object_type, $role_handle, $object_id = '', $skip_user_validation = false, $object = false ) {
-		global $scoper;
-		
 		//log_mem_usage_rs( 'start ItemRolesUI::draw_object_roles_content()' );
-		
+	
 		if ( ! $object_id )
-			$object_id = $scoper->data_sources->detect('id', $src_name, '', $object_type);
-
+			$object_id = scoper_get_object_id( $src_name, $object_type );
+		
+		if ( ! empty($object) && ( 'auto-draft' == $object->post_status ) )
+			$object_id = 0;
+			
 		if ( ( $src_name != $this->loaded_src_name ) || ( $object_type != $this->loaded_object_type ) || ( $object_id != $this->loaded_object_id ) )
 			$this->load_roles($src_name, $object_type, $object_id);
 
-		if ( ! $otype_def = $scoper->data_sources->member_property($src_name, 'object_types', $object_type) )
+		if ( ! $otype_def = $this->scoper->data_sources->member_property($src_name, 'object_types', $object_type) )
 			return;
-			
-		if ( ! $skip_user_validation && ! $scoper->admin->user_can_admin_role($role_handle, $object_id, $src_name, $object_type) )
+
+		if ( ! $skip_user_validation && ! $this->scoper_admin->user_can_admin_role($role_handle, $object_id, $src_name, $object_type) )
 			return;
 		
 		// since we may be dumping a lot of hidden user <li> into the page, enumerate role names to shorten html
 		$role_code = 'r' . array_search($role_handle, $this->role_handles);
 		
-		$role_def = $scoper->role_defs->get($role_handle);
+		$role_def = $this->scoper->role_defs->get($role_handle);
 		
 		if ( ! isset($role_def->valid_scopes[OBJECT_SCOPE_RS]) )
 			return;
@@ -265,7 +273,7 @@ class ScoperItemRolesUI {
 			. "<span class='alignright'><a href='#wphead'>" . __('top', 'scoper') . '</a></span>'
 			. "<label for='objscope_{$role_code}'>"
 			. "<input type='checkbox' class='rs-check' name='objscope_{$role_code}' value='1' id='objscope_{$role_code}' $checked />"
-			. sprintf(__('Restrict for %1$s (<strong>only</strong> selected users/groups are %2$s)', 'scoper'), $otype_def->display_name, $scoper->role_defs->get_abbrev($role_handle, OBJECT_UI_RS) )
+			. sprintf(__('Restrict for %1$s (<strong>only</strong> selected users/groups are %2$s)', 'scoper'), $otype_def->labels->singular_name, $this->scoper->role_defs->get_abbrev($role_handle, OBJECT_UI_RS) )
 			. '</label></p>';
 			
 		if ( $this->do_propagation_cboxes ) {
@@ -276,7 +284,7 @@ class ScoperItemRolesUI {
 			echo "<p style='margin-top: 0.5em;'>"
 			. "<label for='objscope_children_{$role_code}'>"
 			. "<input type='checkbox' class='rs-check' name='objscope_children_{$role_code}' value='1' id='objscope_children_{$role_code}' $checked />"
-			. sprintf(__('Restrict for Sub-%1$s', 'scoper'), $otype_def->display_name_plural)
+			. sprintf(__('Restrict for Sub-%1$s', 'scoper'), $otype_def->labels->name )
 			. '</label></p>';
 		}
 			
@@ -298,8 +306,7 @@ class ScoperItemRolesUI {
 			$class = ( ROLE_BASIS_GROUPS == $default_role_basis ) ? "class='$class_selected'" : "class='$class_unselected'";
 			$js_call = "agp_swap_display('{$role_code}_groups', '{$role_code}_user', '{$role_code}_show_group_roles', '{$role_code}_show_user_roles', '$class_selected', '$class_unselected')";
 			
-			global $is_IE;
-			$bottom_margin = ( $is_IE ) ? '-0.7em' : 0;
+			$bottom_margin = ( ! empty( $GLOBALS['is_IE'] ) ) ? '-0.7em' : 0;
 			
 			echo "\r\n" 
 				. "<div class='agp_js_show' style='display:none;margin:0 0 $bottom_margin 0'>"
@@ -320,31 +327,15 @@ class ScoperItemRolesUI {
 		//need effective line break here if not IE
 		echo "<div style='clear:both;margin:0 0 0.3em 0' $class>";
 		
-		$role_ops = $scoper->role_defs->get_role_ops($role_handle);
+		$role_ops = $this->scoper->cap_defs->get_cap_ops( $this->scoper->role_defs->role_caps[$role_handle] );
 		$agents_reqd_op = (isset($role_ops[OP_EDIT_RS]) ) ? OP_EDIT_RS : OP_READ_RS;
-		
-		// account for Read vs. Read Private in indication of explicit role ownership
-		// (possible TODO: abstract this for other data sources, but not crucial as it doesn't affect actual access)
-		$contained_role_handle = $role_handle;
-		$fudge_objscope_equiv_role = false;
-		if ( ('rs_private_post_reader' == $role_handle) || ('rs_private_page_reader' == $role_handle) ) {
-			if ( ! scoper_get_option( "{$role_handle}_role_objscope" ) ) {
-				$fudge_objscope_equiv_role = true;
-				if ( $object && ! empty($object->post_status) && ( 'private' != $object->post_status ) )
-					$contained_role_handle = str_replace( 'private_', '', $contained_role_handle );
-			}
-		}
-		
-		$containing_roles = $scoper->role_defs->get_containing_roles($role_handle);
 
-		// ... but we don't want assigned Post Readers marked up as "has via other role" because their actual stored object role is Private Post Reader
-		if ( $fudge_objscope_equiv_role )
-			$containing_roles = array_diff_key( $containing_roles, array( 'rs_private_post_reader' => true, 'rs_private_page_reader' => true ) );
+		$containing_roles = $this->scoper->role_defs->get_containing_roles($role_handle);
 
 		require_once('agents_checklist_rs.php');
 		
 		$args = array( 'suppress_extra_prefix' => true, 'default_hide_threshold' => 20, 'propagation' => $this->do_propagation_cboxes,
-				'objtype_display_name' => $otype_def->display_name, 'objtype_display_name_plural' => $otype_def->display_name_plural,
+				'otype_label_singular' => $otype_def->labels->singular_name, 'otype_label' => $otype_def->labels->name,
 				'object_type' => $object_type, 'object_id' => $object_id );
 		
 		$args['via_other_role_ids'] = array(); // must set this here b/c subsequent for loop is set up for users iteration to recall via_other_role_ids from groups iteration
@@ -461,20 +452,18 @@ class ScoperItemRolesUI {
 		return $count_sfx;
 	}
 	
-	// This is now called only with WP < 2.5, for direct single-object role edit via the bulk admin form,
+	// This is now called only for direct single-object role edit via the bulk admin form,
 	// and by any non-post data sources which define admin_actions->object_edit_ui
-	function single_object_roles_ui($src_name, $object_type, $object_id, $args = '') {
+	function single_object_roles_ui($src_name, $object_type, $object_id, $args = array()) {
 		$defaults = array( 'html_inserts' => '' );
 		$args = array_merge( $defaults, (array) $args );
 		extract($args);
 
-		global $scoper;
-		
 		if ( ! scoper_get_otype_option('use_object_roles', $src_name, $object_type) )
 			return;
 		
 		if ( ! $html_inserts ) {
-			if ( ! $otype_def = $scoper->data_sources->member_property($src_name, 'object_types', $object_type) )
+			if ( ! $otype_def = $this->scoper->data_sources->member_property($src_name, 'object_types', $object_type) )
 				return;
 		
 			if ( isset($otype_def->admin_inserts->bottom) )
@@ -497,17 +486,17 @@ class ScoperItemRolesUI {
 		
 		$group_members = array();
 		
-		$role_defs = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $src_name, $object_type);
+		$role_defs = $this->scoper->role_defs->get_matching('rs', $src_name, $object_type);
 		
 		foreach ($role_defs as $role_handle => $role_def) {
-			if ( ! isset($role_def->valid_scopes[OBJECT_SCOPE_RS]) || ! $scoper->admin->user_can_admin_role($role_handle, $object_id, $src_name, $object_type) )
+			if ( ! isset($role_def->valid_scopes[OBJECT_SCOPE_RS]) || ! $this->scoper_admin->user_can_admin_role($role_handle, $object_id, $src_name, $object_type) )
 				continue;
 
 			echo( "\r\n" . sprintf($html_inserts->open->container, "objrole_$role_handle") );
 
 			$count_sfx = $this->get_rolecount_caption($role_handle);
 
-			echo $html_inserts->open->headline  . $scoper->role_defs->get_abbrev( $role_handle, OBJECT_UI_RS ) . $count_sfx
+			echo $html_inserts->open->headline  . $this->scoper->role_defs->get_abbrev( $role_handle, OBJECT_UI_RS ) . $count_sfx
 			. $html_inserts->close->headline
 			. $html_inserts->open->content;
 			
@@ -518,24 +507,31 @@ class ScoperItemRolesUI {
 	}
 
 	function single_term_roles_ui($taxonomy, $args, $term) {
-		global $scoper;
-		
 		if ( ! $taxonomy )
 			return;
 			
-		if ( ! $tx = $scoper->taxonomies->get($taxonomy) )
+		if ( ! $tx = $this->scoper->taxonomies->get($taxonomy) )
 			return;
 
-		$term_id = is_object($term) ? $term->{$tx->source->cols->id} : $term;
-		if ( ! $term_id )
+		global $scoper;
+		$tx_src = $scoper->data_sources->get( $tx->source );
+
+		if ( is_object($term) ) {
+			if ( empty( $term->{$tx_src->cols->id} ) )
+				return;
+			else
+				$term_id = $term->{$tx_src->cols->id};
+		} elseif ( $term )
+			$term_id = $term;
+		else
 			return;
 
-		if ( ! $role_defs_by_otype = $scoper->role_defs->get_for_taxonomy($tx->object_source, $taxonomy) )
+		if ( ! $role_defs_by_otype = $this->scoper->role_defs->get_for_taxonomy($tx->object_source, $taxonomy) )
 			return;
 			
 		require_once('admin-bulk_rs.php');
 		
-		$all_terms = array( (object) array( $tx->source->cols->id => $term_id, $tx->source->cols->name => '', $tx->source->cols->parent => 0 ) );
+		$all_terms = array( (object) array( $tx_src->cols->id => $term_id, $tx_src->cols->name => '', $tx_src->cols->parent => 0 ) );
 
 		$admin_terms = array( $term_id => true );
 
@@ -550,18 +546,18 @@ class ScoperItemRolesUI {
 			$role_bases []= ROLE_BASIS_GROUPS;
 		}
 		
-		$strict_terms = $scoper->get_restrictions(TERM_SCOPE_RS, $taxonomy );
+		$strict_terms = $this->scoper->get_restrictions(TERM_SCOPE_RS, $taxonomy );
 
 		$agents = ScoperAdminBulk::get_agents($role_bases);
 		$agent_names = ScoperAdminBulk::agent_names($agents);
 		$agent_list_prefix = ScoperAdminBulk::agent_list_prefixes();
 		$agent_caption_plural = ScoperAdminBulk::agent_captions_plural($role_bases);
 		
-		$default_restrictions = $scoper->get_default_restrictions(TERM_SCOPE_RS);
+		$default_restrictions = $this->scoper->get_default_restrictions(TERM_SCOPE_RS);
 		$default_strict_roles = ( ! empty($default_restrictions[$taxonomy] ) ) ? array_flip(array_keys($default_restrictions[$taxonomy])) : array();
 
 		require_once('admin_ui_lib_rs.php');
-		$table_captions = ScoperAdminUI::restriction_captions(TERM_SCOPE_RS, $tx, $tx->display_name, $tx->display_name_plural);
+		$table_captions = ScoperAdminUI::restriction_captions(TERM_SCOPE_RS, $tx, $tx->labels->singular_name, $tx->labels->name );
 
 		echo '<br />';
 		$url = "admin.php?page=rs-category-restrictions_t#item-$term_id";

@@ -63,19 +63,24 @@ function wpp_cache_delete($id, $flag = '', $append_blog_suffix = true) {
 	return $wpp_object_cache->delete($id, $flag);
 }
 
-function wpp_cache_flush() {
+function wpp_cache_flush_all_sites() {
+	return wpp_cache_flush( true );
+}
+
+function wpp_cache_flush( $all_sites = false ) {
 	global $wpp_object_cache;
 
 	if ( empty($wpp_object_cache) || ! is_object($wpp_object_cache) ) {
 		
 		if ( empty($wpp_object_cache->auto_flushed) ) {
 			//rs_errlog('need flush - failed wpp_cache_flush');
-			update_option( 'scoper_need_cache_flush', true );
+			$val = $all_sites ? 'all_sites' : true;
+			update_option( 'scoper_need_cache_flush', $val );
 		}
 		return;
 	}
-		
-	return $wpp_object_cache->flush();
+	
+	return $wpp_object_cache->flush( '', $all_sites );
 }
 
 // added by kevinB for use with Role Scoper
@@ -119,25 +124,27 @@ function wpp_cache_get($id, $flag = '', $append_blog_suffix = true) {
 	return $wpp_object_cache->get($id, $flag);
 }
 
-function wpp_cache_init( $sitewide_groups = true ) {
+function wpp_cache_init( $sitewide_groups = true, $use_cache_subdir = true ) {
 	global $wpp_object_cache;
 	
 	if ( isset($wpp_object_cache) )
 		$wpp_object_cache->save();
 		
-	$GLOBALS['wpp_object_cache'] = new WP_Persistent_Object_Cache();
+	$GLOBALS['wpp_object_cache'] = new WP_Persistent_Object_Cache( $use_cache_subdir );
 	
 	if ( IS_MU_RS && $sitewide_groups )
 		$GLOBALS['wpp_object_cache']->global_groups = array_merge( $GLOBALS['wpp_object_cache']->global_groups, array( 'all_usergroups', 'group_members' ) );
 	
 	// added by kevinB: if a flush fails, try try again (and meanwhile, DON'T use the old invalid cache)
 	$need_flush = ( function_exists('scoper_get_option') ) ? scoper_get_option('need_cache_flush') : get_option('scoper_need_cache_flush');
+	
 	if ( $need_flush ) {
 		//rs_errlog('cache init: performing pending flush');
 		delete_option('scoper_need_cache_flush');
 		
 		$wpp_object_cache->auto_flushed = true;
-		$GLOBALS['wpp_object_cache']->flush();
+		$all_sites = ( 'all_sites' == $need_flush );
+		$GLOBALS['wpp_object_cache']->flush( '', $all_sites );
 	}
 		
 }
@@ -161,8 +168,8 @@ function wpp_cache_replace($key, $data, $flag = '', $expire = 0, $append_blog_su
 	return $wpp_object_cache->replace($key, $data, $flag, $expire);
 }
 
-function wpp_cache_set($key, $data, $flag = '', $expire = 0, $append_blog_suffix = true) {
-	if ( ! empty($_POST) )	// kevinB: reduce elusive anomolies and allow flushing optimization by disabling cache updates during POST operation
+function wpp_cache_set($key, $data, $flag = '', $expire = 0, $append_blog_suffix = true, $force_update = false) {
+	if ( ! empty($_POST) && ! $force_update )	// kevinB: reduce elusive anomolies and allow flushing optimization by disabling cache updates during POST operation
 		return;
 
 	global $wpp_object_cache;
@@ -180,16 +187,17 @@ function wpp_cache_set($key, $data, $flag = '', $expire = 0, $append_blog_suffix
 	return $wpp_object_cache->set($key, $data, $flag, $expire);
 }
 
+function wpp_cache_force_set( $key, $data, $flag = '', $expire = 0, $append_blog_suffix = true ) {
+	return wpp_cache_set( $key, $data, $flag, $expire, $append_blog_suffix, true );
+}
+
 // returns true on success
 function wpp_cache_test( &$err_msg, $text_domain = '' ) {
 	// intentionally not using WP_CACHE_DIR because we need a known location so rs_cache_flush.php can delete files without loading WP
 	$cache_dir = ( defined( 'CACHE_PATH' ) ) ? CACHE_PATH : WP_CONTENT_DIR.DIRECTORY_SEPARATOR.'cache'.DIRECTORY_SEPARATOR;
 	$err = false;
 	
-	if ( ! defined( 'ENABLE_PERSISTENT_CACHE' ) ) {
-		$err_msg = __('The file cache will not operate because ENABLE_PERSISTENT_CACHE is not defined in wp-config.php or role-scoper.php.', 'scoper');
-		$err = true;
-	} elseif ( defined( 'DISABLE_PERSISTENT_CACHE' ) ) {
+	if ( defined( 'DISABLE_PERSISTENT_CACHE' ) ) {
 		$err_msg = __('The file cache will not operate because DISABLE_PERSISTENT_CACHE is defined, possibly in wp-config.php or role-scoper.php.', 'scoper');
 		$err = true;
 	} elseif ( ! is_writable($cache_dir) || ! @ is_dir($cache_dir)) {
@@ -247,14 +255,15 @@ class WP_Persistent_Object_Cache {
 	var $secret = '';
 	var $is_404;
 	
-	function WP_Persistent_Object_Cache() {
+	// note: option for non-subdirectory init is to support one-time flushing of root-stored cache on version update
+	function WP_Persistent_Object_Cache( $use_subdir = true ) {
 		global $blog_id;
 		
 		// Destructor method is not reliable.  Call non-object function manually via WP shutdown hook instead.
 		// Also leave this method in place as a backup in case WP shutdown hook is not called.
 		register_shutdown_function(array(&$this, "__destruct"));
 		
-		if ( defined('DISABLE_PERSISTENT_CACHE') || ! defined('ENABLE_PERSISTENT_CACHE') )
+		if ( defined('DISABLE_PERSISTENT_CACHE') )
 			return;
 
 		// Disable the persistent cache if safe_mode is on.
@@ -274,6 +283,21 @@ class WP_Persistent_Object_Cache {
 		} else {
 			if (is_writable(WP_CONTENT_DIR)) {
 				$this->cache_enabled = true;
+			}
+		}
+
+		// put the entire RS cache in a subfolder to avoid clashing with other plugins
+		//	
+		if ( $use_subdir ) { // support init to root cache folder for one-time flush on version update before using subfolder
+			$this->cache_dir = $this->cache_dir . 'rs/';
+			
+			if ( ! file_exists( $this->cache_dir ) ) {
+				if ( @ mkdir( $this->cache_dir ) ) {
+					$stat = stat(WP_CONTENT_DIR);
+					$dir_perms = $stat['mode'] & 0007777; // Get the permission bits.
+					@ chmod( $this->cache_dir, $dir_perms );
+				} else
+					$this->cache_enabled = false;
 			}
 		}
 
@@ -345,7 +369,7 @@ class WP_Persistent_Object_Cache {
 	// only be deleted by flushing the entire cache, or by explicit deletion of each
 	// user/group id.  Neither option is reasonable; we need the ability to flush a wp_cache group. 
 	//
-	function flush($group = '') {
+	function flush( $group = '', $all_sites = false ) {
 		if ( empty( $this->cache_enabled ) )
 			return true;
 
@@ -360,8 +384,8 @@ class WP_Persistent_Object_Cache {
 			return false;
 		}
 		
-		$this->rm_cache_dir($group);
-		
+		$this->rm_cache_dir( $group, $all_sites );
+
 		//rs_errlog ("<br />removing cached group $group:<br />");
 		
 		if ( $group ) {
@@ -436,7 +460,7 @@ class WP_Persistent_Object_Cache {
 	}
 
 	function get_group_dir($group) {
-		if (false !== array_search($group, $this->global_groups))
+		if ( false !== array_search($group, $this->global_groups) )
 			return $group;
 
 		return "{$this->blog_id}/$group";
@@ -457,7 +481,7 @@ class WP_Persistent_Object_Cache {
 	function make_group_dir($group, $perms) {
 		$group_dir = $this->get_group_dir($group);
 		$make_dir = '';
-		foreach (split('/', $group_dir) as $subdir) {
+		foreach ( explode('/', $group_dir) as $subdir ) {
 			$make_dir .= "$subdir/";
 			if (!file_exists($this->cache_dir.$make_dir)) {
 				// kevinB: don't make an empty cache entry following unnecessary delete call
@@ -480,12 +504,16 @@ class WP_Persistent_Object_Cache {
 	}
 
 	// modified by kevinB for use with Role Scoper ( see explanation above flush method )
-	function rm_cache_dir($group = '') {
+	function rm_cache_dir( $group = '', $all_sites = false ) {
 		// BEGIN Rolescoper Modification: optionally reference group subdir
-		$group_dir = ( $group ) ? $this->get_group_dir($group) : '';
-		
+		if ( $group )
+			$group_dir = $this->get_group_dir( $group );
+		else
+			$group_dir = ( $all_sites ) ? '' : $this->blog_id;
+
 		$dir = $this->cache_dir . $group_dir;
 		$dir = rtrim($dir, DIRECTORY_SEPARATOR);
+		
 		// END RoleScoper Modification --//
 		
 		$top_dir = $dir;
@@ -514,16 +542,18 @@ class WP_Persistent_Object_Cache {
 				return false;
 			}
 			
-			while (($file = @ readdir($dh)) !== false) {
-				if ($file == '.' or $file == '..')
+			while ( ($file = @ readdir($dh) ) !== false) {
+				if ( $file == '.' or $file == '..')
 					continue;
 
-				if (@ is_dir($dir . DIRECTORY_SEPARATOR . $file))
+				if ( @ is_dir( $dir . DIRECTORY_SEPARATOR . $file ) )
 					$stack[] = $dir . DIRECTORY_SEPARATOR . $file;
-				else if (@ is_file($dir . DIRECTORY_SEPARATOR . $file)) {
-					if ( file_exists($dir . DIRECTORY_SEPARATOR . $file) ) {
-						if ( !@ unlink($dir . DIRECTORY_SEPARATOR . $file)) {
-							$errors++;
+				elseif ( '.htaccess' != $file ) {  // sanity check and allows for last-time flushing of MU/MS cache folder without wiping WP Super Cache again
+					if ( @ is_file( $dir . DIRECTORY_SEPARATOR . $file ) ) {
+						if ( file_exists( $dir . DIRECTORY_SEPARATOR . $file ) ) {
+							if ( ! @ unlink( $dir . DIRECTORY_SEPARATOR . $file ) ) {
+								$errors++;
+							}
 						}
 					}
 				}
@@ -585,7 +615,10 @@ class WP_Persistent_Object_Cache {
 			return true;
 			
 		$this->cache[$group][$id] = $data;
-		unset ($this->non_existant_objects[$group][$id]);
+		
+		if ( isset($this->non_existant_objects[$group][$id]) )
+			unset ($this->non_existant_objects[$group][$id]);
+			
 		$this->dirty_objects[$group][] = $id;
 
 		return true;

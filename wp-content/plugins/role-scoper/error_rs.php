@@ -1,25 +1,35 @@
 <?php
-function scoper_startup_error() {
+function scoper_startup_error( $msg_id = '' ) {
 	// this is the normal situation on first pass after activation
-	if ( ! strpos($_SERVER['SCRIPT_NAME'], 'p-admin/plugins.php') || ( function_exists('is_plugin_active') && is_plugin_active(SCOPER_FOLDER . '/' . SCOPER_BASENAME) ) ) {
-		rs_notice('Role Scoper cannot operate because another plugin or theme has already declared the function "set_current_user" or forced early execution of "pluggable.php".  <strong>All posts, pages and links are currently hidden</strong>.  Please remove the offending plugin, or deactivate Role Scoper to revert to blog-wide Wordpress roles.');
+	if ( 'wp_role_type' == $msg_id ) {
+		awp_notice('Role Scoper cannot operate because the "WP" Role Type is no longer supported.  Please re-activate <a href="http://downloads.wordpress.org/plugin/role-scoper/download/">Role Scoper version 1.2.8 or earlier</a>, set Roles > Options > Role&nbsp;Type to "RS", then re-establish Roles and Restrictions before upgrading.  <strong>All content is hidden until you deactivate this Role Scoper version.</strong>', 'role-scoper' );
+		
+	} elseif ( ( 'plugins.php' != $GLOBALS['pagenow'] ) || ( function_exists('is_plugin_active') && is_plugin_active(SCOPER_FOLDER . '/' . SCOPER_BASENAME) ) ) {
+		awp_notice('Role Scoper cannot operate because another plugin or theme has already declared the function "set_current_user" or forced early execution of "pluggable.php".  <strong>All content is currently hidden</strong>.  Please remove the offending plugin, or deactivate Role Scoper to revert to blog-wide Wordpress roles.', 'role-scoper' );
 	}
-	
+
 	// To prevent inadverant content exposure, default to blocking all content if another plugin steals wp_set_current_user definition.
-	if ( ! strpos($_SERVER['SCRIPT_NAME'], 'p-admin/plugins.php') ) {
+	if ( 'plugins.php' != $GLOBALS['pagenow'] ) {
 		add_filter('posts_where', create_function('$a', "return 'AND 1=2';"), 99);
 		add_filter('posts_results', create_function('$a', "return array();"), 1);
 		add_filter('get_pages', create_function('$a', "return array();"), 99);
 		add_filter('get_bookmarks', create_function('$a', "return array();"), 99);
 		add_filter('get_categories', create_function('$a', "return array();"), 99);
 		add_filter('get_terms', create_function('$a', "return array();"), 99);
-		
+		add_filter('option_sticky_posts', create_function('$a', "return false;"), 99);
+
 		// Also run interference for all custom-defined where_hook, request_filter or results_filter
 		require_once('role-scoper_main.php');
 		
-		global $scoper, $wpdb;
+		global $scoper, $wpdb, $current_user;
+		$buffer_user = $current_user;
+		
+		require_once( 'role-scoper_init.php' );
+		
 		$scoper = new Scoper();
 		$scoper->load_config();
+		
+		$GLOBALS['current_user'] = $buffer_user;
 		
 		foreach( $scoper->data_sources->get_all() as $src ) {
 			if ( ! empty($src->query_hooks->request) )
@@ -34,7 +44,7 @@ function scoper_startup_error() {
 	}
 }
 
-function awp_notice($message, $plugin_name) {
+function awp_notice( $message, $plugin_name ) {
 	// slick method copied from NextGEN Gallery plugin			// TODO: why isn't there a class that can turn this text black?
 	add_action('admin_notices', create_function('', 'echo \'<div id="message" class="error fade" style="color: black">' . $message . '</div>\';'));
 	trigger_error("$plugin_name internal notice: $message");

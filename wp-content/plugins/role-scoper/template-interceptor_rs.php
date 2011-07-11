@@ -7,18 +7,17 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
  * template-interceptor_rs.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  */
 
 class TemplateInterceptor_RS
 {	
-	//var $scoper;
+	var $scoper;
 
 	function TemplateInterceptor_RS() {
-		//global $scoper;
-		//$this->scoper =& $scoper;	
-		
+		$this->scoper =& $GLOBALS['scoper'];	
+
 		if ( scoper_get_option( 'strip_private_caption' ) ) {
 			add_filter('the_title', array(&$this, 'flt_title'), 10, 3);
 		
@@ -53,14 +52,13 @@ class TemplateInterceptor_RS
 					$event_id_in = "'" . implode("','", $event_ids) . "'";
 
 					// now generate and execute a scoped query for readable/unpublished posts
-					$post_qry = "SELECT ID from $wpdb->posts WHERE 1=1 AND $wpdb->posts.ID IN ($event_id_in)";
+					$post_qry = "SELECT ID FROM $wpdb->posts WHERE 1=1 AND $wpdb->posts.ID IN ($event_id_in)";
 					
 					// custom arguments to force inclusion of unpublished posts (only relationship to an unreadable published/private posts can make an event unreadable)
-					$force_statuses = array( 'published', 'private', 'draft', 'future', 'pending' );
 					$reqd_caps = array();
-					$reqd_caps['post'] = array( 'published' => array('read'), 'private' => array('read_private_posts'), 'draft' => array('read'), 'pending' => array('read'), 'future' => array('read') );
+					$reqd_caps['post'] = array( 'publish' => array('read'), 'private' => array('read_private_posts'), 'draft' => array('read'), 'pending' => array('read'), 'future' => array('read') );
 
-					$post_qry = apply_filters( 'objects_request_rs', $post_qry, 'post', 'post', array('skip_teaser' => true, 'force_statuses' => $force_statuses, 'force_reqd_caps' => $reqd_caps) );
+					$post_qry = apply_filters( 'objects_request_rs', $post_qry, 'post', 'post', array('skip_teaser' => true, 'force_reqd_caps' => $reqd_caps) );
 					$post_ids = scoper_get_col($post_qry);
 					$post_id_in = "'" . implode("','", $post_ids) . "'";
 				}
@@ -148,7 +146,7 @@ function is_teaser_rs( $id = '' , $src_name = 'post' ) {
 	if ( ! $id && ( 'post' == $src_name ) ) {
 		global $post;
 		
-		if ( empty($post->ID) )
+		if ( empty($post) || empty($post->ID) )
 			return false;
 			
 		$id = $post->ID;
@@ -160,14 +158,14 @@ function is_teaser_rs( $id = '' , $src_name = 'post' ) {
 
 function is_restricted_rs( $id = '', $src_name = 'post', $op_type = 'read', $scope_criteria = '' ) {
 	global $scoper;
-
+	
 	if ( empty($scoper) || ( is_home() && is_single() && ! $id ) )
 		return false;
 		
 	if ( ( 'post' == $src_name ) && ! $id ) {
 		global $post;
 
-		if ( ! isset($post->ID) )
+		if ( empty($post) || ! isset($post->ID) )
 			return false;
 		
 		$id = $post->ID;
@@ -175,16 +173,18 @@ function is_restricted_rs( $id = '', $src_name = 'post', $op_type = 'read', $sco
 
 	$listed_ids = ( is_single() || is_page() || empty($scoper->listed_ids[$src_name]) ) ? array( $id => true ) : array();
 	
+	global $scoper_role_usage;
+
 	require_once('role_usage_rs.php');
-	$role_usage = new Role_Usage_RS();
-	$role_usage->determine_role_usage_rs($src_name, $listed_ids);
+	$scoper_role_usage = new Role_Usage_RS();
+	$scoper_role_usage->determine_role_usage_rs($src_name, $listed_ids);
 
 	if ( 'object' == $scope_criteria )
-		return ( isset( $scoper->objscoped_ids[$src_name][$id][$op_type] ) );
+		return ( isset( $scoper_role_usage->objscoped_ids[$src_name][$id][$op_type] ) );
 	elseif ( 'term' == $scope_criteria )
-		return ( isset( $scoper->termscoped_ids[$src_name][$id][$op_type] ) );
+		return ( isset( $scoper_role_usage->termscoped_ids[$src_name][$id][$op_type] ) );
 	else
-		return ( isset( $scoper->restricted_ids[$src_name][$id][$op_type] ) );
+		return ( isset( $scoper_role_usage->restricted_ids[$src_name][$id][$op_type] ) );
 }
 
 // legacy

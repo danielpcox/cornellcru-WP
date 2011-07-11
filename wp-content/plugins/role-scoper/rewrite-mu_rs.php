@@ -7,7 +7,7 @@ require_once( 'rewrite-rules_rs.php' );
  * rewrite-mu_rs.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  */
 class ScoperRewriteMU {
@@ -129,22 +129,15 @@ class ScoperRewriteMU {
 		global $wpdb, $blog_id;
 		$blog_ids = scoper_get_col( "SELECT blog_id FROM $wpdb->blogs ORDER BY blog_id" );
 		$orig_blog_id = $blog_id;
-		
-		$siteurl = get_option( 'siteurl' );
-
-			
+	
 		foreach ( $blog_ids as $id ) {
 			switch_to_blog( $id );
 
-			// WP-mu content rules are only inserted if uploads path matches this default structure
-			$dir = ABSPATH . UPLOADBLOGSDIR . "/$id/files/";
-			$url = trailingslashit( $siteurl ) . UPLOADBLOGSDIR . "/$id/files/";
-			
-			$uploads = apply_filters( 'upload_dir', array( 'path' => $dir, 'url' => $url, 'subdir' => '', 'basedir' => $dir, 'baseurl' => $url, 'error' => false ) );
-
+			require_once( 'uploads_rs.php' );
+			$uploads = scoper_get_upload_info();
 			$htaccess_path = trailingslashit($uploads['basedir']) . '.htaccess';
-			
-			ScoperRewrite::insert_with_markers( $htaccess_path, 'Role Scoper', '' );
+			if ( file_exists( $htaccess_path ) )
+				ScoperRewrite::insert_with_markers( $htaccess_path, 'Role Scoper', '' );
 		}
 		
 		switch_to_blog( $orig_blog_id );

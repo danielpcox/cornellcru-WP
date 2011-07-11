@@ -4,8 +4,9 @@ Plugin Name: Peter's Collaboration E-mails
 Plugin URI: http://www.theblog.ca/wordpress-collaboration-emails
 Description: Enhance the "Submit for Review" feature for Contributor users. This plugin enables automatic e-mails to the relevant users when posts are pending, when they are approved, and when their statuses are changed from "pending" back to "draft".
 Author: Peter Keung
-Version: 1.4.0
+Version: 1.5.0
 Change Log:
+2010-11-27  1.5.0: Support for custom post types and taxonomies
 2010-09-02  1.4.0: Added ability to specify contributor and moderator roles for sites with custom roles and capabilities
 2010-04-25  1.3.5: E-mails are now all encoded in UTF-8.
 2010-01-11  1.3.4: Plugin now removes its database tables when it is uninstalled, instead of when it is deactivated. This prevents the collaboration rules from being deleted when upgrading WordPress automatically.
@@ -66,14 +67,19 @@ $pce_db_collab = $wpdb->prefix . 'collabwriters';
 
 global $pce_db_cats;
 // Name of the database table that will hold category-specific moderators
+// This table is no longer used, but defined here for upgrading and uninstalling purposes
 $pce_db_cats = $wpdb->prefix . 'collabcats';
+
+global $pce_db_collabrules;
+// Name of the database table that will hold post-type-specific moderators
+$pce_db_collabrules = $wpdb->prefix . 'collabrules';
 
 // -------------------------------------------
 // You should not have to edit below this line
 // -------------------------------------------
 
 global $pce_version;
-$pce_version = '1.4.0';
+$pce_version = '1.5.0';
 
 // Enable translations
 add_action('init', 'pce_textdomain');
@@ -82,7 +88,7 @@ function pce_textdomain() {
 }
 
 function pce_pending($pce_newstatus, $pce_oldstatus, $pce_object) {
-    global $wpdb, $pce_db_group, $pce_db_collab, $pce_db_cats, $pce_siteurl, $pce_blogname, $pce_fromname, $pce_fromaddress, $pce_whoapproved, $user_identity, $user_email, $_POST;
+    global $wpdb, $pce_db_group, $pce_db_collab, $pce_siteurl, $pce_blogname, $pce_fromname, $pce_fromaddress, $pce_whoapproved, $user_identity, $user_email, $_POST;
 
     // The person who wrote the post
     $pce_thisuser = get_userdata($pce_object->post_author);
@@ -97,12 +103,6 @@ function pce_pending($pce_newstatus, $pce_oldstatus, $pce_object) {
 
     // Line break, which we will use many times in constructing e-mails
     $pce_eol = "\r\n";
-
-    // Post category
-    $pce_postcats = $_POST['post_category'];
-    if (0 == count($pce_postcats) || !is_array($pce_postcats)) {
-        $pce_postcats = array(get_option('default_category'));
-    }
     
     // If a note was submitted, we will use it in the e-mails
     if (isset($_POST['ppn_post_note']) && $_POST['ppn_post_note'] != '') {
@@ -128,15 +128,18 @@ function pce_pending($pce_newstatus, $pce_oldstatus, $pce_object) {
             }
         }
 
-        // See if there are moderators for the post category
-        $pce_postcat = implode(',', $pce_postcats);
-        $pce_moderators = $wpdb->get_results('SELECT moderators FROM ' . $pce_db_cats . ' WHERE catid IN (' . $pce_postcat . ')');
+        // Get post type rules
+        $pce_moderators = pce_get_post_type_moderators( $pce_object );
 
-        if ($pce_moderators) {
-            foreach($pce_moderators as $pce_moderator) {
-                $pce_moderators_unserialized = array_merge(unserialize($pce_moderator->moderators), $pce_moderators_unserialized);
+        if( count( $pce_moderators ) )
+        {
+            foreach( $pce_moderators as $pce_moderator )
+            {
+                $pce_moderators_unserialized = array_merge( unserialize( $pce_moderator ), $pce_moderators_unserialized );
             }
         }
+        
+        
         // Remove duplicate entries for groups and categories
         $pce_moderators_unserialized = array_unique($pce_moderators_unserialized);
 
@@ -304,9 +307,119 @@ function pce_pending($pce_newstatus, $pce_oldstatus, $pce_object) {
 
 }
 
+function pce_get_post_type_moderators( $post_object )
+{
+    global $wpdb, $pce_db_collabrules;
+
+    $post_type_moderators = array();
+
+    // Get this post's taxonomies
+    // First, find out its post type
+    // If post type is a revision, fetch the post's parent
+    if( 'revision' == $post_object->post_type )
+    {
+        $post_object = get_post( $post_object->post_parent );
+    }
+    
+    // Get moderators for $post_object->post_type
+    $post_type_rules = $wpdb->get_results( 'SELECT taxonomy, term, moderators FROM ' . $pce_db_collabrules . ' WHERE post_type = \'' . $post_object->post_type . '\'', OBJECT );
+
+    if( $post_type_rules )
+    {
+        // Prepare the list of moderator rules for this post type in an easily accessible PHP variable
+        $post_type_moderator_rules = array();
+        foreach( $post_type_rules as $post_type_rule )
+        {
+            $term = strtolower( $post_type_rule->term );
+            if( isset( $post_type_moderator_rules[$post_type_rule->taxonomy] ) )
+            {
+                $post_type_moderator_rules[$post_type_rule->taxonomy][$term] = $post_type_rule->moderators;
+                // Store the term as its name as well
+                // This is because they're submitted as their name or ID (in the case of categories)
+                // We're also storing them as their ID if they exist
+                if( is_numeric( $post_type_rule->term ) )
+                {
+                    $term_object = get_term( $post_type_rule->term, $post_type_rule->taxonomy );
+                    if( $term_object )
+                    {
+                        $term = strtolower( $term_object->name );
+                        $post_type_moderator_rules[$post_type_rule->taxonomy][$term] = $post_type_rule->moderators;
+                    }
+                }
+            }
+            else
+            {
+                $post_type_moderator_rules[$post_type_rule->taxonomy] = array( $term => $post_type_rule->moderators );
+                // Same as above regarding term name and ID
+                if( is_numeric( $post_type_rule->term ) )
+                {
+                    $term_object = get_term( $post_type_rule->term, $post_type_rule->taxonomy );
+                    if( $term_object )
+                    {
+                        $term = strtolower( $term_object->name );
+                        $post_type_moderator_rules[$post_type_rule->taxonomy][$term] = $post_type_rule->moderators;
+                    }
+                }
+            }
+        }
+        // Loop through the categories
+        if( isset( $_POST['post_category'] ) )
+        {
+            $post_categories = $_POST['post_category'];
+            if( 0 == count( $post_categories ) || ! is_array( $post_categories) )
+            {
+                $post_categories = array( get_option( 'default_category' ) );
+            }
+            foreach( $post_categories as $post_category )
+            {
+                if( isset( $post_type_moderator_rules['category'][$post_category] ) )
+                {
+                    $post_type_moderators[] = $post_type_moderator_rules['category'][$post_category];
+                }
+            }
+        }
+        
+        // Loop through all taxonomies
+        if( isset( $_POST['tax_input'] ) )
+        {
+            $post_taxonomies = $_POST['tax_input'];
+            foreach( $post_taxonomies as $taxonomy => $term_list )
+            {
+                // In editor mode, terms are either in an array checkbox (like categories) or freeform listed, comma-separated (like tags)
+                if( is_array( $term_list ) )
+                {
+                    $terms = $term_list;
+                }
+                else
+                {
+                    $terms = explode( ',', $term_list );
+                }
+                if( $terms )
+                {
+                    foreach( $terms as $term )
+                    {
+                        $term = strtolower( trim( $term ) );
+                        if( isset( $post_type_moderator_rules[$taxonomy][$term] ) )
+                        {
+                            $post_type_moderators[] = $post_type_moderator_rules[$taxonomy][$term];
+                        }
+                    }
+                }
+            }
+            
+        }
+        // Add moderators for "all" taxonomies
+        if( isset( $post_type_moderator_rules['all'] ) )
+        {
+            $post_type_moderators[] = $post_type_moderator_rules['all'][''];
+        }
+    }
+    return $post_type_moderators;
+}
+
 add_filter('transition_post_status', 'pce_pending','',3);
 
-if (is_admin()) { // This line makes sure that all of this code below only runs if someone is in the WordPress back-end
+if( is_admin() ) { // This line makes sure that all of this code below only runs if someone is in the WordPress back-end
 
 // This generates an option of checkbox output for contributors or editors and administrators in the system, as well as an "admin" and "other" choice
 function pce_usersoptions($pce_existingmoderators = array(), $pce_contributors_or_moderators, $pce_optionsoutput = true, $pce_numbered = 0) {
@@ -423,15 +536,7 @@ function pce_mod_array($pce_mods, $pce_add, $pce_other_field) {
 // Processes changes to the moderator rules (who approves whose posts)
 function pce_modsubmit() {
     global $wpdb, $pce_db_group;
-    
-    $pce_whitespace = '        ';
-    
-    // Open the informational div
-    $pce_process_submit = '<div id="message" class="updated fade">' . "\n";
-    
-    // Code to close the informational div
-    $pce_process_close = $pce_whitespace . '</div>' . "\n";
-    
+        
     // ----------------------------------
     // Process the default mod changes
     // ----------------------------------
@@ -448,43 +553,32 @@ function pce_modsubmit() {
 
         // It return an error
         else {
-            $pce_process_submit .= '<p><strong>' . $pce_defaultmods_update . '</strong></p>' . "\n";
-            $pce_process_submit .= $pce_process_close;
-            return $pce_process_submit;
+            return array( 'error', $pce_process_close );
         }
         
         $pce_defaultmodsuccess = $wpdb->query('UPDATE ' . $pce_db_group . ' SET moderators = \'' . $pce_defaultmod_serialized . '\' WHERE collabgroup = 1');
         
         if ($pce_defaultmodsuccess) {
-            $pce_process_submit .= $pce_whitespace . '    <p><strong>' . __('Default moderators updated.', 'peters_collaboration_emails') . '</strong></p>' . "\n";
+            return array( 'success', __( 'Default moderators updated.', 'peters_collaboration_emails' ) );
         }
     }
     else {
-        $pce_process_submit .= $pce_whitespace . '    <p><strong>' . __('You must have at least one default mod.', 'peters_collaboration_emails') . '</strong></p>' . "\n";
+        return array( 'error', __('You must have at least one default mod.', 'peters_collaboration_emails') );
     }
 
-    // Close the informational div
-    $pce_process_submit .= $pce_process_close;
-    
-    // We've made it this far, so success!
-    return $pce_process_submit;
+    // We've made it this far, so nothing to report
+    return false;
 }
 
 function pce_rulesubmit() {
     global $wpdb, $pce_db_group;
-
-    $pce_whitespace = '        ';
-
-    // Open the informational div
-    $pce_process_submit = '<div id="message" class="updated fade">' . "\n";
-
-    // Code to close the informational div
-    $pce_process_close = $pce_whitespace . '</div>' . "\n";
     
     // ----------------------------------
     // Process the rule changes
     // ----------------------------------
 
+    $updated = false;
+    
     $pce_usermods = $_POST['pce_usermod']; // An array of moderators for each group (contains User IDs, "admin" or strictly e-mail addresses)
     $pce_groupids = $_POST['pce_groupid']; // An array of group IDs whose moderators need to be updated
     $pce_num_submits = array_keys($pce_groupids);
@@ -499,9 +593,7 @@ function pce_rulesubmit() {
             $pce_groupname = $wpdb->get_var('SELECT groupname FROM ' . $pce_db_group . ' WHERE collabgroup = ' . $pce_groupid);
             
             if (!$pce_groupname) {
-                $pce_process_submit .= '<p><strong>' . sprintf(__('**** ERROR: Group with ID of %d does not exist ****', 'peters_collaboration_emails'), $pce_groupid) . '</strong></p>' . "\n";
-                $pce_process_submit .= $pce_process_close;
-                return $pre_process_submit;
+                return array( 'error', sprintf(__('**** ERROR: Group with ID of %d does not exist ****', 'peters_collaboration_emails'), $pce_groupid ) );
             }
             
             if ($pce_usermod) {
@@ -514,40 +606,35 @@ function pce_rulesubmit() {
                 
                 // It returns an error
                 else {
-                    $pce_process_submit .= '<p><strong>' . $pce_usermod_update . '</strong></p>' . "\n";
-                    $pce_process_submit .= $pce_process_close;
-                    return $pce_process_submit;
+                    return array( 'error', $pce_process_close );
                 }
                 
                 $pce_usermodsuccess = $wpdb->query('UPDATE ' . $pce_db_group . ' SET moderators = \'' . $pce_usermod_serialized . '\' WHERE collabgroup = ' . $pce_groupid);
-                if ($pce_usermodsuccess) {
-                    $pce_process_submit .= $pce_whitespace . '    <p><strong>' . sprintf(__('Moderators for the group %s updated.', 'peters_collaboration_emails'), $pce_groupname) . '</strong></p>' . "\n";
+                if( $pce_usermodsuccess )
+                {
+                    $updated = true;
                 }
             }
             else {
-                $pce_process_submit .= $pce_whitespace . '    <p><strong>' . sprintf(__('You must have at least one default mod for the group "%s".', 'peters_collaboration_emails'), $pce_groupname) . '</strong></p>' . "\n";
+                return array( 'error', sprintf( __( 'You must have at least one default mod for the group "%s".', 'peters_collaboration_emails' ), $pce_groupname ) );
             }
         }
     }
 
-    // Close the informational div
-    $pce_process_submit .= $pce_process_close;
-    
-    // We've made it this far, so success!
-    return $pce_process_submit;
+    if( $updated )
+    {
+        // We've made it this far, so success!
+        return array( 'success', sprintf( __( 'Group moderators updated.', 'peters_collaboration_emails' ) ) );
+    }
+    else
+    {
+        return false;
+    }
 }
 
 function pce_groupsubmit() {
     global $wpdb, $pce_db_group, $pce_db_collab;
 
-    $pce_whitespace = '        ';
-    
-    // Open the informational div
-    $pce_process_submit = '<div id="message" class="updated fade">' . "\n";
-    
-    // Code for closing the informational div
-    $pce_process_close = $pce_whitespace . '</div>' . "\n";
-    
     // ----------------------------------
     // Process a new group addition
     // ----------------------------------
@@ -560,9 +647,7 @@ function pce_groupsubmit() {
         // Check a contributor (basically that this contributor exists)
         $check_contributor = get_userdata($addrule);
         if (!$check_contributor) {
-            $pce_process_submit .= '<p><strong>' . __('**** ERROR: Invalid new group contributor user ID ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-            $pce_process_submit .= $pce_process_close;
-            return $pce_process_submit;        
+            return array( 'error', __( '**** ERROR: Invalid new group contributor user ID ****', 'peters_collaboration_emails' ) );
         }
         
         // Check the added group moderator (admin, user ID, or e-mail address)
@@ -571,9 +656,7 @@ function pce_groupsubmit() {
         if (is_numeric($addgroupmod)) {
             $pce_validuser = get_userdata($addgroupmod);
             if (!$pce_validuser) {
-                $pce_process_submit .= '<p><strong>' . __('**** ERROR: Invalid new group moderator user ID ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-                $pce_process_submit .= $pce_process_close;
-                return $pce_process_submit;
+                return array( 'error', __( '**** ERROR: Invalid new group moderator user ID ****', 'peters_collaboration_emails' ) );
             }
             $addgroupmod = intval($addgroupmod);
         }
@@ -583,9 +666,7 @@ function pce_groupsubmit() {
             $addgroupmod = $_POST['pce_groupmodadd'];
         }
         elseif ($addgroupmod != 'admin') {
-            $pce_process_submit .= '<p><strong>' . __('**** ERROR: Invalid new group moderator submitted ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-            $pce_process_submit .= $pce_process_close;
-            return $pce_process_submit;
+            return array( 'error', __( '**** ERROR: Invalid new group moderator submitted ****', 'peters_collaboration_emails' ) );
         }
         
         $addgroupmod_serialized = serialize(array($addgroupmod));
@@ -593,34 +674,23 @@ function pce_groupsubmit() {
         if ($pce_addgroupsuccess) {
             $pce_addwritersuccess = $wpdb->query('INSERT INTO ' . $pce_db_collab . ' (groupid, writerid) VALUES (LAST_INSERT_ID(), ' . $addrule . ')');
             if ($pce_addwritersuccess) {
-                $pce_process_submit .= $pce_whitespace . '    <p><strong>' . __('New group created.', 'peters_collaboration_emails') . '</strong></p>' . "\n";
+                return array( 'success', __( 'New group created.', 'peters_collaboration_emails' ) );
             }
             else {
-                $pce_process_submit .= '<p><strong>' . __('**** ERROR: Unknown query error when adding a collaborator to the new group ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-                $pce_process_submit .= $pce_process_close;
-                return $pce_process_submit;  
+                return array( 'error', __( '**** ERROR: Unknown query error when adding a collaborator to the new group ****', 'peters_collaboration_emails' ) );
             }
         }
         else {
-            $pce_process_submit .= '<p><strong>' . __('**** ERROR: Unknown query error when creating new group ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-            $pce_process_submit .= $pce_process_close;
-            return $pce_process_submit;            
+            return array( 'error', __( '**** ERROR: Unknown query error when creating new group ****', 'peters_collaboration_emails' ) );
         }
     }
     
     else {
-        $pce_process_submit .= '<p><strong>' . __('**** ERROR: Not all necessary group information was submitted to add a group ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-        $pce_process_submit .= $pce_process_close;
-        return $pce_process_submit;
+        return array( 'error', __( '**** ERROR: Not all necessary group information was submitted to add a group ****', 'peters_collaboration_emails' ) );
     }
     
-    // 
-
-    // Close the informational div
-    $pce_process_submit .= $pce_process_close;
-    
-    // We've made it this far, so success!
-    return $pce_process_submit;
+    // We've made it this far, so nothing to do
+    return false;
 }
 
 // Processes changes to a group name and its members
@@ -719,24 +789,14 @@ function pce_edit_group_submit() {
 function pce_delete_group_submit() {
     global $wpdb, $pce_db_group, $pce_db_collab;
     
-    // Open the informational div
-    $pce_process_submit = '<div id="message" class="updated fade">' . "\n";
-    
-    // Code to close the informational div
-    $pce_process_close = $pce_whitespace . '</div>' . "\n";
-
     $pce_groupid = intval($_POST['pce_groupid']);
     
     $pce_groupname = $wpdb->get_var('SELECT groupname FROM ' . $pce_db_group . ' WHERE collabgroup = ' . $pce_groupid);
     
     if (!$pce_groupname) {
-        $pce_process_submit .= '<p><strong>' . __('**** ERROR: That group does not exist ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-        $pce_process_submit .= $pce_process_close;
-        return $pce_process_submit;    
+        return array( 'error', __( '**** ERROR: That group does not exist ****', 'peters_collaboration_emails' ) );
     }
 
-    $pce_whitespace = '        ';
-    
     // ----------------------------------
     // Process the group deletion
     // ----------------------------------
@@ -748,188 +808,35 @@ function pce_delete_group_submit() {
     $pce_remove_group = $wpdb->query('DELETE FROM ' . $pce_db_group . ' WHERE collabgroup = ' . $pce_groupid . ' LIMIT 1');
     
     if ($pce_remove_contributors && $pce_remove_group) {
-        $pce_process_submit .= '<p><strong>' . sprintf(__('Group %s successfully deleted.', 'peters_collaboration_emails'), $pce_groupname) . '</strong></p>' . "\n";    
+        return array( 'success', sprintf( __( 'Group %s successfully deleted.', 'peters_collaboration_emails' ), $pce_groupname ) );
     }
     else {
-        $pce_process_submit .= '<p><strong>' . __('**** ERROR: Database problem in removing the group. ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";       
+        return array( 'error', __( '**** ERROR: Database problem in removing the group. ****', 'peters_collaboration_emails' ) );
     }
 
-    // Close the informational div
-    $pce_process_submit .= $pce_process_close;
-    
-    // Return the good or bad news
-    return $pce_process_submit;
-}
-
-// Edit category-specific moderators
-
-function pce_catsubmit() {
-    global $wpdb, $pce_db_cats;
-
-    $pce_whitespace = '        ';
-
-    // Open the informational div
-    $pce_process_submit = '<div id="message" class="updated fade">' . "\n";
-
-    // Code to close the informational div
-    $pce_process_close = $pce_whitespace . '</div>' . "\n";
-    
-    // ----------------------------------
-    // Process the category-specific moderator changes
-    // ----------------------------------
-    $pce_catmods = $_POST['pce_catmod']; // An array of moderators for each group (contains User IDs, "admin" or strictly e-mail addresses)
-    $pce_catids = $_POST['pce_catid']; // An array of category IDs whose moderators need to be updated
-    $pce_num_submits = array_keys($pce_catids);
-
-    if ($pce_num_submits) {
-        foreach($pce_num_submits as $pce_num_submit) {
-            $pce_catmods_update = array();
-            $pce_catmod = $pce_catmods[$pce_num_submit];
-            $pce_catid = intval($pce_catids[$pce_num_submit]);
-            
-            // Does this category exist?
-            $pce_catname = get_cat_name($pce_catid);
-            
-            if (!$pce_catname) {
-                $pce_process_submit .= '<p><strong>' . sprintf(__('**** ERROR: Category with ID of %d does not exist ****', 'peters_collaboration_emails'), $pce_catid) . '</strong></p>' . "\n";
-                $pce_process_submit .= $pce_process_close;
-                return $pre_process_submit;
-            }
-            
-            if ($pce_catmod) {
-                $pce_catmod_update = pce_mod_array($pce_catmod, $_POST['addcatmod'][$pce_num_submit], $_POST['pce_catmodadd'][$pce_num_submit]);
-
-                // Nicely scrubbed array of mods to serialize
-                if (is_array($pce_catmod_update)) {
-                    $pce_catmod_serialized = serialize($pce_catmod_update);
-                }
-                // It returns an error
-                else {
-                    $pce_process_submit .= '<p><strong>' . $pce_catmod_update . '</strong></p>' . "\n";
-                    $pce_process_submit .= $pce_process_close;
-                    return $pce_process_submit;
-                }
-                
-                $pce_catmodsuccess = $wpdb->update(
-                    $pce_db_cats, 
-                    array ('moderators' => $pce_catmod_serialized),
-                    array ('catid' => $pce_catid));
-                    
-                if ($pce_catmodsuccess) {
-                    $pce_process_submit .= $pce_whitespace . '    <p><strong>' . sprintf(__('Moderators for the category "%s" updated.', 'peters_collaboration_emails'), $pce_catname) . '</strong></p>' . "\n";
-                }
-            }
-            else {
-                $pce_process_submit .= $pce_whitespace . '    <p><strong>' . sprintf(__('You must have at least one default mod for the category "%s".', 'peters_collaboration_emails'), $pce_catname) . '</strong></p>' . "\n";
-            }
-        }
-    }
-    
-    // Close the informational div
-    $pce_process_submit .= $pce_process_close;
-    
-    // We've made it this far, so success!
-    return $pce_process_submit;
-}
-
-function pce_addcatsubmit() {
-    global $wpdb, $pce_db_cats;
-
-    $pce_whitespace = '        ';
-    
-    // Open the informational div
-    $pce_process_submit = '<div id="message" class="updated fade">' . "\n";
-    
-    // Code for closing the informational div
-    $pce_process_close = $pce_whitespace . '</div>' . "\n";
-    
-    // ----------------------------------
-    // Process a new category moderator rule addition
-    // ----------------------------------
-
-    if ($_POST['addcatmod'] != -1) {
-        $addcat = intval($_POST['cat']);
-        $addcatmod = $_POST['addcatmod'];
-        
-        // Make sure this category exists
-        $addcat_name = get_cat_name($addcat);
-        if (!$addcat_name) {
-            $pce_process_submit .= '<p><strong>' . __('**** ERROR: Invalid category ID ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-            $pce_process_submit .= $pce_process_close;
-            return $pce_process_submit;        
-        }
-        
-        // Check the added category moderator (admin, user ID, or e-mail address)
-
-        // Check that it is a valid user
-        if (is_numeric($addcatmod)) {
-            $pce_validuser = get_userdata($addcatmod);
-            if (!$pce_validuser) {
-                $pce_process_submit .= '<p><strong>' . __('**** ERROR: Invalid new category moderator user ID ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-                $pce_process_submit .= $pce_process_close;
-                return $pce_process_submit;
-            }
-            $addcatmod = intval($addcatmod);
-        }
-            
-        // If the dropdown equals "other" then look for content in pce_catmodadd, which had better be an e-mail address
-        elseif ($addcatmod == 'other' && is_email($_POST['pce_catmodadd'])) {
-            $addcatmod = $_POST['pce_catmodadd'];
-        }
-        elseif ($addcatmod != 'admin') {
-            $pce_process_submit .= '<p><strong>' . __('**** ERROR: Invalid new category moderator submitted ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-            $pce_process_submit .= $pce_process_close;
-            return $pce_process_submit;
-        }
-        
-        $addcatmod_serialized = serialize(array($addcatmod));
-        $pce_addcatsuccess = $wpdb->insert(
-            $pce_db_cats,
-            array('catid' => $addcat,
-                'moderators' => $addcatmod_serialized)
-            );
-
-        if ($pce_addcatsuccess) {
-            $pce_process_submit .= $pce_whitespace . '    <p><strong>' . sprintf(__('New moderator added for the %s category.', 'peters_collaboration_emails'), $addcat_name) . '</strong></p>' . "\n";
-        }
-        else {
-            $pce_process_submit .= '<p><strong>' . __('**** ERROR: Unknown query error when adding a new category moderator ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-            $pce_process_submit .= $pce_process_close;
-            return $pce_process_submit;            
-        }
-    }
-    
-    else {
-        $pce_process_submit .= '<p><strong>' . __('**** ERROR: No moderator was submitted for the category ****', 'peters_collaboration_emails') . '</strong></p>' . "\n";
-        $pce_process_submit .= $pce_process_close;
-        return $pce_process_submit;
-    }
-    
-    // 
-
-    // Close the informational div
-    $pce_process_submit .= $pce_process_close;
-    
-    // We've made it this far, so success!
-    return $pce_process_submit;
+    // Nothing to say here
+    return false;
 }
 
 // This is the options page in the WordPress admin panel that enables you to set moderators on a per-user basis
 function pce_optionsmenu() {
-    if (isset($_GET['group'])) {
-        pce_groupoptionsmenu();
+    if( isset( $_GET['group'] ) )
+    {
+        pce_groupoptionsmenu( $_GET['group'] );
     }
-    elseif (isset($_GET['delete_cat'])) {
-        pce_deletecat();
+    elseif( isset( $_GET['delete_post_type_rule'] ) )
+    {
+        pceFunctionCollection::pce_delete_post_type_rule( $_GET['delete_post_type_rule'] );
     }
-    else {
+    else
+    {
         pce_mainoptionsmenu();
     }
 }
 
-function pce_groupoptionsmenu() {
+function pce_groupoptionsmenu( $pce_groupid ) {
     global $wpdb, $pce_db_group, $pce_db_collab;
-    $pce_groupid = intval($_GET['group']);
+    $pce_groupid = intval( $pce_groupid );
     
     $pce_process_submit = '';
     
@@ -989,58 +896,15 @@ function pce_groupoptionsmenu() {
     
 <?php
 }
-function pce_deletecat() {
-    global $wpdb, $pce_db_cats;
-    $pce_catid = intval($_GET['delete_cat']);
-?>
-    <div class="wrap">
-<?php
-    $pce_catname = get_cat_name($pce_catid);
-    if (!$pce_catname || $_POST['pce_delete_cat_yes']) {
-        
-        // This check runs even if you didn't confirm the deletion because maybe the category doesn't even exist
-        $pce_catexists = $wpdb->get_var('SELECT COUNT(*) FROM ' . $pce_db_cats . ' WHERE catid = ' . $pce_catid);
-        if ($pce_catexists == 1) {
-            $wpdb->query('DELETE FROM ' . $pce_db_cats . ' WHERE catid = ' . $pce_catid . ' LIMIT 1');
-            
-            // If they actually wanted to delete the moderators for this category, let them know the result
-            if ($_POST['pce_delete_cat_yes']) {
-                print '<p><strong>' . $pce_catname . '</strong> category successfully deleted.</p>' . "\n";
-                print '<p><a href="?page=' . basename(__FILE__) . '">Back</a></p>' . "\n";
-            }
-        }
-        else {
-            print '<p>That category does not exist.</p>' . "\n";
-            print '<p><a href="?page=' . basename(__FILE__) . '">Back</a></p>' . "\n";
-        }
-    }
 
-    else {
-?>
-        <p><?php sprintf(_e('Are you sure you want to remove the moderators for the <strong>%s</strong> category?', 'peters_collaboration_emails'), $pce_catname); ?></p>
-        <form method="post" action="<?php print '?page=' . basename(__FILE__) . '&delete_cat=' . $pce_catid; ?>">            
-            <p class="submit"><input type="submit" name="pce_delete_cat_yes" value="<?php _e('Yes', 'peters_collaboration_emails'); ?>" /></p>
-        </form>
-        
-        <form method="post" action="<?php print '?page=' . basename(__FILE__); ?>">
-            <p class="submit"><input type="submit" value="<?php _e('No, go back', 'peters_collaboration_emails'); ?>"></p>
-        </form>    
-<?php
-    }
-?>
-    </div>
-<?php
-}
+function pce_mainoptionsmenu()
+{
+    global $wpdb, $pce_db_group, $pce_db_collab, $pce_db_collabrules;
 
-function pce_mainoptionsmenu() {
-    global $wpdb, $pce_db_group, $pce_db_collab, $pce_db_cats;
-    
-    // Upgrade for pre-1.1.0 versions
-    if($wpdb->get_var('SHOW TABLES LIKE \'' . $pce_db_cats . '\'') != $pce_db_cats) {
-        pce_upgrade_category_table();
-    }
-    
-    if ($_POST['pce_modsubmit']) {    
+    // Upgrade check here because it's the only place we know they will visit
+    pce_upgrade();
+
+    if ($_POST['pce_modsubmit']) {
         $pce_process_submit = pce_modsubmit();
     }
     elseif ($_POST['pce_rulesubmit']) {
@@ -1052,11 +916,12 @@ function pce_mainoptionsmenu() {
     elseif ($_POST['pce_delete_group_submit']) {
         $pce_process_submit = pce_delete_group_submit();
     }
-    elseif ($_POST['pce_catsubmit']) {
-        $pce_process_submit = pce_catsubmit();
+    elseif ($_POST['pce_post_type_submit']) {
+        $pce_process_submit = pceFunctionCollection::pce_post_type_submit();
     }
-    elseif ($_POST['pce_addcatsubmit']) {
-        $pce_process_submit = pce_addcatsubmit();
+    elseif( $_POST['pce_add_post_type_submit'] )
+    {
+        $pce_process_submit = pceFunctionCollection::pce_add_post_type_submit();
     }
     
     // -----------------------------------
@@ -1103,7 +968,7 @@ function pce_mainoptionsmenu() {
         ++$i;
     }
     
-    $pce_defaultoptions .= "\n" . $pce_defaultoptionswhitespace . '<p><input type="checkbox" name="pce_defaultmod[' . $i .']" /> ' . __( 'Add:', 'peters_collaboration_emails' ) . ' <select name="adddefaultmod" id="adddefaultmod" onchange="addMod(\'adddefaultmod\');">';
+    $pce_defaultoptions .= "\n" . $pce_defaultoptionswhitespace . '<p><input type="checkbox" name="pce_defaultmod[' . $i .']" /> ' . __( 'Add:', 'peters_collaboration_emails' ) . ' <select name="adddefaultmod" id="adddefaultmod">';
     $pce_defaultoptions .= pce_usersoptions($pce_existingmods, 'moderators');
     $pce_defaultoptions .= "\n" . $pce_defaultoptionswhitespace . '</select></p><p id="pce_adddefaultmod">E-mail: <input type="text" name="pce_defaultmodadd" width="30" maxlength="90" /></p>';
     
@@ -1120,16 +985,13 @@ function pce_mainoptionsmenu() {
         // Set up the default options variable
         $pce_useroptions = '';
         
-        // Whitespace!
-        $pce_useroptionswhitespace = '                ';
-        
         foreach ($pce_usermods_results as $pce_usermod_result) {
         
             // Define the group name
             $pce_groupname = htmlspecialchars($pce_usermod_result[2], ENT_QUOTES);
             
             $pce_useroptions .= '<tr>' . "\n";
-            $pce_useroptions .= $pce_useroptionswhitespace . '<td><p><strong>' . $pce_groupname . '</strong> [<a href="?page=' . basename(__FILE__) . '&group=' . $pce_usermod_result[0]. '">Edit</a>]</p>';
+            $pce_useroptions .= '<td><p><strong>' . $pce_groupname . '</strong> [<a href="?page=' . basename(__FILE__) . '&group=' . $pce_usermod_result[0]. '">Edit</a>]</p>';
 
             
             // Define the group ID
@@ -1140,16 +1002,16 @@ function pce_mainoptionsmenu() {
             
             if ($pce_writers) {
             
-                $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '<p>';
+                $pce_useroptions .= "\n" . '<p>';
                 
                 foreach ($pce_writers as $pce_writer) {
                     $pce_thiswriter = get_userdata($pce_writer[0]);
-                    $pce_useroptions .= "\n" . $pce_useroptionswhitespace . $pce_thiswriter->display_name . '<br />';
+                    $pce_useroptions .= "\n" . $pce_thiswriter->display_name . '<br />';
                 }
-                $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '</p>';
+                $pce_useroptions .= "\n" . '</p>';
             }
             
-            $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '</td>';
+            $pce_useroptions .= "\n" . '</td>';
                         
             // Put this list of e-mail addresses an array since it is stored in the database as serialized
             $pce_usermods = unserialize($pce_usermod_result[1]);
@@ -1159,7 +1021,7 @@ function pce_mainoptionsmenu() {
             // Establish a counter for the checkboxes
             $i = 0;
             
-            $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '<td>';
+            $pce_useroptions .= "\n" . '<td>';
             
             $pce_existingmods = array();
             
@@ -1168,29 +1030,29 @@ function pce_mainoptionsmenu() {
                 // If they've chosen a user ID, get the e-mail address associated with that user ID
                 if (is_int($pce_usermod)) {
                     $pce_userinfo = get_userdata($pce_usermod);
-                    $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '    <p><input type="checkbox" name="pce_usermod[' . $i_m . '][' . $i .']" value="' . $pce_usermod . '" checked="checked" /> ' . $pce_userinfo->display_name . ' (' . $pce_userinfo->user_email . ')</p>';
+                    $pce_useroptions .= "\n" . '<p><input type="checkbox" name="pce_usermod[' . $i_m . '][' . $i .']" value="' . $pce_usermod . '" checked="checked" /> ' . $pce_userinfo->display_name . ' (' . $pce_userinfo->user_email . ')</p>';
                     $pce_existingmods[$pce_usermod] = '';
                 }
 
                 // If they've chosen it to be the site admin, get the site admin e-mail address
                 elseif ($pce_usermod == 'admin') {
-                    $pce_useroptions .= "\n" . $pce_useroptionswhitespace  . '    <p><input type="checkbox" name="pce_usermod[' . $i_m . '][' . $i .']" value="' . $pce_usermod . '" checked="checked" /> ' . __( 'General admin', 'peters_collaboration_emails' ) . '(' . get_option('admin_email') . ')</p>';
+                    $pce_useroptions .= "\n" . '<p><input type="checkbox" name="pce_usermod[' . $i_m . '][' . $i .']" value="' . $pce_usermod . '" checked="checked" /> ' . __( 'General admin', 'peters_collaboration_emails' ) . '(' . get_option('admin_email') . ')</p>';
                     $pce_existingmods['admin'] = '';
                 }
                 
                 // Whatever is left should be a custom e-mail address
                 else {
-                    $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '    <p><input type="checkbox" name="pce_usermod[' . $i_m . '][' . $i .']" value="' . $pce_usermod . '" checked="checked" /> ' . $pce_usermod . '</p>';
+                    $pce_useroptions .= "\n" . '<p><input type="checkbox" name="pce_usermod[' . $i_m . '][' . $i .']" value="' . $pce_usermod . '" checked="checked" /> ' . $pce_usermod . '</p>';
                 }
                 
                 ++$i;
             }
             
-            $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '    <p><input type="checkbox" name="pce_usermod[' . $i_m . '][' . $i .']" /> ' . __( 'Add:', 'peters_collaboration_emails' ) . ' <select name="addusermod[' . $i_m . ']" id="usermodadd[' . $i_m . ']" onchange="addMod(\'usermodadd[' . $i_m . ']\')">';
+            $pce_useroptions .= "\n" . '<p><input type="checkbox" name="pce_usermod[' . $i_m . '][' . $i .']" /> ' . __( 'Add:', 'peters_collaboration_emails' ) . ' <select name="addusermod[' . $i_m . ']" id="usermodadd[' . $i_m . ']">';
             $pce_useroptions .= pce_usersoptions($pce_existingmods, 'moderators');
-            $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '    </select></p><p id="pce_usermodadd[' . $i_m . ']">E-mail: <input type="text" name="pce_usermodadd[' . $i_m . ']" width="30" maxlength="90" /></p>';
-            $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '<input type="hidden" name="pce_groupid[' . $i_m . ']" value="' . $pce_groupid . '" /></td>';
-            $pce_useroptions .= "\n" . $pce_useroptionswhitespace . '</tr>';
+            $pce_useroptions .= "\n" . '</select></p><p id="pce_usermodadd[' . $i_m . ']">E-mail: <input type="text" name="pce_usermodadd[' . $i_m . ']" width="30" maxlength="90" /></p>';
+            $pce_useroptions .= "\n" . '<input type="hidden" name="pce_groupid[' . $i_m . ']" value="' . $pce_groupid . '" /></td>';
+            $pce_useroptions .= "\n" . '</tr>';
             ++$i_m;
         }
     }
@@ -1202,103 +1064,135 @@ function pce_mainoptionsmenu() {
     $pce_groupoptions = '';
     
     $pce_groupoptions .= '<p>' . __( 'Group name:', 'peters_collaboration_emails' ) . ' <input type="text" name="newgroupname" width="30" maxlength="90" /></p>'; 
-    $pce_groupoptions .= "\n" . $pce_useroptionswhitespace . '<p>' . __('Add contributor:', 'peters_collaboration_emails') . ' <select name="addrule">';
-    $pce_groupoptions .= "\n" . $pce_useroptionswhitespace . '    <option value="-1"></option>';
+    $pce_groupoptions .= "\n" . '<p>' . __('Add contributor:', 'peters_collaboration_emails') . ' <select name="addrule">';
+    $pce_groupoptions .= "\n" . '<option value="-1"></option>';
     
     // This list should only include users
     $pce_groupoptions .= pce_usersoptions(array(), 'contributors');
-    $pce_groupoptions .= "\n" . '            </select>';
+    $pce_groupoptions .= "\n" . '</select>';
     
-    $pce_groupoptions .= "\n" . $pce_useroptionswhitespace . '    <p>' . __('Add moderator:', 'peters_collaboration_emails') . ' <select name="addgroupmod" id="groupmodadd" onchange="addMod(\'groupmodadd\')">';
-    $pce_groupoptions .= "\n" . $pce_useroptionswhitespace . '    <option value="-1"></option>';
+    $pce_groupoptions .= "\n" . '<p>' . __('Add moderator:', 'peters_collaboration_emails') . ' <select name="addgroupmod" id="groupmodadd">';
+    $pce_groupoptions .= "\n" . '<option value="-1"></option>';
     $pce_groupoptions .= pce_usersoptions(array(), 'moderators');
-    $pce_groupoptions .= "\n" . $pce_useroptionswhitespace . '    </select></p><p id="pce_groupmodadd">E-mail: <input type="text" name="pce_groupmodadd" width="30" maxlength="90" /></p>'; 
+    $pce_groupoptions .= "\n" . '</select></p><p id="pce_groupmodadd">E-mail: <input type="text" name="pce_groupmodadd" width="30" maxlength="90" /></p>';
 
     // -----------------------------------
-    // Get the category-specific moderator rules
+    // Get the post-type-specific moderator rules
     // -----------------------------------
     
-    $pce_catmods_results = $wpdb->get_results('SELECT catid, moderators FROM ' . $pce_db_cats);
-    $pce_existingcatids = array();
-    
-    if ($pce_catmods_results) {
-    
-        $i_c = 0;
+    $pce_post_type_mods_results = $wpdb->get_results( 'SELECT rule_id, post_type, taxonomy, term, moderators FROM ' . $pce_db_collabrules . ' ORDER BY post_type ASC, taxonomy ASC, term ASC', OBJECT );
+    if( $pce_post_type_mods_results )
+    {
+        $i_p = 0;
         
         // Set up the default options variable
-        $pce_catoptions = '';    
+        $pce_post_type_rules = '';
         
-        foreach ($pce_catmods_results as $pce_catmod_result) {
-        
-            // Define the group name
-            $pce_catname = get_cat_name($pce_catmod_result->catid);
+        foreach( $pce_post_type_mods_results as $pce_post_type_mods_result )
+        {
+            $pce_post_type_rules .= '<tr>' . "\n";
             
-            // Keep track of the existing category IDs so that we can exclude them for the "add" form
-            $pce_existingcatids[] = $pce_catmod_result->catid;
+            $pce_rule_id = $pce_post_type_mods_result ->rule_id;
             
-            $pce_catoptions .= '<tr>' . "\n";
-            $pce_catoptions .= $pce_useroptionswhitespace . '<td><p><strong>' . $pce_catname . '</strong> [<a href="?page=' . basename(__FILE__) . '&delete_cat=' . $pce_catmod_result->catid . '">X</a>]</p></td>';
-            // Get the moderators for this category
-            $pce_catmods = unserialize($pce_catmod_result->moderators);
+            
+            // Output the post type name
+            $pce_post_type_name = htmlspecialchars($pce_post_type_mods_result->post_type, ENT_QUOTES );
+            $pce_post_type_rules .= '<td><p><strong>' . $pce_post_type_name . '</strong> [<a href="?page=' . basename(__FILE__) . '&delete_post_type_rule=' . $pce_rule_id. '">Delete</a>]</p></td>';
+
+            // Output the post type taxonomy
+            $pce_post_type_taxonomy = htmlspecialchars( $pce_post_type_mods_result->taxonomy, ENT_QUOTES );
+            if( 'all' == $pce_post_type_taxonomy )
+            {
+                $pce_post_type_taxonomy_label = __( 'All', 'peters_collaboration_emails' );
+            }
+            else
+            {
+                $pce_post_type_taxonomy_label = get_taxonomy( $pce_post_type_taxonomy );
+                if( '' == $pce_post_type_taxonomy_label )
+                {
+                    $pce_post_type_taxonomy_label = __( '*** undefined ***', 'peters_collaboration_emails' );
+                }
+                else
+                {
+                    $pce_post_type_taxonomy_label = $pce_post_type_taxonomy_label->label;
+                }
+            }
+            $pce_post_type_rules .= '<td><p>' . $pce_post_type_taxonomy_label . '</p></td>';
+            
+            $pce_post_type_term = htmlspecialchars( $pce_post_type_mods_result->term, ENT_QUOTES );
+            // Output the post type term
+            if( 'all' == $pce_post_type_taxonomy )
+            {
+                $pce_post_type_term = __( '*** n/a ***', 'peters_collaboration_emails' );
+            }
+            elseif( is_numeric( $pce_post_type_term ) )
+            {
+                $pce_post_type_term_object = get_term( $pce_post_type_term, $pce_post_type_taxonomy );
+                if( $pce_post_type_term_object && property_exists( $pce_post_type_term_object, 'name' ) )
+                {
+                    $pce_post_type_term = $pce_post_type_term_object->name;
+                }
+            }
+            $pce_post_type_rules .= '<td><p>' . $pce_post_type_term . '</p></td>';
+
+            // Put this list of e-mail addresses an array since it is stored in the database as serialized
+            $pce_post_type_mods = unserialize( $pce_post_type_mods_result->moderators );
 
             // Build the list of options based on this array
-            
             // Establish a counter for the checkboxes
             $i = 0;
             
-            $pce_existingmods = array();
-            $pce_catoptions .= "\n" . $pce_useroptionswhitespace . '<td>';
+            $pce_post_type_rules .= "\n" . '<td>';
             
-            foreach ($pce_catmods as $pce_catmod) {
+            $pce_existingmods = array();
+            
+            foreach( $pce_post_type_mods as $pce_post_type_mod )
+            {
                 // If they've chosen a user ID, get the e-mail address associated with that user ID
-                if (is_int($pce_catmod)) {
-                    $pce_userinfo = get_userdata($pce_catmod);
-                    $pce_catoptions .= "\n" . $pce_useroptionswhitespace . '    <p><input type="checkbox" name="pce_catmod[' . $i_c . '][' . $i .']" value="' . $pce_catmod . '" checked="checked" /> ' . $pce_userinfo->display_name . ' (' . $pce_userinfo->user_email . ')</p>';
-                    $pce_existingmods[$pce_catmod] = '';
+                if( is_int( $pce_post_type_mod ) )
+                {
+                    $pce_userinfo = get_userdata( $pce_post_type_mod );
+                    $pce_post_type_rules .= "\n" . '<p><input type="checkbox" name="pce_post_type_mod[' . $i_p . '][' . $i .']" value="' . $pce_post_type_mod . '" checked="checked" /> ' . $pce_userinfo->display_name . ' (' . $pce_userinfo->user_email . ')</p>';
+                    $pce_existingmods[$pce_post_type_mod] = '';
                 }
 
                 // If they've chosen it to be the site admin, get the site admin e-mail address
-                elseif ($pce_catmod == 'admin') {
-                    $pce_catoptions .= "\n" . $pce_useroptionswhitespace  . '    <p><input type="checkbox" name="pce_catmod[' . $i_c . '][' . $i .']" value="' . $pce_catmod . '" checked="checked" /> ' . __( 'General admin', 'peters_collaboration_emails' ) . '(' . get_option('admin_email') . ')</p>';
+                elseif( 'admin' == $pce_post_type_mod )
+                {
+                    $pce_post_type_rules .= "\n" . '<p><input type="checkbox" name="pce_post_type_mod[' . $i_p . '][' . $i .']" value="' . $pce_post_type_mod . '" checked="checked" /> ' . __( 'General admin', 'peters_collaboration_emails' ) . '(' . get_option('admin_email') . ')</p>';
                     $pce_existingmods['admin'] = '';
                 }
                 
                 // Whatever is left should be a custom e-mail address
-                else {
-                    $pce_catoptions .= "\n" . $pce_useroptionswhitespace . '    <p><input type="checkbox" name="pce_catmod[' . $i_c . '][' . $i .']" value="' . $pce_catmod . '" checked="checked" /> ' . $pce_catmod . '</p>';
+                else
+                {
+                    $pce_post_type_rules .= "\n" . '<p><input type="checkbox" name="pce_post_type_mod[' . $i_p . '][' . $i .']" value="' . $pce_post_type_mod . '" checked="checked" /> ' . $pce_post_type_mod . '</p>';
                 }
                 
                 ++$i;
             }
-            $pce_catoptions .= "\n" . $pce_useroptionswhitespace . '    <p><input type="checkbox" name="pce_catmod[' . $i_c . '][' . $i .']" /> ' . __('Add:', 'peters_collaboration_emails') . ' <select name="addcatmod[' . $i_c . ']" id="catmodadd[' . $i_c . ']" onchange="addMod(\'catmodadd[' . $i_c . ']\')">';
-            $pce_catoptions .= pce_usersoptions($pce_existingmods, 'moderators');
-            $pce_catoptions .= "\n" . $pce_useroptionswhitespace . '    </select></p><p id="pce_catmodadd[' . $i_c . ']">' . __('E-mail:' , 'peters_collaboration_emails') . ' <input type="text" name="pce_catmodadd[' . $i_c . ']" width="30" maxlength="90" /></p>';
-            $pce_catoptions .= "\n" . $pce_useroptionswhitespace . '<input type="hidden" name="pce_catid[' . $i_c . ']" value="' . $pce_catmod_result->catid . '" /></td>';        
-            $pce_catoptions .= "\n" . $pce_useroptionswhitespace . '</tr>';
-            ++$i_c;
+            
+            $pce_post_type_rules .= "\n" . '<p><input type="checkbox" name="pce_post_type_mod[' . $i_p . '][' . $i .']" /> ' . __( 'Add:', 'peters_collaboration_emails' ) . ' <select name="add_post_type_mod[' . $i_p . ']" id="post_type_mod_add[' . $i_p . ']">';
+            $pce_post_type_rules .= pce_usersoptions( $pce_existingmods, 'moderators' );
+            $pce_post_type_rules .= "\n" . '</select></p><p id="pce_post_type_mod_add[' . $i_p. ']">E-mail: <input type="text" name="pce_post_type_mod_add[' . $i_p . ']" width="30" maxlength="90" /></p>';
+            $pce_post_type_rules .= "\n" . '<input type="hidden" name="pce_rule_id[' . $i_p . ']" value="' . $pce_rule_id . '" /></td>';
+            $pce_post_type_rules .= "\n" . '</tr>';
+            ++$i_p;
         }
     }
     
-    // --------------------------------------------------------------------
-    // Form to add a category, needing at least one moderator 
-    // --------------------------------------------------------------------    
-
-    $pce_addcatoptions = '';
-
-    $pce_addcatoptions .= '<p>' . __('Category:', 'peters_collaboration_emails') . ' ';
-    $pce_existingcatids_implode = implode(',', $pce_existingcatids);
-    $pce_addcatoptions .= wp_dropdown_categories(array('orderby' => 'name', 'hide_empty' => 0, 'exclude' => $pce_existingcatids_implode, 'echo' => 0, 'hierarchical' => 1));
-    $pce_addcatoptions .= '</p>'; 
-    $pce_addcatoptions .= "\n" . $pce_useroptionswhitespace . '    <p>' . __('Add moderator:', 'peters_collaboration_emails') . '    <select name="addcatmod" id="catmodadd" onchange="addMod(\'catmodadd\')">';
-    $pce_addcatoptions .= "\n" . $pce_useroptionswhitespace . '    <option value="-1"></option>';
-    $pce_addcatoptions .= pce_usersoptions(array(), 'moderators');
-    $pce_addcatoptions .= "\n" . $pce_useroptionswhitespace . '    </select></p><p id="pce_catmodadd">' . __('E-mail:' ,'peters_collaboration_emails') . ' <input type="text" name="pce_catmodadd" width="30" maxlength="90" /></p>';
- 
 ?>
     <div class="wrap">
         <h2><?php _e('Manage collaboration e-mails', 'peters_collaboration_emails'); ?></h2>
         <p><?php _e('Set the moderators who should be e-mailed whenever Contributor users submit pending posts.', 'peters_collaboration_emails'); ?></p>
-        <?php print $pce_process_submit; ?>
+        <?php // 
+        if( is_array( $pce_process_submit ) && count( $pce_process_submit ) )
+        {
+            print '<div id="message" class="updated fade">' . "\n";
+            print $pce_process_submit[1];
+            print '</div>' . "\n";
+        }
+        ?>
 
         <h3><?php _e('Default moderators', 'peters_collaboration_emails'); ?></h3>
         <form name="pce_modform" action="<?php print '?page=' . basename(__FILE__); ?>" method="post">
@@ -1314,12 +1208,12 @@ function pce_mainoptionsmenu() {
         <table class="widefat">
             <tr>
                 <th><?php _e('Group', 'peters_collaboration_emails'); ?></th>
-                <th><?php _e('Rules', 'peters_collaboration_emails'); ?></th>
+                <th><?php _e('Moderators', 'peters_collaboration_emails'); ?></th>
             </tr>
             <?php print $pce_useroptions; ?>
             
         </table>
-        <p class="submit"><input type="hidden" id="pce_num_adds" value="<?php print $i_m; ?>" /><input type="submit" name="pce_rulesubmit" value="<?php _e('Update', 'peters_collaboration_emails'); ?>" /></p>
+        <p class="submit"><input type="submit" name="pce_rulesubmit" value="<?php _e('Update', 'peters_collaboration_emails'); ?>" /></p>
         </form>
         <form name="pce_groupform" action="<?php print '?page=' . basename(__FILE__); ?>" method="post">
         <h4><?php _e('Add a group', 'peters_collaboration_emails'); ?></h4>
@@ -1328,79 +1222,500 @@ function pce_mainoptionsmenu() {
         <p class="submit"><input type="submit" name="pce_groupsubmit" value="<?php _e('Update', 'peters_collaboration_emails'); ?>" /></p>
         </form>
         
-        <h3><?php _e('Moderators by category', 'peters_collaboration_emails'); ?></h3>
-        <form name="pce_catform" action="<?php print '?page=' . basename(__FILE__); ?>" method="post">
+        <h3><?php _e('Moderators by post type and taxonomy', 'peters_collaboration_emails'); ?></h3>
+        <form name="pce_post_type_form" action="<?php print '?page=' . basename(__FILE__); ?>" method="post">
         <h4><?php _e('Existing rules', 'peters_collaboration_emails'); ?></h4>
         <table class="widefat">
             <tr>
-                <th><?php _e('Category', 'peters_collaboration_emails'); ?></th>
-                <th><?php _e('Rules', 'peters_collaboration_emails'); ?></th>
+                <th><?php _e('Post Type', 'peters_collaboration_emails'); ?></th>
+                <th><?php _e('Taxonomy', 'peters_collaboration_emails'); ?></th>
+                <th><?php _e('Term', 'peters_collaboration_emails'); ?></th>
+                <th><?php _e('Moderators', 'peters_collaboration_emails'); ?></th>
             </tr>
-            <?php print $pce_catoptions; ?>
+            <?php print $pce_post_type_rules; ?>
             
         </table>
-        <p class="submit"><input type="hidden" id="pce_cat_adds" value="<?php print $i_c; ?>" /><input type="submit" name="pce_catsubmit" value="<?php _e('Update', 'peters_collaboration_emails'); ?>" /></p>
+        <p class="submit"><input type="submit" name="pce_post_type_submit" value="<?php _e('Update', 'peters_collaboration_emails'); ?>" /></p>
         </form>
-        <form name="pce_addcatform" action="<?php print '?page=' . basename(__FILE__); ?>" method="post">
-        <h4><?php _e('Add category-specific moderators', 'peters_collaboration_emails'); ?></h4>
-            <?php print $pce_addcatoptions; ?>
-        
-        <p class="submit"><input type="submit" name="pce_addcatsubmit" value="<?php _e('Update', 'peters_collaboration_emails'); ?>" /></p>
-        </form>
+        <form name="pce_add_post_type_form" action="<?php print '?page=' . basename(__FILE__); ?>" method="post">
+        <h4><?php _e('Add post-type-specific moderators', 'peters_collaboration_emails'); ?></h4>
+            <?php
+            $post_types = get_post_types( '', 'objects');
+            print 'Post type: <select name="post_types" id="post_types">';
+            print '<option value="0">----------</option>';
+            foreach( $post_types as $post_type )
+            {
+                // Don't show revisions, attachments, or navigation menu items, as they're not traditional posts
+                if( ! in_array( $post_type->name, array( 'revision', 'attachment', 'nav_menu_item' ) ) )
+                {
+                    print '<option value="' . $post_type->name . '">' . $post_type->label . '</option>';
+                }
+            }
+            print '</select><br /><br />';
+            print 'Taxonomy: <select name="taxonomy_types" id="taxonomy_types">';
+            print '</select><br /><br />';
+            
+            print 'Term: <select name="taxonomy_terms" id="taxonomy_terms">';
+            print '</select>';
+            print '<input name="taxonomy_term" id="taxonomy_term" style="display: none;" type="text" width="30" maxlength="50" />';
+            print '<p>' . __('Add moderator:', 'peters_collaboration_emails') . ' <select name="add_post_type_rule_mod" id="post_type_rule_mod_add">';
+            print '<option value="-1"></option>';
+            print pce_usersoptions( array(), 'moderators' );
+            print '</select></p><p id="pce_post_type_rule_mod_add">E-mail: <input type="text" name="pce_post_type_rule_mod_add" width="30" maxlength="90" /></p>';
+            ?>
+        <p class="submit"><input type="submit" name="pce_add_post_type_submit" value="<?php _e('Update', 'peters_collaboration_emails'); ?>" /></p>
+        </form>        
     </div>
 
     <script type="text/javascript">
-        var defaultModTextField = document.getElementById("pce_adddefaultmod");
-        var defaultModSelectField = document.getElementById("adddefaultmod");
-        if (defaultModSelectField.value != 'other') {
-            defaultModTextField.style.display = 'none';
-        }
-
-        var numAdds = document.getElementById("pce_num_adds").value;
-        for (i=0; i < numAdds; ++i) {
-            var otherTextField = document.getElementById("pce_usermodadd[" + i + "]");
-            var otherSelectField = document.getElementById("usermodadd[" + i + "]");
-            if (otherSelectField.value != 'other') {
-                otherTextField.style.display = 'none';
+        jQuery( document ).ready( function()
+        {
+            // Functionality to hide the "Other" field as necessary
+            if( jQuery( '#adddefaultmod' ).val() != 'other' )
+            {
+                jQuery( '#pce_adddefaultmod' ).hide();
             }
-       }
-
-        var catAdds = document.getElementById("pce_cat_adds").value;
-        for (i=0; i < catAdds; ++i) {
-            var catOtherTextField = document.getElementById("pce_catmodadd[" + i + "]");
-            var catOtherSelectField = document.getElementById("catmodadd[" + i + "]");
-            if (catOtherSelectField.value != 'other') {
-                catOtherTextField.style.display = 'none';
+            if( jQuery( '#groupmodadd' ).val() != 'other' )
+            {
+                jQuery( '#pce_groupmodadd' ).hide();
+            }
+            if( jQuery( '#post_type_rule_mod_add' ).val() != 'other' )
+            {
+                jQuery( '#pce_post_type_rule_mod_add' ).hide();
+            }
+            jQuery( '[id^=post_type_mod_add]' ).each( function()
+            {
+                var textareaID = '#pce_' + jQuery( this ).attr( 'id' );
+                textareaID = textareaID.replace("[", "\\[");
+                textareaID = textareaID.replace("]", "\\]");
+                if( jQuery( this ).val() != 'other' )
+                {
+                    jQuery( textareaID ).hide();
+                }
+            });
+            jQuery( '[id^=usermodadd]' ).each( function()
+            {
+                var textareaID = '#pce_' + jQuery( this ).attr( 'id' );
+                textareaID = textareaID.replace("[", "\\[");
+                textareaID = textareaID.replace("]", "\\]");
+                if( jQuery( this ).val() != 'other' )
+                {
+                    jQuery( textareaID ).hide();
+                }
+            });
+            jQuery( '#adddefaultmod' ).change( function()
+            {
+                addMod( jQuery( this ) );
+            });
+            jQuery( '#groupmodadd' ).change( function()
+            {
+                addMod( jQuery( this ) );
+            });
+            jQuery( '#post_type_rule_mod_add' ).change( function()
+            {
+                addMod( jQuery( this ) );
+            });
+            jQuery( '[id^=usermodadd]' ).change( function()
+            {
+                addMod( jQuery( this ) );
+            });
+            jQuery( '[id^=post_type_mod_add]' ).change( function()
+            {
+                addMod( jQuery( this ) );
+            });
+            
+            // AJAX for post types
+            jQuery( '#post_types' ).change( function()
+            {
+                var data = {
+                        post_type: jQuery( this ).val(),
+                        action: 'get_post_type_taxonomies'
+                };
+                
+                jQuery( '#taxonomy_types' ).empty();
+                jQuery( '#taxonomy_terms' ).empty();
+                jQuery( '#taxonomy_term' ).val( '' );
+                jQuery( '#taxonomy_terms' ).show();
+                jQuery( '#taxonomy_term' ).hide();
+                jQuery.post( ajaxurl, data, function( response )
+                {
+                    var taxonomies = jQuery.parseJSON( response );
+                    if( '0' != taxonomies )
+                    {
+                        jQuery( '#taxonomy_types' ).append( '<option selected="selected" value="all">All</option>' );
+                        jQuery.each( taxonomies, function( index, item )
+                        {
+                            jQuery( '#taxonomy_types' ).append( '<option value="' + item.name + '">' + item.label + '</option>' );
+                        });
+                    }
+                });
+            });
+            jQuery( '#taxonomy_types' ).change( function()
+            {
+                var data = {
+                        taxonomy: jQuery( this ).val(),
+                        action: 'get_taxonomy_terms'
+                };
+                
+                jQuery( '#taxonomy_terms' ).empty();
+                jQuery.post( ajaxurl, data, function( response )
+                {
+                    var taxonomy_terms = jQuery.parseJSON( response );
+                    if( '1' == taxonomy_terms )
+                    {
+                        jQuery( '#taxonomy_terms' ).hide();
+                        jQuery( '#taxonomy_term' ).show();
+                    }
+                    else if( '0' != taxonomy_terms )
+                    {
+                        jQuery( '#taxonomy_terms' ).show();
+                        jQuery( '#taxonomy_term' ).hide();
+                        jQuery.each( taxonomy_terms, function( index, item )
+                        {
+                            jQuery( '#taxonomy_terms' ).append( '<option value="' + item.id + '">' + item.name + '</option>' );
+                        });
+                        jQuery( '#taxonomy_terms' ).append( '<option value="-1">--- Manual ---</option>' )
+                    }
+                });
+            });
+            jQuery( '#taxonomy_terms' ).change( function()
+            {
+                if( -1 == jQuery( this ).val() )
+                {
+                    jQuery( '#taxonomy_term' ).show();
+                }
+                else
+                {
+                    jQuery( '#taxonomy_term' ).val( '' );
+                    jQuery( '#taxonomy_term' ).hide();
+                }
+            });
+        });
+        function addMod( htmlElement )
+        {
+            // Escape selectors for jQuery
+            var textareaID = '#pce_' + jQuery( htmlElement ).attr( 'id' );
+            textareaID = textareaID.replace("[", "\\[");
+            textareaID = textareaID.replace("]", "\\]");
+            if( 'other' == jQuery( htmlElement ).val() )
+            {
+                jQuery( textareaID ).show();
+            }
+            else
+            {
+                jQuery( textareaID ).hide();
             }
         }
         
-        var groupAddTextField = document.getElementById("pce_groupmodadd");
-        var groupAddSelectField = document.getElementById("groupmodadd");
-        if (groupAddSelectField.value != 'other') {
-            groupAddTextField.style.display = 'none';
-        }
-        
-        var catAddTextField = document.getElementById("pce_catmodadd");
-        var catAddSelectField = document.getElementById("catmodadd");
-        if (catAddSelectField.value != 'other') {
-            catAddTextField.style.display = 'none';
-        }
-        
-        function addMod(modId) {
-            var addModValue = document.getElementById(modId).value;
-            var addModTextField = document.getElementById("pce_" + modId);
-            if (addModValue == 'other') {
-                // Show the text field
-                addModTextField.style.display = '';
-            }
-            else {
-                // Hide the text field
-                addModTextField.style.display = 'none';
-            }
-        }
     </script>
 <?php
 }
+
+// This class should eventually hold all helper functions
+class pceFunctionCollection
+{
+
+    // Ajax function to return JSON-encoded taxonomies for a given post type
+    function pce_get_post_type_taxonomies()
+    {
+        $post_type = $_POST['post_type'];
+        if( post_type_exists( $post_type ) )
+        {
+            $taxonomies = get_taxonomies( array( 'object_type' => array( $post_type ) ), 'objects' );
+            if( $taxonomies )
+            {
+                $taxonomy_array = array();
+                foreach( $taxonomies as $taxonomy )
+                {
+                    // Skip a few built-in taxonomy types for now, as we're not going to support them
+                    if( ! in_array( $taxonomy->name, array( 'nav_menu', 'link_category', 'post_format' ) ) )
+                    {
+                        if( '' == $taxonomy->label )
+                        {
+                            $taxonomy_label = $taxonomy->name;
+                        }
+                        else
+                        {
+                            $taxonomy_label = $taxonomy->label;
+                        }
+                        
+                        $taxonomy_array[] = array( 'name' => $taxonomy->name,
+                                                   'label' => $taxonomy_label );
+                    }
+                }
+                print json_encode( $taxonomy_array );
+                die();
+            }
+        }
+        print '0';
+        die();
+    }
+
+    // Ajax function to return JSON-encoded terms for a given taxonomy
+    function pce_get_taxonomy_terms()
+    {
+        $taxonomy = $_POST['taxonomy'];
+        if( taxonomy_exists( $taxonomy ) )
+        {
+            $terms = get_terms( $taxonomy, array( 'hide_empty' => false ) );
+            if( $terms )
+            {
+                $terms_array = array();
+                foreach( $terms as $term )
+                {
+                    $terms_array[] = array( 'id' => $term->term_id, 'name' => $term->name );
+                }
+                print json_encode( $terms_array );
+                die();
+            }
+            else
+            {
+                print '1';
+                die();
+            }
+        }
+        print '0';
+        die();
+    }
+    function pce_add_post_type_submit()
+    {
+        global $wpdb, $pce_db_collabrules;
+
+        // ----------------------------------
+        // Process a new post type rule submission
+        // ----------------------------------
+
+        if( -1 != $_POST['add_post_type_mod'] )
+        {
+            $post_type = $_POST['post_types'];
+            $taxonomy_type = $_POST['taxonomy_types'];
+            if( '' != trim( $_POST['taxonomy_term'] ) )
+            {
+                $taxonomy_term = trim( $_POST['taxonomy_term'] );
+            }
+            elseif( 'all' == $taxonomy_type )
+            {
+                $taxonomy_term = '';
+            }
+            else
+            {
+                $taxonomy_term = $_POST['taxonomy_terms'];
+            }
+            
+            $post_type_mod = $_POST['add_post_type_rule_mod'];
+
+            // Check: Is this taxonomy available for this post type?
+            $post_type_taxonomies = get_taxonomies( array( 'object_type' => array( $post_type ) ), 'names' );
+            if( ! in_array( $taxonomy_type, $post_type_taxonomies ) && 'all' != $taxonomy_type )
+            {
+                return array( 'error', __( '**** ERROR: That taxonomy type does not exist for that post type ****', 'peters_collaboration_emails' ) );
+            }
+            
+            // No check if taxonomy term is available for this taxonomy because you can often have freeform terms
+            $taxonomy_term = substr( $taxonomy_term, 0, 255 );
+            
+            // Check to make sure that this rule doesn't already exist with the same post type, taxonomy type, and taxonomy term
+            // It might still exist if you had first submitted the term freeform and now you're submitting after the term was officially added and vice versa
+            // Possible TODO: Check for both the ID and the text version of the term
+            $rule_exists = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pce_db_collabrules
+                                                            WHERE post_type = %s
+                                                            AND taxonomy = %s
+                                                            AND term = %s;"
+                                                            , $post_type, $taxonomy_type, $taxonomy_term
+                                                         ) );
+            if( $rule_exists )
+            {
+                return array( 'error', __( '**** ERROR: That post type rule already exists. Please add or remove moderators to the existing rule. ****', 'peters_collaboration_emails' ) );
+            }
+            
+            // Check the added moderator (admin, user ID, or e-mail address)
+            // Check that it is a valid user
+            if( is_numeric( $post_type_mod ) )
+            {
+                $pce_validuser = get_userdata( $post_type_mod );
+                if( !$pce_validuser )
+                {
+                    return array( 'error', __( '**** ERROR: Invalid new moderator user ID ****', 'peters_collaboration_emails' ) );
+                }
+                $post_type_mod = intval( $post_type_mod );
+            }
+                
+            // If the dropdown equals "other" then look for content in pce_post_type_rule_mod_add, which had better be an e-mail address
+            elseif( 'other' == $post_type_mod && is_email( $_POST['pce_post_type_rule_mod_add'] ) )
+            {
+                $post_type_mod = $_POST['pce_post_type_rule_mod_add'];
+            }
+            elseif( 'admin' != $post_type_mod )
+            {
+                return array( 'error', __( '**** ERROR: Invalid new moderator submitted ****', 'peters_collaboration_emails' ) );
+            }
+
+            $post_type_mod_serialized = serialize( array( $post_type_mod ) );
+            $pce_add_post_type_mod_success = $wpdb->insert(
+                $pce_db_collabrules,
+                array(   'post_type'  => $post_type
+                       , 'taxonomy'   => $taxonomy_type
+                       , 'term'       => $taxonomy_term
+                       , 'moderators' => $post_type_mod_serialized
+                      )
+                );
+
+            if( $pce_add_post_type_mod_success )
+            {
+                return array( 'success', sprintf( __( 'New moderator added for the post type rule.', 'peters_collaboration_emails' ) ) );
+            }
+            else
+            {
+                return array( 'error', __( '**** ERROR: Unknown query error when adding a new moderator for the post type rule ****', 'peters_collaboration_emails' ) );
+            }
+        }
+        
+        else
+        {
+            return array( 'error', __( '**** ERROR: No moderator was submitted for the post type rule ****', 'peters_collaboration_emails' ) );
+        }
+
+        // We've made it this far, so nothing to do!
+        return false;
+    }
+    
+    // Edit post type moderators
+    function pce_post_type_submit()
+    {
+        global $wpdb, $pce_db_collabrules;
+
+        // ----------------------------------
+        // Process the post-type-specific moderator changes
+        // ----------------------------------
+        
+        $updated = false;
+        $pce_post_type_mods = $_POST['pce_post_type_mod']; // An array of moderators for each post type rule (contains User IDs, "admin" or strictly e-mail addresses)
+        $pce_rule_ids = $_POST['pce_rule_id']; // An array of post type rules to be updated
+        $pce_num_submits = array_keys( $pce_rule_ids );
+
+        if( $pce_num_submits )
+        {
+            foreach( $pce_num_submits as $pce_num_submit )
+            {
+                $pce_post_type_mods_update = array();
+                $pce_post_type_mod = $pce_post_type_mods[$pce_num_submit];
+                $pce_rule_id = intval( $pce_rule_ids[$pce_num_submit] );
+                
+                // Does this post type rule exist?
+                $post_type_rule_exists = pceFunctionCollection::post_type_rule_exists( $pce_rule_id );
+                
+                if( ! $post_type_rule_exists )
+                {
+                    return array( 'error', sprintf(__('**** ERROR: Post type rule with ID of %d does not exist ****', 'peters_collaboration_emails'), $pce_rule_id ) );
+                }
+                if( $pce_post_type_mod )
+                {
+                    $pce_post_type_mod_update = pce_mod_array( $pce_post_type_mod, $_POST['add_post_type_mod'][$pce_num_submit], $_POST['pce_post_type_mod_add'][$pce_num_submit] );
+
+                    // Nicely scrubbed array of mods to serialize
+                    if( is_array( $pce_post_type_mod_update ) )
+                    {
+                        $pce_post_type_mod_serialized = serialize( $pce_post_type_mod_update );
+                    }
+                    // It returns an error
+                    else
+                    {
+                        return array( 'error', $pce_post_type_mod_update );
+                    }
+                    
+                    $pce_post_type_mod_success = $wpdb->update(
+                                                                $pce_db_collabrules
+                                                                , array( 'moderators' => $pce_post_type_mod_serialized )
+                                                                , array( 'rule_id' => $pce_rule_id )
+                                                               );
+                    if( $pce_post_type_mod_success )
+                    {
+                        $updated = true;
+                    }
+                }
+                else
+                {
+                    return array( 'error', __( 'You must have at least one default moderator for each rule. Otherwise, delete the rule.', 'peters_collaboration_emails' ) );
+                }
+            }
+        }
+        
+        // We've made it this far, so success!
+        if( $updated )
+        {
+            return array( 'success', __( 'Moderators for the post type rules updated.', 'peters_collaboration_emails' ) );
+        }
+        else
+        {
+            return false;
+        }
+    }
+    function pce_delete_post_type_rule( $rule_id )
+    {
+        global $wpdb, $pce_db_collabrules;
+        $rule_id = intval( $rule_id );
+
+        print '<div class="wrap">';
+        print '<h2>' . __( 'Delete post type rule', 'peters_collaboration_emails' ) . '</h2>';
+
+        if( pceFunctionCollection::post_type_rule_exists( $rule_id ) )
+        {                
+            // If they actually wanted to delete the moderators for this category, let them know the result
+            if( $_POST['pce_delete_post_type_rule_yes'] )
+            {
+                $wpdb->query( 'DELETE FROM ' . $pce_db_collabrules . ' WHERE rule_id = ' . $rule_id . ' LIMIT 1' );
+                print "\n" . '<p>' . sprintf( __( 'Post type rule successfully deleted.', 'peters_collaboration_emails' ) );
+                print "\n" . '<p><a href="?page=' . basename(__FILE__) . '">Back</a></p>' . "\n";
+            }
+            else
+            {
+                print "\n" . '<p>' . __( 'Are you sure you want to remove this post type rule?', 'peters_collaboration_emails' ) . '</p>';
+                print "\n" . '<form method="post" action="?page=' . basename(__FILE__) . '&delete_post_type_rule=' . $rule_id . '">';
+                print "\n" . '<p class="submit"><input type="submit" name="pce_delete_post_type_rule_yes" value="' . __( 'Yes', 'peters_collaboration_emails') . '" /></p>';
+                print "\n" . '</form>';
+                print "\n" . '<form method="post" action="?page=' . basename(__FILE__) . '">';
+                print "\n" . '<p class="submit"><input type="submit" value="' . __( 'No, go back', 'peters_collaboration_emails' ) . '" /></p>';
+                print "\n" . '</form>';
+            }
+        }
+        else
+        {
+            print '<p>' . __( 'That post type rule does not exist.', 'peters_collaboration_emails' ) . '</p>';
+            print '<p><a href="?page=' . basename(__FILE__) . '">Back</a></p>' . "\n";
+        }
+        print '</div>';
+    }
+    function post_type_rule_exists( $rule_id )
+    {
+        global $wpdb, $pce_db_collabrules;
+        
+        $exists = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $pce_db_collabrules
+                                                            WHERE rule_id = %d"
+                                                            , intval( $rule_id )
+                                                         ) );
+        return $exists;
+    }
+    function create_post_type_table()
+    {
+        global $wpdb, $pce_db_collabrules;
+        if( $wpdb->get_var( 'SHOW TABLES LIKE \'' . $pce_db_collabrules . '\'' ) != $pce_db_collabrules )
+        {
+            $sql = "CREATE TABLE $pce_db_collabrules (
+                  rule_id int(11) NOT NULL auto_increment,
+                  post_type varchar(50) NOT NULL,
+                  taxonomy varchar(50) NOT NULL,
+                  term varchar(255) NOT NULL,
+                  moderators longtext NOT NULL,
+                  UNIQUE KEY rule_id (rule_id)
+                );";
+            $wpdb->query( $sql );
+        }
+    }
+}
+
+add_action( 'wp_ajax_get_post_type_taxonomies', array( 'pceFunctionCollection', 'pce_get_post_type_taxonomies' ) );
+add_action( 'wp_ajax_get_taxonomy_terms', array( 'pceFunctionCollection', 'pce_get_taxonomy_terms' ) );
+
 
 function pce_addoptionsmenu() {
     add_options_page(__('Collaboration e-mails', 'peters_collaboration_emails'), __('Collaboration e-mails', 'peters_collaboration_emails'), 7, basename(__FILE__), 'pce_optionsmenu');
@@ -1408,23 +1723,65 @@ function pce_addoptionsmenu() {
 
 add_action('admin_menu','pce_addoptionsmenu',1);
 
-// Add category table
-function pce_upgrade_category_table() {
-    global $wpdb, $pce_db_cats;
-    // Add the table to hold category-specific moderators
-    $sql = 'CREATE TABLE ' . $pce_db_cats . ' (
-    catid int(4) NOT NULL,
-    moderators longtext NOT NULL,
-    UNIQUE KEY catid (catid)
-    )';
-    $wpdb->query($sql);
+// Perform upgrade functions
+// Some newer operations are duplicated from pce_install() as there's no guarantee that the user will follow a specific upgrade procedure
+function pce_upgrade()
+{
+    global $wpdb, $pce_db_cats, $pce_db_collabrules, $pce_version;
+
+    // Turn version into an integer for comparisons
+    $current_version = intval( str_replace( '.', '', get_option( 'pce_version' ) ) );
+
+    if( $current_version < 150 )
+    {
+        pceFunctionCollection::create_post_type_table();
+
+        if( $wpdb->get_var( 'SHOW TABLES LIKE \'' . $pce_db_cats . '\'' ) == $pce_db_cats )
+        {
+            // Transfer all category-specific rules
+            $category_rules = $wpdb->get_results( 'SELECT catid, moderators FROM ' . $pce_db_cats, OBJECT );
+            if( $category_rules )
+            {
+                foreach( $category_rules as $category_rule )
+                {
+                    // Add these rules for both posts and pages and let the user delete the post/post rules if not applicable
+                    $wpdb->insert( $pce_db_collabrules,
+                                   array(   'post_type'  => 'post'
+                                          , 'taxonomy'   => 'category'
+                                          , 'term'       => $category_rule->catid
+                                          , 'moderators' => $category_rule->moderators
+                                        ) );
+                    $wpdb->insert( $pce_db_collabrules,
+                                   array(   'post_type'  => 'page'
+                                          , 'taxonomy'   => 'category'
+                                          , 'term'       => $category_rule->catid
+                                          , 'moderators' => $category_rule->moderators
+                                        ) );
+                }
+            }
+            
+            // Delete old category table
+            $wpdb->query( 'DROP TABLE ' . $pce_db_cats );
+        }
+        
+        // Future versions
+        // update_option( 'pce_version', '1.5.0', '', 'no' );
+    }
+    
+    if( $current_version != intval( str_replace( '.', '', $pce_version ) ) )
+    {
+        // Add the version number to the database
+        delete_option( 'pce_version' );
+        add_option( 'pce_version', $pce_version, '', 'no' );
+    }
 }
 
 // Add and remove database tables when installing and uninstalling
 
-function pce_install () {
-    global $wpdb, $pce_db_group, $pce_db_collab, $pce_db_cats, $pce_version;
-    
+function pce_install()
+{
+    global $wpdb, $pce_db_group, $pce_db_collab, $pce_db_collabrules, $pce_version;
+
     // Add the table to hold group information and moderator rules
     if($wpdb->get_var('SHOW TABLES LIKE \'' . $pce_db_group . '\'') != $pce_db_group) {
         $sql = 'CREATE TABLE ' . $pce_db_group . ' (
@@ -1434,7 +1791,7 @@ function pce_install () {
         KEY collabgroup (collabgroup)
         ) AUTO_INCREMENT=2;';
 
-          $wpdb->query($sql);
+        $wpdb->query($sql);
     }
     
     // Insert the default moderator rule
@@ -1452,28 +1809,18 @@ function pce_install () {
           $wpdb->query($sql);
     }
     
-    // Add the table to hold category-specific moderators
-    if($wpdb->get_var('SHOW TABLES LIKE \'' . $pce_db_cats . '\'') != $pce_db_cats) {
-        $sql = 'CREATE TABLE ' . $pce_db_cats . ' (
-        catid int(4) NOT NULL,
-        moderators longtext NOT NULL,
-        UNIQUE KEY catid (catid)
-        )';
-          $wpdb->query($sql);
-    }
-
-    // Add the version number to the database
-    add_option( 'pce_version', $pce_version, '', 'no' );
+    pceFunctionCollection::create_post_type_table();
+    
+    pce_upgrade();
 }
 
 function pce_uninstall() {
-    global $wpdb, $pce_db_group, $pce_db_collab, $pce_db_cats;
+    global $wpdb, $pce_db_group, $pce_db_collab, $pce_db_cats, $pce_db_collabrules;
 
     if($wpdb->get_var('SHOW TABLES LIKE \'' . $pce_db_group . '\'') == $pce_db_group) {
         $sql = 'DROP TABLE ' . $pce_db_group;
         $wpdb->query($sql);
     }
-
     if($wpdb->get_var('SHOW TABLES LIKE \'' . $pce_db_collab . '\'') == $pce_db_collab) {
         $sql = 'DROP TABLE ' . $pce_db_collab;
         $wpdb->query($sql);
@@ -1482,11 +1829,17 @@ function pce_uninstall() {
         $sql = 'DROP TABLE ' . $pce_db_cats;
         $wpdb->query($sql);
     }
+    if($wpdb->get_var('SHOW TABLES LIKE \'' . $pce_db_collabrules . '\'') == $pce_db_collabrules) {
+        $sql = 'DROP TABLE ' . $pce_db_collabrules;
+        $wpdb->query($sql);
+    }
     delete_option( 'pce_version' );
 }
 
 register_activation_hook( __FILE__, 'pce_install' );
 register_uninstall_hook( __FILE__, 'pce_uninstall' );
+
+wp_enqueue_script( 'jquery' );
 
 } // This closes that initial check to make sure someone is actually logged in
 ?>

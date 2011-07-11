@@ -12,7 +12,7 @@ class ScoperAdminBulkLib {
 			$link_end = '';
 		
 		$date_limits = array();
-			
+
 		// This would sort entire list (currently grouping by assign_for and alphabetizing each grouping)
 		//$sorted_roles = array();
 		//uasort($agent_names, 'strnatcasecmp');
@@ -113,7 +113,9 @@ class ScoperAdminBulkLib {
 	}
 	
 	function taxonomy_scroll_links($tx, $terms, $admin_terms = '') {
-		if ( empty($terms) || ( is_array($admin_terms) && empty($admin_terms) ) )
+		$max_terms = ( defined( 'SCOPER_MAX_TAXONOMY_SCROLL_LINKS' ) ) ? SCOPER_MAX_TAXONOMY_SCROLL_LINKS : 100;
+
+		if ( empty($terms) || ( is_array($admin_terms) && empty($admin_terms) ) || ( count($terms) > $max_terms ) )
 			return;
 		
 		echo '<strong>' . __('Scroll to current settings:','scoper') . '</strong><br />';	
@@ -121,9 +123,12 @@ class ScoperAdminBulkLib {
 		if ( $admin_terms && ! is_array($admin_terms) )
 			$admin_terms = '';
 	
-		$col_id = $tx->source->cols->id;
-		$col_name = $tx->source->cols->name;
-		$col_parent = $tx->source->cols->parent;
+		global $scoper;
+		$tx_src = $scoper->data_sources->get( $tx->source );
+
+		$col_id = $tx_src->cols->id;
+		$col_name = $tx_src->cols->name;
+		$col_parent = ( ! empty($tx_src->cols->parent) ) ? $tx_src->cols->parent : '';
 
 		$font_ems = 1.2;
 		$text = '';
@@ -185,54 +190,6 @@ class ScoperAdminBulkLib {
 		
 		return $text;
 	}
-	
-	function common_ui_msg( $msg_id ) {
-		if ( 'pagecat_plug' == $msg_id ) {
-			$msg = __('Category Roles for WordPress pages are <a %s>disabled for this blog</a>. Object Roles can be assigned to individual pages, and optionally propagated to sub-pages.', 'scoper');
-			echo '<li>';
-			printf( $msg, 'href="admin.php?page=rs-options"');
-			
-			echo ' ';
-			_e('Another option is to categorise pages via the <a>Page&nbsp;Category&nbsp;Plus</a>&nbsp;plugin.', 'scoper');
-
-			echo '</li>';
-		}
-	}
-	
-	// object_array = db results 2D array
-	function order_by_hierarchy($object_array, $col_id, $col_parent, $id_key = false) {
-		$ordered_results = array();
-		$find_parent_id = 0;
-		$last_parent_id = array();
-		
-		do {
-			$found_match = false;
-			$lastcount = count($ordered_results);
-			foreach ( $object_array as $key => $item )
-				if ( $item->$col_parent == $find_parent_id ) {
-					if ( $id_key )
-						$ordered_results[$item->$col_id]= $object_array[$key];
-					else
-						$ordered_results[]= $object_array[$key];
-					
-					unset($object_array[$key]);
-					$last_parent_id[] = $find_parent_id;
-					$find_parent_id = $item->$col_id;
-					
-					$found_match = true;
-					break;	
-				}
-			
-			if ( ! $found_match ) {
-				if ( ! count($last_parent_id) )
-					break;
-				else
-					$find_parent_id = array_pop($last_parent_id);
-			}
-		} while ( true );
-		
-		return $ordered_results;
-	}
 
 	function display_date_limit_inputs( $role_duration = true, $content_date_limits = true ) {
 		echo '
@@ -289,6 +246,24 @@ class ScoperAdminBulkLib {
 			echo '</ul>';
 			
 			echo '</div>';
+// jQuery to hide the show/hide the date selection UI based on "Keep current setting" checkbox toggle			
+?>
+<script type="text/javascript">
+/* <![CDATA[ */
+jQuery(document).ready( function($) {
+<?php foreach( array( 'start_date_gmt', 'end_date_gmt', 'content_min_date_gmt', 'content_max_date_gmt' ) as $topic ) : ?>
+$('#<?php echo $topic;?>_keep-timestamp').click(function() {
+	if ( $('#<?php echo $topic;?>_keep-timestamp').attr( 'checked' ) ) {
+		$('#<?php echo $topic;?>_timestamp_ui').hide();
+	} else {
+		$('#<?php echo $topic;?>_timestamp_ui').show();
+	}
+});
+<?php endforeach; ?>
+});
+/* ]]> */
+</script>
+<?php
 		}
 		
 		if ( $content_date_limits ) {
@@ -458,7 +433,7 @@ class ScoperAdminBulkLib {
 		<?php
 		$checked = ( ! empty($_POST["{$id_prefix}keep-timestamp"]) ) ? "checked='checked'" : '';
 		?>
-		&nbsp;<input type="checkbox" id="<?php echo($id_prefix)?>keep-timestamp" name="<?php echo($id_prefix)?>keep-timestamp" <?php echo $checked;?> /><?php _e('keep current setting', 'scoper'); ?>
+		&nbsp;<input type="checkbox" id="<?php echo($id_prefix)?>keep-timestamp" name="<?php echo($id_prefix)?>keep-timestamp" <?php echo $checked;?> />&nbsp;<?php _e('keep stored setting', 'scoper'); ?>
 		</p>
 	<?php
 	}
@@ -471,12 +446,12 @@ class ScoperAdminBulkLib {
 		foreach ( $prefixes as $pfx ) {
 			$key = str_replace( 'gmt_', 'gmt', $pfx );
 			
-			$aa = $_POST[$pfx . 'aa'];
-			$mm = $_POST[$pfx . 'mm'];
-			$jj = $_POST[$pfx . 'jj'];
-			$hh = $_POST[$pfx . 'hh'];
-			$mn = $_POST[$pfx . 'mn'];
-			$ss = $_POST[$pfx . 'ss'];
+			$aa = ( isset($_POST[$pfx . 'aa']) ) ? $_POST[$pfx . 'aa'] : 0;
+			$mm = ( isset($_POST[$pfx . 'mm']) ) ? $_POST[$pfx . 'mm'] : 0;
+			$jj = ( isset($_POST[$pfx . 'jj']) ) ? $_POST[$pfx . 'jj'] : 0;
+			$hh = ( isset($_POST[$pfx . 'hh']) ) ? $_POST[$pfx . 'hh'] : 0;
+			$mn = ( isset($_POST[$pfx . 'mn']) ) ? $_POST[$pfx . 'mn'] : 0;
+			$ss = ( isset($_POST[$pfx . 'ss']) ) ? $_POST[$pfx . 'ss'] : 0;
 			
 			if ( ! empty($_POST[$pfx . 'keep-timestamp']) ) {
 				$return[$key] = -1;
@@ -534,7 +509,7 @@ jQuery(document).ready( function($) {
 		id = this.id;
 		pos = id.indexOf( 'clear-timestamp' );
 		pfx = id.substr( 0, pos );
-		
+
 		clearDateEdit_rs( pfx );
 
 		return false;

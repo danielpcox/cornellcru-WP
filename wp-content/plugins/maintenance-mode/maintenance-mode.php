@@ -3,7 +3,7 @@
 Plugin Name: Maintenance Mode
 Plugin URI: http://sw-guide.de/wordpress/plugins/maintenance-mode/
 Description: Adds a splash page to your blog that lets visitors know your blog is down for maintenance. Logged in administrators get full access to the blog including the front-end. Navigate to <a href="options-general.php?page=maintenance-mode.php">Settings &rarr; Maintenance Mode</a> to get started.
-Version: 5.2
+Version: 5.4
 Author: Michael Wöhrer
 Author URI: http://sw-guide.de/
 */
@@ -34,7 +34,8 @@ Author URI: http://sw-guide.de/
 */
 require_once ( dirname(__FILE__) . '/inc.swg-plugin-framework.php');
 
-if (!function_exists('wp_get_current_user')) require (ABSPATH . WPINC . '/pluggable.php'); // For current_user_can() -> "wp_get_current_user() in wp-includes\capabilities.php on line 969". We need to include now since it is by default included AFTER plugins are being loaded.
+# commented out since plugin version 5.3 -- http://radiok.info/blog/the-case-of-maintenance-mode/ 
+#if (!function_exists('wp_get_current_user')) require (ABSPATH . WPINC . '/pluggable.php'); // For current_user_can() -> "wp_get_current_user() in wp-includes\capabilities.php on line 969". We need to include now since it is by default included AFTER plugins are being loaded.
 
 class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 
@@ -59,11 +60,10 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 					// Display link only if user is administrator / can manage options.
 					$link_to_mamo_opt = '';
 					if ( current_user_can('manage_options') ) {
-						$link_to_mamo_opt = __("Please don\'t forget to", $this->g_info['ShortName']) . ' <a href="admin.php?page=' . basename($this->g_info['PluginFile']) . '">' . __('deactivate', $this->g_info['ShortName']) . '</a> ' . __('it as soon as you are done.', $this->g_info['ShortName']);
+						$link_to_mamo_opt = __("Please don't forget to", $this->g_info['ShortName']) . ' <a href="admin.php?page=' . basename($this->g_info['PluginFile']) . '">' . __('deactivate', $this->g_info['ShortName']) . '</a> ' . __('it as soon as you are done.', $this->g_info['ShortName']);
 					}
 					$msg = '<div class="error"><p>' . __("The Maintenance Mode is active.",$this->g_info['ShortName']) . ' ' . $link_to_mamo_opt . '</p></div>';
-					#add_action('admin_notices', create_function( '', "echo '$msg';" )); // Did not work on some systems so changed with Plugin version 5.2
-					add_action('admin_notices', create_function( '', 'echo \'' . $msg . '\';' ));
+					add_action('admin_notices', $c = create_function('', 'echo "' . addcslashes($msg,'"') . '";')); // We use addcslashes otherwise it causes a parse error when the $msg contains a single quote
 				}
 			}
 
@@ -88,6 +88,7 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 					return; // exit function ApplyMaintenanceMode()
 				} else {
 					# Don't display feeds and apply HTTP header
+					nocache_headers(); // Sets the headers to prevent caching for the different browsers
 					$this->http_header_unavailable(); 
 					exit();
 				}
@@ -102,6 +103,7 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 					return; // exit function ApplyMaintenanceMode()
 				} else {
 					# Don't display trackbacks and apply HTTP header
+					nocache_headers(); // Sets the headers to prevent caching for the different browsers
 					$this->http_header_unavailable(); 
 					exit();
 				}
@@ -122,19 +124,7 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 			}
 
 			############
-			# 6. Path to splash page
-			############
-			if ($this->g_opt['mamo_theme'] == '503') {
-				$path503file = get_stylesheet_directory() . '/503.php'; // No longer use get_template_directory() to support child themes.
-			} else {
-				$path503file = dirname(__FILE__) . '/maintenance-mode_theme_' . $this->g_opt['mamo_theme'] . '.php';
-			}
-			if (file_exists($path503file)=== false) {
-				$path503file = dirname(__FILE__) . '/maintenance-mode_theme_default.php';
-			}
-
-			############
-			# 7. Display maintenance mode splash page
+			# 6. Display maintenance mode splash page
 			############
 			if ( is_admin() || strstr(htmlspecialchars($_SERVER['REQUEST_URI']), '/wp-admin/') ) {
 				///////
@@ -153,8 +143,7 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 				} else {
 					# No access to backend, display splash page
 					$status = 'noaccesstobackend';	// Some status to be used later in theme file
-					include($path503file); // Display splash page
-				    exit();
+					$this->display_splash_page();
 				}
 			
 			} else {
@@ -170,13 +159,53 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 					######
 					# No access to frontend, display splash page
 					######
-					if ($this->g_opt['mamo_503_splashpage'] == '1') $this->http_header_unavailable(); // Apply HTTP header
-					include($path503file); // Display splash page 
-				    exit();
+					$this->display_splash_page();
 				}
 			}
 
 		}	// if ($this->g_opt['mamo_activate'] == 'on')
+	}
+
+	/**
+	 * Displays the splash page
+	 */	 
+	function display_splash_page() {
+		#########
+		# Get path to splash page
+		#########
+		if ($this->g_opt['mamo_theme'] == '503') {
+			$path503file = get_stylesheet_directory() . '/503.php'; // No longer use get_template_directory() to support child themes.
+		} else {
+			$path503file = dirname(__FILE__) . '/maintenance-mode_theme_' . $this->g_opt['mamo_theme'] . '.php';
+		}
+		if (file_exists($path503file)=== false) {
+			$path503file = dirname(__FILE__) . '/maintenance-mode_theme_default.php';
+		}
+
+		#########
+		# Consider the Super Cache plugin
+		#########
+		if( defined( 'WPCACHEHOME' ) ) {
+			// Solves issue of white page output with Super Cache plugin version 0.9.9.6.
+			// Did not occur when removing <html> and </html> tag in splash page source, so weird problem.
+			ob_end_clean();
+		}
+
+		#########
+		# Header
+		#########
+		nocache_headers(); // Sets the headers to prevent caching for the different browsers 
+		if ($this->g_opt['mamo_503_splashpage'] == '1') $this->http_header_unavailable(); // Apply HTTP header
+
+		#########
+		# Output
+		#########
+		include($path503file); // Display splash page 
+
+		#########
+		# Bye bye
+		#########
+	    exit();
 	}
 
 	function is_excluded_url() {
@@ -185,8 +214,13 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 		$urlarray = explode(' ', $urlarray);		
 		$oururl = 'http://' . $_SERVER['HTTP_HOST'] . htmlspecialchars($_SERVER['REQUEST_URI']);
 		foreach ($urlarray as $expath) {
-			if ((!empty($expath)) && (strpos($oururl, $expath) !== false)) {
-				return true;
+			if (!empty($expath)) {
+				// Strip whitespace
+				$expath = str_replace(' ', '', $expath);
+				// Check if it is a matching url
+				if (strpos($oururl, $expath) !== false)	return true;
+				// Check if we are on home. Note that is_home() or is_front_page() are not working here for some reasons.
+				if ( (strtoupper($expath) == '[HOME]') && ( trailingslashit(get_bloginfo('url')) == trailingslashit($oururl) ) )	return true;  
 			}
 		}
 		return false;
@@ -342,7 +376,7 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 
 		$this->AddContentMain(__('Paths to be still accessable',$this->g_info['ShortName']), "
 			<p class='swginfo'>
-				".__('Enter paths that shall be excluded and still be accessable. Separate multiple paths with line breaks.<br />Example: If you want to exclude <em>http://site.com/about/</em>, then enter <em>/about/</em>.',$this->g_info['ShortName'])."
+				".__('Enter paths that shall be excluded and still be accessable. Separate multiple paths with line breaks.<br />Example: If you want to exclude <em>http://site.com/about/</em>, then enter <em>/about/</em>.<br />Hint: If you want to exclude the home page, enter <em>[HOME]</em>.',$this->g_info['ShortName'])."
 			</p>
 			<textarea style='width:95%;' name='mamo_excludedpaths' id='mamo_excludedpaths' rows='2' >" . $this->COPTHTML('mamo_excludedpaths') . "</textarea>
 			<hr />
@@ -522,7 +556,7 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 	 */
 	function mamo_template_tag_message() {
 			$mamo_msg = stripslashes($this->g_opt['mamo_pagemsg']);
-			$mamo_msg = str_replace('[blogurl]', get_settings('home'), $mamo_msg);
+			$mamo_msg = str_replace('[blogurl]', get_option('home'), $mamo_msg);
 			$mamo_msg = str_replace('[blogtitle]', get_bloginfo('name'), $mamo_msg);
 
 			$calctimes_arr = $this->calculate_times();
@@ -544,7 +578,7 @@ class MaintenanceMode extends MaintenanceMode_SWGPluginFramework {
 	 */
 	function mamo_template_tag_login_logout() {
 
-		global $user_ID, $wp_version;
+		global $user_ID, $wp_version, $status;
 		get_currentuserinfo();
 		$returnval = '';
 		// Get URLs for login/logout
@@ -591,7 +625,7 @@ if( !isset($myMaMo)  ) {
 			# Old option names to delete from the options table; newest last please
 				'DeleteOldOpt' =>	array('plugin_maintenancemode', 'plugin_maintenancemode2','plugin_maintenance-mode_5'),
 			# Plugin version
-				'Version' => 		'5.2',
+				'Version' => 		'5.4',
 			# First plugin version of which we do not reset the plugin options to default;
 			# Normally we reset the plugin's options after an update; but if we for example
 			# update the plugin from version 2.3 to 2.4 und did only do minor changes and
@@ -629,8 +663,8 @@ if( !isset($myMaMo)  ) {
 		));
 
 
-	$myMaMo->ApplyMaintenanceMode();
-
+#	$myMaMo->ApplyMaintenanceMode();	// commented out and added the line below since plugin version 5.3 -- http://radiok.info/blog/the-case-of-maintenance-mode/
+	add_action('plugins_loaded', array($myMaMo, 'ApplyMaintenanceMode'));
 
 
 	############################################################################

@@ -10,40 +10,32 @@ require_once( 'admin_lib_rs.php' );
  * filters-admin-ui_rs.php
  * 
  * @author 		Kevin Behrens
- * @copyright 	Copyright 2009
+ * @copyright 	Copyright 2010
  * 
  */
 class ScoperAdminFiltersUI
 {
 	var $scoper;
-	var $item_filters;
+	var $scoper_admin;
 	
 	function ScoperAdminFiltersUI() {
-		global $scoper;
-		$this->scoper =& $scoper;
-		
-		$current_script = $_SERVER['SCRIPT_NAME'];
-		$item_edit_scripts = apply_filters( 'item_edit_scripts_rs', array('p-admin/post-new.php', 'p-admin/post.php', 'p-admin/page.php', 'p-admin/page-new.php', 'p-admin/categories.php') );
-		$item_edit_scripts []= 'p-admin/admin-ajax.php';
+		global $pagenow, $plugin_page_cr;
 
-		foreach( $item_edit_scripts as $edit_script ) {
-			if ( strpos( $current_script, $edit_script ) ) {
-				require_once( 'filters-admin-ui-item_rs.php' );
-				$scoper->filters_admin_item_ui = new ScoperAdminFiltersItemUI();
-				break;
-			}
+		$this->scoper =& $GLOBALS['scoper'];
+		$this->scoper_admin =& $GLOBALS['scoper_admin'];
+
+		$item_edit_scripts = apply_filters( 'item_edit_scripts_rs', array('post-new.php', 'post.php', 'page.php', 'page-new.php', 'edit-tags.php') );
+		$item_edit_scripts []= 'admin-ajax.php';
+
+		if ( in_array( $pagenow, $item_edit_scripts ) || in_array( $plugin_page_cr, $item_edit_scripts ) ) {
+			require_once( 'filters-admin-ui-item_rs.php' );
+			global $scoper_admin_filters_item_ui;
+			$scoper_admin_filters_item_ui = new ScoperAdminFiltersItemUI();
 		}
 
-		if ( awp_ver('2.7-dev') )
-			add_action( '_admin_menu', array(&$this, 'act_admin_menu') );
-		else {
-			require_once( 'filters-admin-legacy_rs.php' );
-			add_action( '_admin_menu', array('ScoperAdminFilters_Legacy', 'act_admin_menu_26') );
-		}
-		
 		add_action('admin_head', array(&$this, 'ui_hide_admin_divs') );
 
-		if ( is_user_administrator_rs() || strpos($_SERVER['REQUEST_URI'], 'admin.php?page=rs-') )
+		if ( is_user_administrator_rs() || ( 0 === strpos( $plugin_page_cr, 'rs-' ) ) )
 			add_action('in_admin_footer', array(&$this, 'ui_admin_footer') );
 
 		if ( GROUP_ROLES_RS ) {
@@ -55,65 +47,24 @@ class ScoperAdminFiltersUI
 		add_action('show_user_profile', array(&$this, 'ui_user_roles'), 2);
 		add_action('edit_user_profile', array(&$this, 'ui_user_roles'), 2);
 		
-		$script_name = $_SERVER['SCRIPT_NAME'];
-		
-		if ( strpos($_SERVER['SCRIPT_NAME'], 'role-management.php') && empty($_POST) )
+		// possible TODO: equivalent message display for other role management plugins
+		if ( ( 'role-management.php' == $plugin_page_cr ) && empty( $_POST ) )
 			add_filter( 'capabilities_list', array(&$this, 'flt_capabilities_list') );	// capabilities_list is a Role Manager hook
-		
-		//temporary solution to alert user of filtering performed on saved page - see corresponding code in hardway-admin
-		
-		$object_type = awp_post_type_from_uri();
-		
-		if ( 'page' == $object_type ) {
-			global $current_user;
-			if ( $notice = get_option("scoper_notice_{$current_user->ID}") ) {
-				delete_option( "scoper_notice_{$current_user->ID}" );
-				rs_notice($notice);
-			}
-		}
+
+		if ( 'nav-menus.php' == $pagenow )
+			add_action( 'admin_head', array(&$this, 'ui_hide_add_menu') );
 	} // end class constructor
 	
-	// remove "Write Post" / "Write Page" menu items if user only has role for certain existing objects
-	function act_admin_menu() {
-		global $submenu;
-
-		if ( isset($submenu['edit.php'][10]) ) {
-			$this->scoper->ignore_object_roles = true;
-			if ( ! current_user_can( 'edit_posts' ) )
-				unset( $submenu['edit.php'][10] );
-
-			$this->scoper->ignore_object_roles = false;
-		}
-		
-		if ( isset($submenu['edit-pages.php'][10]) ) {
-			$this->scoper->ignore_object_roles = true;
-			if ( ! current_user_can( 'edit_pages' ) )
-				unset( $submenu['edit-pages.php'][10] );
-
-			$this->scoper->ignore_object_roles = false;
-		}
-		
-		if ( isset($submenu['link-manager.php'][10]) ) {
-			$this->scoper->ignore_object_roles = true;
-			if ( ! current_user_can( 'manage_links' ) )
-				unset( $submenu['link-manager.php'][10] );
-
-			$this->scoper->ignore_object_roles = false;
-		}
-	}
-	
 	function ui_hide_admin_divs() {
-		// Determine data source based on URI
-		// However, this will only consider URIs included in Scoped_Data_Source->users_where_reqd_caps
-		if ( ! ( $context = $this->scoper->admin->get_context() ) || empty($context->source ) || empty($context->object_type_def ) )
+		if ( ! in_array( $GLOBALS['pagenow'], array( 'post.php', 'post-new.php' ) ) )
 			return;
 
-		$src_name = $context->source->name;
-		$object_type = $context->object_type_def->name;
-		
-		
+		if ( ! $object_type = cr_find_post_type() )
+			return;
+
 		// For this data source, is there any html content to hide from non-administrators?
-		$css_ids = scoper_get_otype_option('admin_css_ids', $src_name, $object_type);
+		$option_type = ( 'page' == $object_type ) ? 'page' : 'post';
+		$css_ids = scoper_get_otype_option('admin_css_ids', 'post', $option_type);
 		$css_ids = str_replace(' ', '', $css_ids);
 		$css_ids = str_replace(',', ';', $css_ids);
 		$css_ids = explode(';', $css_ids);	// option storage is as semicolon-delimited string
@@ -121,9 +72,9 @@ class ScoperAdminFiltersUI
 		if ( empty($css_ids) )
 			return;
 
-		$object_id = $this->scoper->data_sources->detect('id', $src_name, '', $object_type);
+		$object_id = scoper_get_object_id( 'post' );
 
-		$can_edit_blogwide = $this->scoper->admin->user_can_edit_blogwide($src_name, $object_type);
+		$can_edit_blogwide = $this->scoper->user_can_edit_blogwide('post', $object_type);
 		
 		$blogwide_requirement = scoper_get_option('hide_non_editor_admin_divs');
 		
@@ -137,41 +88,37 @@ class ScoperAdminFiltersUI
 			$blogwide_requirement_met = is_content_administrator_rs();
 			
 		elseif ( 'editor' == $blogwide_requirement )
-			$blogwide_requirement_met = $this->scoper->admin->user_can_edit_blogwide($src_name, $object_type, array( 'status' => 'published', 'require_others_cap' => true ) );
+			$blogwide_requirement_met = $this->scoper->user_can_edit_blogwide('post', $object_type, array( 'status' => 'publish', 'require_others_cap' => true ) );
 		
 		elseif ( 'author' == $blogwide_requirement )
-			$blogwide_requirement_met = $this->scoper->admin->user_can_edit_blogwide($src_name, $object_type, array( 'status' => 'published' ) );
+			$blogwide_requirement_met = $this->scoper->user_can_edit_blogwide('post', $object_type, array( 'status' => 'publish' ) );
 		
 		elseif ( $blogwide_requirement )
 			$blogwide_requirement_met = $can_edit_blogwide;
 		else
 			$blogwide_requirement_met = true;
-			
+
 		if ( $can_edit_blogwide && $blogwide_requirement_met ) {
 			// don't hide anything if a user with sufficient blog-wide role is creating a new object
 			if ( ! $object_id )
 				return;
 
-			if ( ! $object = $this->scoper->data_sources->get_object($src_name, $object_id) )
+			if ( ! $object = $this->scoper->data_sources->get_object('post', $object_id) )
 				return;
 
-			if ( ('post' == $src_name ) && empty($object->post_date) ) // don't prevent the full editing of new posts/pages
+			if ( empty($object->post_date) ) // don't prevent the full editing of new posts/pages
 				return;
 
 			// don't hide anything if a user with sufficient blog-wide role is editing their own object
-			if ( ! empty($col_owner) ) {
-				global $current_user;
-				if ( empty($object->$col_owner) || ( $object->$col_owner == $current_user->ID) )
-					return;
-			}
+			/*
+			global $current_user;
+			if ( empty($object->post_author) || ( $object->post_author == $current_user->ID) )
+				return;
+			*/
 		}
 
 		
-		if ( ( $blogwide_requirement && ! $blogwide_requirement_met ) || ! $this->scoper->admin->user_can_admin_object($src_name, $object_type, $object_id, '', '', true) ) {
-
-			if ( ! awp_ver('2.7-dev') )	// side-info with related posts, links, etc.
-				echo "\n<!-- " . __('Role Scoper Plugin CSS:') . " -->\n<style type='text/css'>\n<!--\n.side-info { display: none !important; }\n-->\n</style>\n";	
-
+		if ( ( $blogwide_requirement && ! $blogwide_requirement_met ) || ! $this->scoper_admin->user_can_admin_object('post', $object_type, $object_id, '', '', true) ) {
 			echo( "\n<style type='text/css'>\n<!--\n" );
 			
 			$removeable_metaboxes = apply_filters( 'scoper_removeable_metaboxes', array( 'categorydiv', 'tagsdiv-post_tag', 'postcustom', 'pagecustomdiv', 'authordiv', 'pageauthordiv', 'trackbacksdiv', 'revisionsdiv', 'pending_revisions_div', 'future_revisionsdiv' ) );
@@ -192,6 +139,23 @@ class ScoperAdminFiltersUI
 		
 	}
 
+	// Don't show add new menu UI if user can't edit nav menus blogwide.  Otherwise they could create a new menu but not edit it later.
+	function ui_hide_add_menu() {
+		$tx_obj = get_taxonomy( 'nav_menu' );
+
+		if ( cr_user_can( $tx_obj->cap->manage_terms, BLOG_SCOPE_RS ) )
+			return;
+?>
+<script type="text/javascript">
+/* <![CDATA[ */
+jQuery(document).ready( function($) {
+	$('.menu-add-new').hide();
+});
+/* ]]> */
+</script>
+<?php
+	} // end function 
+	
 	function ui_admin_footer() {
 		if ( (false !== strpos($_SERVER['HTTP_USER_AGENT'], 'msie 7') ) )
 			echo '<span style="float:right; margin-left: 2em"><a href="http://agapetry.net/">' . __('Role Scoper', 'scoper') . '</a> ' . SCOPER_VERSION . ' | ' . '<a href="http://agapetry.net/forum/">' . __('Support Forum', 'scoper') . '</a>&nbsp;</span>';

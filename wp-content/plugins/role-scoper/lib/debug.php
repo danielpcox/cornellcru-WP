@@ -13,17 +13,20 @@ function d_echo($str) {
 }
 
 if ( ! function_exists('rs_errlog') ) {
-	function rs_errlog($message, $line_break = true) {
+	function rs_errlog($msg, $line_break = true) {
 		if ( ! defined('RS_DEBUG') )
 			return;
 
+		if( is_array($msg) || is_object($msg) )
+			$msg = serialize( $msg );
+			
 		$append = ( $line_break ) ? "\r\n" : '';
 		
 		if ( defined('RS_DEBUG_LOGFILE') )
-			error_log($message . $append, 3, RS_DEBUG_LOGFILE);
+			error_log($msg . $append, 3, RS_DEBUG_LOGFILE);
 		
 		elseif ( defined('SCOPER_ABSPATH') && is_writable(SCOPER_ABSPATH) )
-			error_log($message . $append, 3, SCOPER_ABSPATH . '/php_debug.txt');
+			error_log($msg . $append, 3, SCOPER_ABSPATH . '/php_debug.txt');
 	}
 }
 

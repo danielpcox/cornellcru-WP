@@ -22,12 +22,7 @@ class ScoperUserSearch {
 		$recommend = __( 'Recommend&nbsp;^', 'scoper' );
 		
 		if ( 'groups' == $agent_type ) {
-			if ( ! empty( $_GET['page'] ) && ( 'rs-groups' == $_GET['page'] ) && ! empty( $_GET['id'] ) )
-				$group_id = $_GET['id'];
-			else
-				$group_id = 0;
-	
-			$can_admin = is_content_administrator_rs() || current_user_can( 'manage_groups', $group_id );
+			$can_admin = is_user_administrator_rs();
 		
 			if ( $can_admin ) {
 				$this->status []= 'active';
@@ -43,7 +38,7 @@ class ScoperUserSearch {
 				$this->approval_caption []= '';
 			}
 
-			if ( scoper_get_option( 'group_recommendations' ) && ( $can_admin || ( $can_moderate = current_user_can( 'recommend_group_membership', $group_id ) ) ) ) {
+			if ( scoper_get_option( 'group_recommendations' ) && ( $can_admin || ( $can_moderate = current_user_can( 'recommend_group_membership' ) ) ) ) {
 				$this->status []= 'recommended';
 				$this->list_ids [] = 'recommended_agents_rs';
 				$this->removal_ids [] = 'unrecommended_agents_rs';
@@ -63,7 +58,7 @@ class ScoperUserSearch {
 				}	
 			}
 
-			if ( scoper_get_option( 'group_requests' ) && ( $can_admin || current_user_can( 'request_group_membership', $group_id ) ) ) {
+			if ( scoper_get_option( 'group_requests' ) && ( $can_admin || current_user_can( 'request_group_membership' ) ) ) {
 				$this->status []= 'requested';
 				$this->list_ids [] = 'requested_agents_rs';
 				$this->removal_ids [] = 'unrequested_agents_rs';
@@ -86,8 +81,13 @@ class ScoperUserSearch {
 				}
 			}
 		} else {
-			$can_admin = is_user_administrator_rs();
-		
+			if ( ! empty( $_GET['page'] ) && ( 'rs-groups' == $_GET['page'] ) && ! empty( $_GET['id'] ) )
+				$group_id = $_GET['id'];
+			else
+				$group_id = 0;
+	
+			$can_admin = is_user_administrator_rs() || current_user_can( 'manage_groups', $group_id );
+			
 			if ( $can_admin ) {
 				$this->status []= 'active';
 				$this->list_ids [] = 'current_agents_rs';
@@ -152,7 +152,7 @@ class ScoperUserSearch {
 		echo "\n" . "<script type='text/javascript' src='" . SCOPER_URLPATH . "/admin/dualListBox.js'></script>";
 		
 		$site_url = admin_url('');
-			
+
 		if ( ! $this->list_ids )
 			return;
 
@@ -278,14 +278,16 @@ class ScoperUserSearch {
 	}
 	
 	function output_html( $agents, $agent_type = 'users' ) {
-		
+
 		if ( 'groups' == $agent_type ) {
-			if ( 'requested' == $this->status[0] )
-				$reqd_caps = 'request_group_membership';
-			elseif ( 'recommended' == $this->status[0] )
-				$reqd_caps = 'recommend_group_membership';
-			else
-				$reqd_caps = 'manage_groups';
+			$reqd_caps = 'manage_groups';
+			
+			if ( ! empty( $this->status[0] ) ) {
+				if ( 'requested' == $this->status[0] )
+					$reqd_caps = 'request_group_membership';
+				elseif ( 'recommended' == $this->status[0] )
+					$reqd_caps = 'recommend_group_membership';
+			}
 				
 			$editable_group_ids = ScoperAdminLib::get_all_groups( FILTERED_RS, COL_ID_RS, array( 'reqd_caps' => $reqd_caps ) );
 		}
@@ -325,9 +327,11 @@ if ( ! empty($this->list_ids) ) :
 	<br />
 	<select name="<?php echo $this->list_ids[0]?>[]" id="<?php echo $this->list_ids[0]?>" multiple="multiple" style="height:100px;width:200px;">
 	<?php
-	foreach ( $agents[ $this->status[0] ] as $value => $caption )
-		if ( ( 'users' == $agent_type ) || ( in_array( $value, $editable_group_ids ) ) )
-			echo "<option value='$value'>$caption</option>";
+	if ( ! empty($agents[ $this->status[0] ]) ) {
+		foreach ( $agents[ $this->status[0] ] as $value => $caption )
+			if ( ( 'users' == $agent_type ) || ( in_array( $value, $editable_group_ids ) ) )
+				echo "<option value='$value'>$caption</option>";
+	}
 	?>
 	</select>
 	<br /> 
@@ -336,7 +340,7 @@ if ( ! empty($this->list_ids) ) :
 	</td>
 	
 	<td>
-	<button id="to2_0" type="button" class="rs_remove"><?php echo $this->remove_button[0]?></button> <button id="allTo2_0" type="button" class="rs_remove"><?php echo $this->remove_all_button[0]?></button> <br /><br /> <button id="allTo1_0" type="button"><?php echo $this->restore_all_button[0]?></button>  <button id="to1_0" type="button"><?php echo $this->restore_button[0]?></button></td>
+	<button id="to2_0" type="button" class="rs_remove"><?php echo ( esc_html($this->remove_button[0]) ) ?></button> <button id="allTo2_0" type="button" class="rs_remove"><?php echo ( esc_html($this->remove_all_button[0]) ) ?></button> <br /><br /> <button id="allTo1_0" type="button"><?php echo( esc_html($this->restore_all_button[0]) ) ?></button>  <button id="to1_0" type="button"><?php echo( esc_html($this->restore_button[0]) )?></button></td>
 	<td>
 	<?php
 	echo $this->removal_captions[0];
@@ -365,9 +369,11 @@ if ( ! empty($this->list_ids) ) :
 		<br />
 		<select name="<?php echo $this->list_ids[$key]?>[]" id="<?php echo $this->list_ids[$key]?>" multiple="multiple" style="height:100px;width:200px;">
 		<?php
-		foreach ( $agents[ $this->status[$key] ] as $value => $caption )
-			if ( ( 'users' == $agent_type ) || ( in_array( $value, $editable_group_ids ) ) )
-				echo "<option value='$value'>$caption</option>";
+		if ( ! empty($agents[ $this->status[$key] ] ) ) {
+			foreach ( $agents[ $this->status[$key] ] as $value => $caption )
+				if ( ( 'users' == $agent_type ) || ( in_array( $value, $editable_group_ids ) ) )
+					echo "<option value='$value'>$caption</option>";
+		}
 		?>
 		</select>
 		<br /> 
@@ -405,8 +411,7 @@ if ( ! empty($this->list_ids) ) :
 	</div>
 	<?php
 		foreach ( $this->list_ids as $key => $list_id ) {
-			
-			if ( $agents[ $this->status[$key] ] )
+			if ( $agents && ! empty( $agents[ $this->status[$key] ] ) )
 				$csv = implode( ',', array_keys($agents[ $this->status[$key] ] ) );
 			else
 				$csv = '';

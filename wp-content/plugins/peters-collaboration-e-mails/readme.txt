@@ -2,8 +2,8 @@
 Contributors: pkthree
 Donate link: http://www.theblog.ca
 Tags: collaboration, post, posts, admin, email, editor, author, status
-Requires at least: 2.7
-Tested up to: 3.0
+Requires at least: 3.0
+Tested up to: 3.1
 Stable tag: trunk
 
 This plugin enables automatic e-mails to the relevant users during the collaboration workflow.
@@ -20,7 +20,7 @@ Enhance the "Submit for Review" feature for Contributor users. This plugin enabl
 
 * When a post's status is changed back to "draft" from "pending": The original Contributor user gets an e-mail saying that their post has been reverted back to a draft, along with a link to edit and re-submit the post.
 
-* When used with [Peter's Post Notes](http://www.theblog.ca/wordpress-post-notes "From Peter's Useful Crap") on WordPress 2.7 and higher, users can leave notes to accompany the e-mails for each step in the workflow.
+* When used with [Peter's Post Notes](http://www.theblog.ca/wordpress-post-notes "From Peter's Useful Crap"), users can leave notes to accompany the e-mails for each step in the workflow.
 
 = Translations =
 
@@ -32,10 +32,12 @@ Enhance the "Submit for Review" feature for Contributor users. This plugin enabl
 * ro\_RO translation by Gabriel Berzescu
 * pl\_PL translation by Michal Rozmiarek
 * de\_DE translation by Rian Klijn of http://www.creditriskmanager.com/
+* nl\_NL translation by Rene of http://wpwebshop.com
+* ru\_RU translation by Doktor Bro of http://doktorbro.net
 
 = Requirements =
 
-* WordPress 2.7 or higher
+* WordPress 3.0 or higher
 
 == Installation ==
 
@@ -43,11 +45,11 @@ Unzip the peters\_collaboration\_emails folder to your WordPress plugins folder.
 
 Details about the e-mails sent (who the sender should be; whether the contributor should know who approved his/her post; and so on) are configured by editing the top of the plugin file itself. The default settings should be sufficient for most implementations.
 
-Moderator rules are configured in the Settings > Collaboration e-mails admin menu. Moderators are Administrator or Editor users who should be notified whenever a post is submitted for review. You can create groups of Contributor users and assign different moderators for each group. In other words, different users can be notified based on who wrote a post. You can also assign moderators based on post categories. If a Contributor user belongs to multiple groups and/or a post has multiple categories, all moderators who have been assigned to the relevant groups and categories are e-mailed.
+Moderator rules are configured in the Settings > Collaboration e-mails admin menu. Moderators are Administrator or Editor users who should be notified whenever a post is submitted for review. You can create groups of Contributor users and assign different moderators for each group. In other words, different users can be notified based on who wrote a post. You can also assign moderators based on various taxonomies (such as tags, categories, and more) on post, pages, and custom post types. If a Contributor user belongs to multiple groups and/or a post has multiple taxonomy values, all moderators who have been assigned to the relevant groups or who match the post type rules are e-mailed.
 
 == Troubleshooting ==
 
-Note that if you are using SMTP to send e-mails, WordPress up to and including version 2.9 has a bug in sending to multiple recipients. A fix is described at http://www.theblog.ca/wordpress-smtp
+For version 1.4.0 and lower of the plugin, note that if you are using SMTP to send e-mails, WordPress up to and including version 2.9 has a bug in sending to multiple recipients. A fix is described at http://www.theblog.ca/wordpress-smtp
 
 == Screenshots ==
 
@@ -59,6 +61,7 @@ Please visit the plugin page at http://www.theblog.ca/wordpress-collaboration-em
 
 == Changelog ==
 
+* 2010-11-27  1.5.0: Support for custom post types and taxonomies
 * 2010-09-02  1.4.0: Added ability to specify contributor and moderator roles for sites with custom roles and capabilities
 * 2010-04-25  1.3.5: E-mails are now all encoded in UTF-8
 * 2010-01-11  1.3.4: Plugin now removes its database tables when it is uninstalled, instead of when it is deactivated. This prevents the collaboration rules from being deleted when upgrading WordPress automatically.

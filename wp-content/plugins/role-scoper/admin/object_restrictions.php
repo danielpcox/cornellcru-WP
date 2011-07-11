@@ -4,7 +4,7 @@ if( basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME']) )
 	die( 'This page cannot be called directly.' );
 
 function scoper_admin_object_restrictions($src_name, $object_type) {
-global $scoper;
+global $scoper, $scoper_admin;
 
 if ( ! ( $src = $scoper->data_sources->get($src_name) ) || ! empty($src->no_object_roles) || ! empty($src->taxonomy_only) || ($src_name == 'group') )
 	wp_die(__('Invalid data source', 'scoper'));
@@ -13,19 +13,20 @@ $is_administrator = is_administrator_rs($src, 'user');
 
 $role_bases = array();
 
-if ( USER_ROLES_RS && ( $is_administrator || $scoper->admin->user_can_admin_object($src_name, $object_type, 0, true) ) )
+if ( USER_ROLES_RS && ( $is_administrator || $scoper_admin->user_can_admin_object($src_name, $object_type, 0, true) ) )
 	$role_bases []= ROLE_BASIS_USER;
 	
-if ( GROUP_ROLES_RS && ( $is_administrator || $scoper->admin->user_can_admin_object($src_name, $object_type, 0, true) || current_user_can('manage_groups') ) )
+if ( GROUP_ROLES_RS && ( $is_administrator || $scoper_admin->user_can_admin_object($src_name, $object_type, 0, true) || current_user_can('manage_groups') ) )
 	$role_bases []= ROLE_BASIS_GROUPS;
 
 if ( empty($role_bases) )
 	wp_die(__awp('Cheatin&#8217; uh?'));
 	
 $otype = $scoper->data_sources->member_property($src_name, 'object_types', $object_type);
-	
-require_once( SCOPER_ABSPATH . '/hardway/hardway-parent_rs.php');
+
+
 require_once( 'admin-bulk_rs.php' );
+require_once( 'admin_lib-bulk-parent_rs.php');
 $role_assigner = init_role_assigner();
 	
 $nonce_id = 'scoper-assign-roles';
@@ -49,9 +50,9 @@ if ( isset($_POST['rs_submit'] ) ) {
 <?php
 
 $src_otype = ( isset($src->object_types) ) ? "{$src_name}:{$object_type}" : $src_name;
-$display_name = $scoper->admin->interpret_src_otype($src_otype, false);
-$display_name_plural = $scoper->admin->interpret_src_otype($src_otype, true);
-echo '<h2>' . sprintf(__('%s Restrictions', 'scoper'), $display_name)
+$item_label_singular = $scoper_admin->interpret_src_otype($src_otype, 'singular_name');
+$item_label = $scoper_admin->interpret_src_otype($src_otype);
+echo '<h2>' . sprintf(__('%s Restrictions', 'scoper'), $item_label_singular)
 	. '&nbsp;&nbsp;<span style="font-size: 0.6em; font-style: normal">(<a href="#scoper_notes">' . __('see notes', 'scoper') . '</a>)</span>'
 	. '</h2>';
 
@@ -63,12 +64,12 @@ if ( scoper_get_option('display_hints') ) {
 	$uses_taxonomies = scoper_get_taxonomy_usage( $src_name, $object_type );
 
 	if ( $uses_taxonomies && (1 == count($uses_taxonomies) ) ) {
-		$tx_display = $scoper->taxonomies->member_property( current($uses_taxonomies), 'display_name' );
-		printf(__('Reduce access to a specific %1$s by requiring some role(s) to be %2$s%3$s-assigned%4$s. Corresponding WP-assigned Roles and RS-assigned General and %5$s Role assignments are ignored.', 'scoper'), $display_name, $link_open, $display_name, '</a>', $tx_display);
-	} elseif ( count($tx_names) > 1 )
-		printf(__('Reduce access to a specific %1$s by requiring some role(s) to be %2$s%3$s-assigned%4$s. Corresponding WP-assigned Roles and RS-assigned General and Section Role assignments are ignored.', 'scoper'), $display_name, $link_open, $display_name, '</a>');
+		$tx_display = $scoper->taxonomies->member_property( reset($uses_taxonomies), 'display_name' );
+		printf(__('Reduce access to a specific %1$s by requiring some role(s) to be %2$s%3$s-assigned%4$s. Corresponding WP-assigned Roles and RS-assigned General and %5$s Role assignments are ignored.', 'scoper'), $item_label_singular, $link_open, $item_label_singular, '</a>', $tx_display);
+	} elseif ( count($uses_taxonomies) )
+		printf(__('Reduce access to a specific %1$s by requiring some role(s) to be %2$s%3$s-assigned%4$s. Corresponding WP-assigned Roles and RS-assigned General and Term Role assignments are ignored.', 'scoper'), $item_label_singular, $link_open, $item_label_singular, '</a>');
 	else
-		printf(__('Reduce access to a specific %1$s by requiring some role(s) to be %2$s%3$s-assigned%4$s. Corresponding WP-assigned Roles and RS-assigned General Role assignments are ignored.', 'scoper'), $display_name, $link_open, $display_name, '</a>');
+		printf(__('Reduce access to a specific %1$s by requiring some role(s) to be %2$s%3$s-assigned%4$s. Corresponding WP-assigned Roles and RS-assigned General Role assignments are ignored.', 'scoper'), $item_label_singular, $link_open, $item_label_singular, '</a>');
 
 	echo '</div>';
 }
@@ -83,26 +84,18 @@ wp_nonce_field( $nonce_id );
 // ============ Users / Groups and Assignment Mode Selection Display ================
 if ( empty($src->cols->parent) || $ignore_hierarchy )
 	$assignment_modes = array( 
-		ASSIGN_FOR_ENTITY_RS => sprintf(__('for selected %s', 'scoper'), $display_name_plural)
+		ASSIGN_FOR_ENTITY_RS => sprintf(__('for selected %s', 'scoper'), $item_label)
 	);
 else
 	$assignment_modes = array(
-		ASSIGN_FOR_ENTITY_RS => sprintf(__('for selected %s', 'scoper'), $display_name_plural), 
-		ASSIGN_FOR_CHILDREN_RS => sprintf(__('for sub-%s of selected', 'scoper'), $display_name_plural), 
-		ASSIGN_FOR_BOTH_RS => sprintf(__('for selected and sub-%s', 'scoper'), $display_name_plural)
+		ASSIGN_FOR_ENTITY_RS => sprintf(__('for selected %s', 'scoper'), $item_label), 
+		ASSIGN_FOR_CHILDREN_RS => sprintf(__('for sub-%s of selected', 'scoper'), $item_label), 
+		ASSIGN_FOR_BOTH_RS => sprintf(__('for selected and sub-%s', 'scoper'), $item_label)
 	);
 
 $max_scopes = array( 'object' => __('Restrict selected roles', 'scoper'), 'blog' => __('Unrestrict selected roles', 'scoper')  );
 $args = array( 'max_scopes' => $max_scopes, 'scope' => OBJECT_SCOPE_RS );
 ScoperAdminBulk::display_inputs(ROLE_RESTRICTION_RS, $assignment_modes, $args);
-
-$role_display = array();
-$editable_roles = array();
-foreach ( $scoper->role_defs->get_all_keys() as $role_handle ) {
-	$role_display[$role_handle] = $scoper->role_defs->get_abbrev( $role_handle, OBJECT_UI_RS );
-	if ( $scoper->admin->user_can_admin_role($role_handle, 0, $src_name, $object_type) )
-		$editable_roles[0][$role_handle] = true;
-}
 	
 echo '<br />';
 $args = array( 'default_hide_empty' => ! empty($otype->admin_default_hide_empty), 'hide_roles' => true, 'scope' => OBJECT_SCOPE_RS, 'src' => $src, 'otype' => $otype );
@@ -116,7 +109,7 @@ $nexttext = __('next', 'scoper');
 
 $site_url = get_option('siteurl');
 
-$args = array( 'include_child_restrictions' => true, 'return_array' => true, 'role_type' => SCOPER_ROLE_TYPE, 'force_refresh' => true );
+$args = array( 'include_child_restrictions' => true, 'return_array' => true, 'role_type' => 'rs', 'force_refresh' => true );
 $strict_objects = $scoper->get_restrictions(OBJECT_SCOPE_RS, $src_name, $args);
 
 $object_names = array();
@@ -140,13 +133,13 @@ if ( isset($strict_objects['restrictions']) ) {
 $object_ids = array_flip( array_unique($object_ids) );
 
 // Get the obj name, parent associated with each role (also sets $object_names, $unlisted objects)
-$listed_objects = ScoperAdminBulk::get_objects_info($object_ids, $object_names, $object_status, $unlisted_objects, $src, $otype, $ignore_hierarchy);
+$listed_objects = ScoperAdminBulkParent::get_objects_info($object_ids, $object_names, $object_status, $unlisted_objects, $src, $otype, $ignore_hierarchy);
 
 
 if ( $col_parent ) {
 	if ( $listed_objects ) {
 		if ( $unlisted_objects ) // query for any parent objects which don't have their own role assignments
-			$listed_objects = ScoperHardwayParent::add_missing_parents($listed_objects, $unlisted_objects, $col_parent);
+			$listed_objects = ScoperAdminBulkParent::add_missing_parents($listed_objects, $unlisted_objects, $col_parent);
 
 		// convert keys from object ID to title+ID so we can alpha sort them
 		$listed_objects_alpha = array();
@@ -155,7 +148,7 @@ if ( $col_parent ) {
 
 		uksort($listed_objects_alpha, "strnatcasecmp");
 
-		$listed_objects = ScoperHardwayParent::order_by_hierarchy($listed_objects_alpha, $col_id, $col_parent);
+		$listed_objects = ScoperAdminBulkParent::order_by_hierarchy($listed_objects_alpha, $col_id, $col_parent);
 	} // endif any listed objects
 	
 } else { // endif doing object hierarchy
@@ -177,10 +170,30 @@ if ( ! $is_administrator )
 else
 	$cu_admin_results = '';	// no need to filter admins
 
-$role_defs_by_otype = array();
-$role_defs_by_otype[$object_type] = $scoper->role_defs->get_matching(SCOPER_ROLE_TYPE, $src_name, $object_type);
+// membuffer ids so user_can_admin_role() doesn't trigger a separate has_cap query for each one
+if ( $cu_admin_results )
+	$scoper->listed_ids[$src_name] = $cu_admin_results;
+	
+global $scoper_admin;
+	
+$role_display = array();
+$editable_roles = array();
 
-$table_captions = ScoperAdminUI::restriction_captions(OBJECT_SCOPE_RS, '', $display_name, $display_name_plural);
+$role_defs_by_otype = array();
+$role_defs_by_otype[$object_type] = $scoper->role_defs->get_matching( 'rs', $src_name, $object_type);
+
+foreach ( array_keys($role_defs_by_otype[$object_type]) as $role_handle ) {
+	$role_display[$role_handle] = $scoper->role_defs->get_abbrev( $role_handle, OBJECT_UI_RS );
+	
+	if ( $cu_admin_results && ! is_user_administrator_rs() ) {
+		foreach( array_keys($cu_admin_results) as $object_id ) {
+			if ( $scoper_admin->user_can_admin_role($role_handle, $object_id, $src_name, $object_type) )
+				$editable_roles[$object_id][$role_handle] = true;
+		}
+	}
+}
+
+$table_captions = ScoperAdminUI::restriction_captions(OBJECT_SCOPE_RS, '', $item_label_singular, $item_label);
 
 $args = array( 
 'admin_items' => $cu_admin_results, 	'editable_roles' => $editable_roles,	'default_hide_empty' => ! empty($otype->admin_default_hide_empty),
@@ -200,16 +213,16 @@ echo '</div>';
 echo '</form><br /><h4 style="margin-bottom:0.1em"><a name="scoper_notes"></a>' . __("Notes", 'scoper') . ':</h4><ul class="rs-notes">';	
 
 echo '<li>';
-printf(__('To edit all roles for any %1$s, click on the %1$s name.', 'scoper'), $otype->display_name);
+printf(__('To edit all roles for any %1$s, click on the %1$s name.', 'scoper'), $otype->labels->singular_name );
 echo '</li>';
 
 echo '<li>';
-printf(__("To edit the %s via its default editor, click on the ID link.", 'scoper'), $otype->display_name);
+printf(__("To edit the %s via its default editor, click on the ID link.", 'scoper'), $otype->labels->singular_name );
 echo '</li>';
 
 if ( ! $is_administrator ) {
 	echo '<li>';
-	printf(__('To enhance performance, the role editing checkboxes here may not include some roles which you can only edit due to your own %1$s-specific role. In such cases, click on the editing link to edit roles for the individual %1$s.', 'scoper'), $otype->display_name);
+	printf(__('To enhance performance, the role editing checkboxes here may not include some roles which you can only edit due to your own %1$s-specific role. In such cases, click on the editing link to edit roles for the individual %1$s.', 'scoper'), $otype->labels->singular_name );
 	echo '</li>';
 }
 

@@ -43,34 +43,29 @@ class AttachmentTemplate_RS {
 		}
 	}
 	
-	function impose_post_teaser(&$object, $object_type, $use_teaser_type = 'fixed') {
+	function impose_post_teaser(&$object, $post_type, $use_teaser_type = 'fixed') {
 		global $current_user, $scoper, $wp_query;
 
 		require_once('teaser_rs.php');
-		
-		$src_name = 'post';
 		
 		$teaser_replace = array();
 		$teaser_prepend = array();
 		$teaser_append = array();
 		
-		$teaser_replace[$object_type]['post_content'] = ScoperTeaser::get_teaser_text( 'replace', 'content', $src_name, $object_type, $current_user );
+		$teaser_replace[$post_type]['post_content'] = ScoperTeaser::get_teaser_text( 'replace', 'content', 'post', $post_type, $current_user );
 
-		$teaser_replace[$object_type]['post_excerpt'] = ScoperTeaser::get_teaser_text( 'replace', 'excerpt', $src_name, $object_type, $current_user );
-		$teaser_prepend[$object_type]['post_excerpt'] = ScoperTeaser::get_teaser_text( 'prepend', 'excerpt', $src_name, $object_type, $current_user );
-		$teaser_append[$object_type]['post_excerpt'] = ScoperTeaser::get_teaser_text( 'append', 'excerpt', $src_name, $object_type, $current_user );
+		$teaser_replace[$post_type]['post_excerpt'] = ScoperTeaser::get_teaser_text( 'replace', 'excerpt', 'post', $post_type, $current_user );
+		$teaser_prepend[$post_type]['post_excerpt'] = ScoperTeaser::get_teaser_text( 'prepend', 'excerpt', 'post', $post_type, $current_user );
+		$teaser_append[$post_type]['post_excerpt'] = ScoperTeaser::get_teaser_text( 'append', 'excerpt', 'post', $post_type, $current_user );
 
-		$teaser_prepend[$object_type]['post_name'] = ScoperTeaser::get_teaser_text( 'prepend', 'name', $src_name, $object_type, $current_user );
-		$teaser_append[$object_type]['post_name'] = ScoperTeaser::get_teaser_text( 'append', 'name', $src_name, $object_type, $current_user );
+		$teaser_prepend[$post_type]['post_name'] = ScoperTeaser::get_teaser_text( 'prepend', 'name', 'post', $post_type, $current_user );
+		$teaser_append[$post_type]['post_name'] = ScoperTeaser::get_teaser_text( 'append', 'name', 'post', $post_type, $current_user );
 	
 		$force_excerpt = array();
-		$force_excerpt[$object_type] = ( 'excerpt' == $use_teaser_type );
+		$force_excerpt[$post_type] = ( 'excerpt' == $use_teaser_type );
 		
-		$args = array( 'col_excerpt' => 'post_excerpt', 'col_content' => 'post_content', 'col_id' => 'ID',
-		'teaser_prepend' => $teaser_prepend, 		'teaser_append' => $teaser_append, 	'teaser_replace' => $teaser_replace, 
-		'force_excerpt' => $force_excerpt );
-		
-		ScoperTeaser::apply_teaser( $object, $src_name, $object_type, $args );
+		$args = array( 'teaser_prepend' => $teaser_prepend,   'teaser_append' => $teaser_append, 	'teaser_replace' => $teaser_replace,  'force_excerpt' => $force_excerpt );
+		ScoperTeaser::apply_post_teaser( $object, $post_type, $args );
 		
 		$wp_query->is_404 = false;
 		$wp_query->is_attachment = true;

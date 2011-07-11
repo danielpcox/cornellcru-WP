@@ -10,7 +10,7 @@
 <?php
 	wp_admin_css( 'login', true );
 	wp_admin_css( 'colors-fresh', true );
-
+	global $is_iphone;
 	if ( $is_iphone ) { ?>
 	<meta name="viewport" content="width=320; initial-scale=0.9; maximum-scale=1.0; user-scalable=0;" />
 	<style type="text/css" media="screen">
