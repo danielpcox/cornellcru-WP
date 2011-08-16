@@ -747,3 +747,10 @@ ol li:first-child:last-child {
 #return_top a { position:absolute; position:fixed; right:0; bottom:15px;
 display:block; height:138px; width:38px; background:url(img/return-top.png) no-repeat left top; border:none; text-decoration:none; }
 /*#return_top a:hover { background:url(img/return-top.png) no-repeat right top; text-decoration:none; }*/
+
+
+/*Social media counters plugin*/
+#ph_social_share_bottom {
+    margin-left: 20px;
+    margin-bottom: 10px;
+}
