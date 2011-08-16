@@ -751,6 +751,10 @@ display:block; height:138px; width:38px; background:url(img/return-top.png) no-r
 
 /*Social media counters plugin*/
 #ph_social_share_bottom {
-    margin-left: 20px;
+    margin-left: 0px;
     margin-bottom: 10px;
+}
+
+div.post div {
+    margin-left:20px;
 }
