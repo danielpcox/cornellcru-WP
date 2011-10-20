@@ -56,7 +56,7 @@
 </head>
 <body>
     <div id="header">
-      <a id="logo" href="<?php echo get_option('home'); ?>/"><?php bloginfo('name'); ?></a><!--/#logo-->
+	  <img src="<?php bloginfo('template_url'); ?>/images/CornellCru Logo no fire.png"><!--/#logo-->
         <?php if ($options['header_search']) : ?>
          <?php if ($options['use_google_search']) : ?>
          <form action="http://www.google.com/cse" method="get" id="search">
