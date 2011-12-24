@@ -450,13 +450,13 @@ form.upgrade .hint {
 	float: right;
 }
 
-.js.folded #adminmenu .wp-submenu {
+.folded #adminmenu .wp-submenu {
 	display: block;
 	left: auto;
 	right: 26px;
 }
 
-.js.folded #adminmenu .wp-submenu.sub-open {
+.folded #adminmenu .wp-submenu.sub-open {
 	padding: 0 0 8px 8px;
 }
 
@@ -464,7 +464,7 @@ form.upgrade .hint {
 	padding: 6px 10px 5px 4px;
 }
 
-.js.folded #adminmenu .wp-submenu-wrap {
+.folded #adminmenu .wp-submenu-wrap {
 	-webkit-border-bottom-right-radius: 0;
 	-webkit-border-bottom-left-radius: 3px;
 	-webkit-border-top-right-radius: 0;
@@ -484,16 +484,16 @@ form.upgrade .hint {
 	border-width: 0 0 1px 1px;
 }
 
-.js.folded #adminmenu .wp-submenu ul {
+.folded #adminmenu .wp-submenu ul {
 	border-width: 0 1px 0 0;
 }
 
-.js.folded #adminmenu .wp-submenu a {
+.folded #adminmenu .wp-submenu a {
 	padding-left: 0;
 	padding-right: 10px;
 }
 
-.js.folded #adminmenu a.wp-has-submenu {
+.folded #adminmenu a.wp-has-submenu {
 	margin-left: 0;
 	margin-right: 40px;
 }
