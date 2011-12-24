@@ -1,0 +1,249 @@
+/*---------------------------------------------------------------- 
+  Copyright: 
+  Copyright (C) 2009 danielfajardo web
+  
+  License: 
+  GPL Software 
+  
+  Author: 
+  danielfajardo - http: //wwww.danielfajardo.com
+---------------------------------------------------------------- */
+
+body {
+	font-family: Geneva,Helvetica,Verdana,Arial,sans-serif;
+	font-size: 62.50%; /* Resets 1em to 10px */
+	color: #444;
+	}
+	body.font-small		{ font-size: 65%; }
+	body.font-medium	{ font-size: 75%; }  
+	body.font-large		{ font-size: 85%; }
+  
+/* Headings
+***************************************************************************** */
+h1,h2,h3,h4,h5,h6 {
+	color: #444;
+	font-family: Geneva,Helvetica,Verdana,Arial,sans-serif;
+	font-weight: normal;
+	line-height: 1.2em;
+	color: #be261e;
+}
+	
+h1 { font-size: 2.4em; }
+h2 { font-size: 2.0em; }
+h3 { font-size: 1.6em; }
+h4 { font-size: 1.2em; }
+	
+h5 { 
+	font-size: 1.0em;
+	font-weight: bold; }
+	
+h6 { 
+	font-size: 0.9em;
+	font-weight: bold; }
+
+code, pre {
+	margin: 1em 0;
+	font-family: "Courier New", Courier, monospace;
+	font-size: 1em;
+	color: #000;
+	}
+
+pre {
+	overflow: auto;
+	padding: 1em;
+	border: 1px solid #ddd;
+	background: #f1f1f1;
+	}
+	pre.script {
+		border: 1px dashed #ccd;
+		-moz-border-radius: 5px;
+		-webkit-border-radius: 5px;
+		background: #ffffdd;
+	}
+
+blockquote {
+	font-style: italic;
+	padding-left: 48px;
+	background: url(../images/icons/quote.png) 0 0 no-repeat;
+}
+
+acronym, abbr
+{
+	font-size: 0.9em;
+	letter-spacing: .07em;
+	cursor: help;
+	border-bottom: 1px dashed #999;
+}
+
+
+/* General elements
+***************************************************************************** */
+p {
+	margin: .5em 0 1em 0;
+	line-height: 1.5em;
+}
+	p.last { margin-bottom: 0!important; }
+	p img {
+		/* margin: 0 15px 10px 0; */
+		padding: 0; }
+
+hr { display: none; }
+
+strong { 
+	color:#666;
+	font-weight: bold;
+}
+	
+em { font-style: italic; }
+
+.small { font-size: .8em; color: #666; }
+
+.large { font-size: 1.2em; }
+
+.resalted { font-weight: bold; }
+
+.highlight  { background: #e7feb1; padding: 0 .25em; margin: 0 .25em; }
+
+.center { text-align: center;	}
+
+.hidden {	display: none; }
+
+.underlined { border-bottom: 1px solid #cdd; }
+
+
+/* General elements
+***************************************************************************** */
+
+input {
+	padding: 4px 8px;
+	border: 1px solid #cdd;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	background: #f9ffff;
+}
+input.button {
+	float: right;
+	padding: 4px 8px;
+	border: 1px solid #cdd;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	background: #26a;
+	color: #cdd;
+}
+input.button:hover {
+	background: #be261e;
+	color: #fff;
+}
+input.button:active {
+	background: #333;
+	color: #fff;
+}
+
+label {
+	padding: 0 10px;
+	font-size: 0.8em;
+	color: #666;
+}
+
+textarea {
+	padding: 9px;
+	border: 1px solid #cdd;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	background: #f9ffff;
+}
+
+/* Links
+***************************************************************************** */
+
+a {	text-decoration: none; }
+	a:link    { color: #26a; }
+	a:hover   { color: #000; }
+	a:active  { color: #be261e; }
+	a:visited { color: #26a; }
+
+a img {	border: none;	}
+
+.logotext a {	text-decoration: none; }
+	.logotext a:link    { color: #be261e; }
+	.logotext a:hover   { color: #000; }
+	.logotext a:active  { color: #26a; }
+	.logotext a:visited { color: #be261e; }
+
+#mainmenu ul li a:link    { color: #26a; }
+#mainmenu ul li a:hover   { color: #000; }
+#mainmenu ul li a:active  { color: #be261e; }
+#mainmenu ul li a:visited { color: #444; }
+
+.post h2 a:link,
+.post h3.post-title a:link    { color: #be261e; }
+.post h2 a:hover,
+.post h3.post-title a:hover   { color: #26a; }
+.post h2 a:active,
+.post h3.post-title a:active  { color: #000; }
+.post h2 a:visited,
+.post h3.post-title a:visited { color: #b7cb16; }
+
+#sidebar a:link    { color: #be261e; }
+#sidebar a:hover   { color: #26a; }
+#sidebar a:active  { color: #444; }
+#sidebar a:visited { color: #be261e; }
+
+
+/* list 
+***************************************************************************** */
+
+/* Unordered and Ordered list */
+ul, ol { 
+	margin: .5em 1.5em 2em 1.7em;
+}
+
+ul { 	list-style-type: disc; }
+	ul.check, ul.arrow, ul.cross, ul.light, ul.star {
+		list-style: none;
+		margin-left: 0;
+		}
+		ul.check li, ul.arrow li, ul.cross li, ul.light li, ul.star li {
+			list-style-type: none;
+			background-repeat: no-repeat;
+			background-position: center left;
+			padding: 4px 0 3px 25px;
+			}
+			ul.check li { background-image: url(../images/list/typo_check.jpg); }
+			ul.arrow li { background-image: url(../images/list/typo_arrow.jpg); }
+			ul.cross li { background-image: url(../images/list/typo_cross.jpg); }
+			ul.light li { background-image: url(../images/list/typo_light.jpg); }
+			ul.star li  { background-image: url(../images/list/typo_star.jpg); }
+	
+	ul.check-big, ul.arrow-big, ul.cross-big, ul.light-big, ul.star-big {
+		list-style: none;
+		margin-left: 0;
+		}
+		ul.check-big li, ul.arrow-big li, ul.cross-big li, ul.light-big li, ul.star-big li {
+			list-style-type: none;
+			background-repeat: no-repeat;
+			background-position: center left;
+			padding: 11px 0 8px 50px;
+			font-size: 1.4em;
+			font-weight: bold;
+			}
+			ul.check-big li { background-image: url(../images/list/typo_check-big.jpg); }
+			ul.arrow-big li { background-image: url(../images/list/typo_arrow-big.jpg); }
+			ul.cross-big li { background-image: url(../images/list/typo_cross-big.jpg); }
+			ul.light-big li { background-image: url(../images/list/typo_light-big.jpg); }
+			ul.star-big li  { background-image: url(../images/list/typo_star-big.jpg); }
+
+ol { list-style-type: decimal}
+	/* on the search results page */
+	ol.list li { margin-bottom: 2em; }
+	ol.list h4 { margin: 0 0 .2em; }
+
+/* Definiton list */	
+dl { margin: 0 0 1.5em 0; }
+	dl dt { font-weight: bold; }
+	dd { margin-left: 1.5em; }
+	
+
+/* Tables
+***************************************************************************** */
+	

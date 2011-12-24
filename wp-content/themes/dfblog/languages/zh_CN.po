@@ -1,0 +1,421 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: dfBlog 1.1.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-05-14 13:53+0100\n"
+"PO-Revision-Date: \n"
+"Last-Translator: elecpc <elecpc AT gmail.com>\n"
+"Language-Team: danielfajardo web <web@danielfajardo.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-KeywordsList: __;_e;_c\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-Language: Chinese\n"
+"X-Poedit-Country: CHINA\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: ./includes\n"
+
+#: 404.php:1
+msgid "Upss, not found..."
+msgstr "抱歉，没找到..."
+
+#: 404.php:13
+msgid "The page does not exist"
+msgstr "该网页不存在"
+
+#: 404.php:15
+#, php-format
+msgid "Sorry, but there aren't any posts in the %s category yet."
+msgstr "对不起，%s 标签下没有文章。"
+
+#: 404.php:17
+msgid "Sorry, but you are looking for something that isn&#8217;t here."
+msgstr "很抱歉，没有找到您需要的。"
+
+#: 404.php:19
+msgid "Sorry, but there aren't any posts with this date."
+msgstr "对不起，没有此日期的文章。"
+
+#: 404.php:22
+#, php-format
+msgid "Sorry, but there aren't any posts by %s yet."
+msgstr "对不起 %s 下没有文章。"
+
+#: 404.php:24
+msgid "No posts found."
+msgstr "文章没有找到。"
+
+#: 404.php:29
+msgid "Try a different search?"
+msgstr "试试其他的关键字，尝试再次搜索？"
+
+#: 404.php:32
+msgid "Or follow one of these links"
+msgstr "或者点击下面感兴趣的链接"
+
+#: archive.php:13
+#: archive.php:22
+#: index.php:13
+#: search.php:13
+#: search.php:25
+#, php-format
+msgid "Permanent Link to %s"
+msgstr "永久链接到 %s"
+
+#: archive.php:22
+#: search.php:25
+msgid "Read the rest of this entry &raquo;"
+msgstr "继续阅读 &raquo;"
+
+#: comments.php:6
+msgid "Please do not load this page directly. Thanks!"
+msgstr "请勿直接载入本页面，謝謝！"
+
+#: comments.php:9
+msgid "This post is password protected. Enter the password to view comments."
+msgstr "本文已经加密。查看评论请输入密码。"
+
+#: comments.php:20
+#: functions.php:312
+msgid "No Comments &#187;"
+msgstr "没有评论 &#187;"
+
+#: comments.php:20
+#: functions.php:313
+msgid "1 Comment &#187;"
+msgstr "1条评论 &#187;"
+
+#: comments.php:20
+#: functions.php:314
+msgid "% Comments &#187;"
+msgstr "%条评论 &#187;"
+
+#: comments.php:45
+msgid "Comments are closed."
+msgstr "评论已关闭。"
+
+#: comments.php:55
+msgid "Leave a Reply"
+msgstr "发表评论"
+
+#: comments.php:55
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr "%s 发表评论"
+
+#: comments.php:62
+#, php-format
+msgid "You must be <a href=\"%s\">logged in</a> to post a comment."
+msgstr "您必须 <a href=\"%s\">登录</a> 发表评论。"
+
+#: comments.php:69
+#, php-format
+msgid "Logged in as <a href=\"%1$s\">%2$s</a>."
+msgstr "您现在以<a href=\"%1$s\">%2$s</a>的身份登录。"
+
+#: comments.php:69
+msgid "Log out of this account"
+msgstr "退出此帐号"
+
+#: comments.php:69
+msgid "Log out &raquo;"
+msgstr "退出 &raquo;"
+
+#: comments.php:72
+msgid "Name"
+msgstr "姓名"
+
+#: comments.php:72
+#: comments.php:74
+msgid "(required)"
+msgstr "(必须)"
+
+#: comments.php:74
+msgid "Mail (will not be published)"
+msgstr "Email(不会公开)"
+
+#: comments.php:76
+msgid "Website"
+msgstr "网站"
+
+#: comments.php:78
+#, php-format
+msgid "<strong>XHTML:</strong> You can use these tags: <code>%s</code>"
+msgstr "<strong>XHTML:</strong>您可以使用以下标签：<code>%s</code>"
+
+#: comments.php:80
+msgid "Submit Comment"
+msgstr "发表评论"
+
+#: footer.php:7
+msgid "Powered by "
+msgstr "Powered by"
+
+#: footer.php:7
+#, php-format
+msgid "%d processes generated in %s seconds."
+msgstr "%d processes generated in %s seconds."
+
+#: footer.php:8
+msgid "GoTo top"
+msgstr "返回页首"
+
+#: functions.php:39
+msgid "Header Style"
+msgstr "Header Style"
+
+#: functions.php:39
+#: functions.php:42
+msgid "must be a directory in"
+msgstr "must be a directory in"
+
+#: functions.php:42
+msgid "Background Style"
+msgstr "Background Style"
+
+#: functions.php:45
+msgid "Logo type"
+msgstr "Logo type"
+
+#: functions.php:45
+#: functions.php:48
+#: functions.php:51
+msgid "Default: "
+msgstr "Default:"
+
+#: functions.php:45
+#: functions.php:213
+msgid "Show as text"
+msgstr "Show as text"
+
+#: functions.php:48
+msgid "Label of the first menu item"
+msgstr "Label of the first menu item"
+
+#: functions.php:48
+#: functions.php:107
+msgid "Home"
+msgstr "Home"
+
+#: functions.php:51
+msgid "Subscribe to Feed visibility"
+msgstr "Subscribe to Feed visibility"
+
+#: functions.php:51
+#: functions.php:225
+msgid "Show"
+msgstr "Show"
+
+#: functions.php:54
+msgid "Header"
+msgstr "Header"
+
+#: functions.php:57
+msgid "Background"
+msgstr "Background"
+
+#: functions.php:60
+msgid "Menu"
+msgstr "Menu"
+
+#: functions.php:140
+msgid "Theme Options"
+msgstr "Theme Options"
+
+#: functions.php:147
+msgid "settings saved"
+msgstr "settings saved"
+
+#: functions.php:148
+msgid "settings reset"
+msgstr "settings reset"
+
+#: functions.php:151
+msgid "settings"
+msgstr "settings"
+
+#: functions.php:155
+msgid "Reset"
+msgstr "Reset"
+
+#: functions.php:208
+msgid "Show as image"
+msgstr "Show as image"
+
+#: functions.php:230
+msgid "Hide"
+msgstr "Hide"
+
+#: functions.php:250
+msgid "Save changes"
+msgstr "Save changes"
+
+#: functions.php:300
+#, php-format
+msgid "Posted in %s"
+msgstr "Posted in %s"
+
+#: functions.php:329
+msgid "Edit"
+msgstr "Edit"
+
+#: functions.php:333
+msgid "-Post metadata unknown-"
+msgstr "-Post metadata unknown-"
+
+#: functions.php:390
+msgid "Page %CURRENT_PAGE% of %TOTAL_PAGES%"
+msgstr "Page %CURRENT_PAGE% of %TOTAL_PAGES%"
+
+#: functions.php:400
+msgid "First"
+msgstr "First"
+
+#: functions.php:402
+#: functions.php:416
+msgid "&#8201;...&#8201;"
+msgstr "&#8201;...&#8201;"
+
+#: functions.php:404
+msgid "&laquo; Previous"
+msgstr "&laquo;前一页"
+
+#: functions.php:414
+msgid "Next &raquo;"
+msgstr "下一页 &raquo;"
+
+#: functions.php:417
+msgid "Last"
+msgstr "最后一页"
+
+#: header.php:16
+msgid "Category &raquo; "
+msgstr "分类 &raquo;"
+
+#: header.php:19
+msgid "Tag &raquo; "
+msgstr "标签 &raquo;"
+
+#: header.php:22
+msgid "Search results &raquo;"
+msgstr "搜索结果 &raquo;"
+
+#: header.php:64
+#: header.php:68
+msgid "A link to home page"
+msgstr "链接到首页"
+
+#: header.php:87
+msgid "Subscribe to Feed"
+msgstr "RSS订阅"
+
+#: searchform.php:3
+msgid "Search..."
+msgstr "搜索..."
+
+#: sidebar.php:7
+msgid "calendar"
+msgstr "日历"
+
+#: sidebar.php:11
+msgid "categories"
+msgstr "分类"
+
+#: sidebar.php:14
+msgid "tag cloud"
+msgstr "标签云"
+
+#: sidebar.php:19
+msgid "meta"
+msgstr "meta"
+
+#: sidebar.php:23
+msgid "This page validates as XHTML 1.0 Transitional"
+msgstr "This page validates as XHTML 1.0 Transitional"
+
+#: sidebar.php:23
+msgid "Valid <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+msgstr "Valid <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+
+#: sidebar.php:24
+msgid "XHTML Friends Network"
+msgstr "XHTML Friends Network"
+
+#: sidebar.php:24
+msgid "XFN"
+msgstr "XFN"
+
+#: sidebar.php:25
+msgid "Powered by WordPress, state-of-the-art semantic personal publishing platform."
+msgstr "Powered by WordPress, state-of-the-art semantic personal publishing platform."
+
+#: single.php:23
+#, php-format
+msgid "You can follow any responses to this entry through the <a href='%s'>RSS 2.0</a> feed."
+msgstr "您可以<a href='%s'>RSS 2.0</a>订阅。"
+
+#: single.php:26
+#, php-format
+msgid "You can <a href=\"#respond\">leave a response</a>, or <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "<a href=\"#respond\">留言</a>，或者<a href=\"%s\" rel=\"trackback\">引用 Trackback</a>。"
+
+#: single.php:29
+#, php-format
+msgid "Responses are currently closed, but you can <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "评论已关闭,但可以<a href=\"%s\" rel=\"trackback\">引用 Trackback</a>。"
+
+#: single.php:32
+msgid "You can skip to the end and leave a response. Pinging is currently not allowed."
+msgstr "您可以直接留下评论。当前不允许Pinging。"
+
+#: single.php:35
+msgid "Both comments and pings are currently closed."
+msgstr "当前评论和Ping已关闭。"
+
+#: includes/content-header.inc.php:4
+msgid "Latest Publications"
+msgstr "最新发表"
+
+#: includes/content-header.inc.php:7
+#, php-format
+msgid "Archive for the &#8216;%s&#8217; Category"
+msgstr "存档的&#8216;%s&#8217;分类"
+
+#: includes/content-header.inc.php:10
+#, php-format
+msgid "Posts Tagged &#8216;%s&#8217;"
+msgstr "文档标签&#8216;%s&#8217;"
+
+#: includes/content-header.inc.php:13
+#, php-format
+msgid "Archive for %s|Daily archive page"
+msgstr "存档 %s|每日存档"
+
+#: includes/content-header.inc.php:16
+#, php-format
+msgid "Archive for %s|Monthly archive page"
+msgstr "存档 %s|每月存档"
+
+#: includes/content-header.inc.php:16
+msgid "F, Y"
+msgstr "F, Y"
+
+#: includes/content-header.inc.php:19
+#, php-format
+msgid "Archive for %s|Yearly archive page"
+msgstr "存档 %s|每年存档"
+
+#: includes/content-header.inc.php:19
+msgid "Y"
+msgstr "Y"
+
+#: includes/content-header.inc.php:22
+msgid "Author Archive"
+msgstr "作者存档"
+
+#: includes/content-header.inc.php:25
+msgid "Search results for "
+msgstr "搜索结果"
+

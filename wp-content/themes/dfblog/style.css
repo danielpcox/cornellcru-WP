@@ -1,0 +1,522 @@
+/*
+Theme Name: dfBlog
+Theme URI: http://www.danielfajardo.com/dfblog/
+Description: Clean and clear, fixed width, two columns, right sidebar, standards compliant. Compatible with WordPress 2.8. Valid CSS & HTML. Style combinations available configurable from the Theme Options Admin Page. Supported languages: English, Spanish, Italian, Czech, Dutch, German, Norwegian, Russian, French, Chinese, Slovenian, Hungarian, Polish, Swedish and Danish. Please contact us, if you like to contribute your own language. Designed by danielfajardo web. See http://www.danielfajardo.com/dfblog/ for more info.
+Version: 1.1.5
+Author: danielfajardo web
+Author URI: http://www.danielfajardo.com/
+Tags: fixed-width, two-columns, right-sidebar, theme-options, threaded-comments, custom-colors, light, white, red, blue, pink, silver
+
+	The CSS, XHTML and design is released under GPL:
+	http://www.opensource.org/licenses/gpl-license.php
+*/
+
+/* Reset Browser Default */ 
+/*\*/@import url(css/reset.css); /**/
+
+/* Typography */
+/*\*/@import url(css/typography.css); /**/
+
+/* Template */
+/*\*/@import url(css/template.css); /**/
+
+/* Menu */
+/*\*/@import url(css/menu.css); /**/
+
+
+/* Head
+***************************************************************************** */
+
+#head .logotext {
+	font-size: 3.2em;
+	font-weight: bold;
+	padding: 32px 30px 0 30px;
+	letter-spacing: -.05em;
+}
+
+#head .slogan {
+	font-size: 1.4em;
+	padding: 5px 30px 0 30px;
+}
+
+#head .logoimg {
+	padding: 19px 0 0 20px;
+}
+
+
+/* Main Menu. The first level
+***************************************************************************** */
+
+#mainmenu {
+	letter-spacing: .1em;
+	font-variant: small-caps;
+	font-weight: lighter;
+}
+
+#mainmenu ul {
+	font-size: 1.2em;
+	}
+	#mainmenu ul li a {
+		padding-left: 2em;
+		padding-right: 2em;
+	}
+
+
+/* Breadcrumb NavXT plugin
+***************************************************************************** */
+
+#breadcrumb {
+}
+
+
+/* Wrap -> Contaniner -> Content, pagenavigator, entry...
+***************************************************************************** */
+
+.content-header {
+	margin: 0;
+	padding: 0 0 0 50px;
+	text-align: left;
+	overflow: hidden;
+	clear: both;
+	}
+	.content-header h2 {
+		margin: .4em 0 40px;
+		color: #999;
+		border-bottom: 1px solid #cdd;
+	}
+
+.post {
+	overflow: visible;
+	clear: both;
+	margin-left: 1px;
+	padding: 0 0 40px 50px;
+	background: #fff url(images/post-label.gif) 0px 0px no-repeat;
+	}
+	.post hr {
+		display: block;
+	}
+
+.postmetadata {
+	clear: both;
+	margin: 0;
+	font-size: 1.2em;
+	line-height:1.6em;
+	color: #888;
+	}
+	.postmetadata .date, .postmetadata .author, .postmetadata .comment, .postmetadata .category, .postmetadata .tag, .postmetadata .edit {
+		margin:  0 0 0 2px;
+		padding: 0 0 0 20px;
+	}
+	.postmetadata .date           { background: url(images/icons/icons-normal.png) 0 0 no-repeat; }
+	.postmetadata .date:hover     { background: url(images/icons/icons-hover.png) 0 0 no-repeat;	}
+
+	.postmetadata .author         { background: url(images/icons/icons-normal.png) 0 -16px no-repeat; }
+	.postmetadata .author:hover   { background: url(images/icons/icons-hover.png) 0 -16px no-repeat;	}
+
+	.postmetadata .comment        { background: url(images/icons/icons-normal.png) 0 -32px no-repeat; }
+	.postmetadata .comment:hover  { background: url(images/icons/icons-hover.png) 0 -32px no-repeat;	}
+
+	.postmetadata .category       { background: url(images/icons/icons-normal.png) 0 -48px no-repeat; }
+	.postmetadata .category:hover { background: url(images/icons/icons-hover.png) 0 -48px no-repeat;	}
+
+	.postmetadata .tag            { background: url(images/icons/icons-normal.png) 0 -64px no-repeat; }
+	.postmetadata .tag:hover      { background: url(images/icons/icons-hover.png) 0 -64px no-repeat;	}
+
+	.postmetadata .edit           { background: url(images/icons/icons-normal.png) 0 -80px no-repeat; }
+	.postmetadata .edit:hover     { background: url(images/icons/icons-hover.png) 0 -80px no-repeat;	}
+
+#pagenavigator {
+	clear: both;
+	margin: 0 0 20px 50px;
+	width: 590px;
+	height: 22px;
+	font-size: 1.0em;
+	border: 1px solid #dee;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	background: #f1f9f9;
+	}
+	#pagenavigator a,
+	#pagenavigator span.current { margin: 0 .75em 0 0; padding: 3px .25em; }
+	#pagenavigator a.page       {}
+	#pagenavigator span.current { color: #be261e; font-weight: bold; }
+	#pagenavigator a.first      {}
+	#pagenavigator a.last       {}
+	#pagenavigator span.extend  {}
+	#pagenavigator span.pages   {}
+
+.entry {
+	font-size: 1.4em;
+	line-height: 1.4em;
+	margin: 20px 0 0;
+	}
+	.entry blockquote {
+		font-size: .9em;
+	}
+	.entry blockquote blockquote {
+		font-size: .9em;
+	}
+	.entry fieldset {
+		padding: 1em 1em 1em 2em;
+		margin-bottom: 1em;
+		border: 1px dashed #ccc;
+		-moz-border-radius: 5px;
+		-webkit-border-radius: 5px;
+	}
+	.entry fieldset legend {
+		font-weight: bold;
+		text-transform: uppercase;
+		margin: -.25em 0 -.25em -3em;
+		padding: .25em 1em .25em 1em;
+		background-color: white;
+		border: 1px solid #ccc;
+		-moz-border-radius: 5px;
+		-webkit-border-radius: 5px;
+	}
+	.entry table {
+		border-width: 0 1px 1px 0;
+		border-style: solid;
+		border-color: #ccc;
+		font-size: 0.9em;
+	}
+	.entry table tr td {
+		padding: 5px 10px;
+		border-width: 1px 0 0 1px;
+		border-style: solid;
+		border-color: #ccc;
+	
+	}
+	.entry table tr th {
+		border-width: 1px 0 0 1px;
+		border-style: solid;
+		border-color: #ccc;
+		padding: 5px 10px;
+		background: #f4f4f4;
+		color: #666;
+		font-weight: bold;
+		text-align: center;
+	}
+	.entry ol { list-style-type: decimal; }
+	.entry ol ol {	list-style-type: lower-alpha; }
+	.entry ol ol ol {	list-style-type: lower-roman; }
+
+	.entry ul.links {
+		list-style: none;
+		margin-left: 0;
+		}
+		.entry ul.links li {
+			padding: 0 0 1em;
+		}
+
+.notice {
+		font-size: 1.4em;
+		line-height: 1.4em;
+		padding: 2em 1em 1em 0;
+		border: 1px solid #ccc;
+		-moz-border-radius: 5px;
+		-webkit-border-radius: 5px;
+		background: #fff9f9;
+	}
+	.notice div#icon {
+		float: left;
+		margin-left: 20px;
+		width: 48px;
+		height: 48px;
+		background: url(images/icons/notice.png) 0 0 no-repeat;
+	}
+	.notice div#box {
+		float: right;
+		width: 500px;
+		}
+		.notice div#box form {
+			margin-bottom: 1em;
+		}
+
+p img {
+	padding: 0;
+	max-width: 100%;
+}
+
+img.centered {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+
+/* Comments
+***************************************************************************** */
+
+#comments {
+	font-size: 1em;
+	line-height: 1.4em;
+	margin: 0 0 20px 50px;
+	padding: 20px 0 0 0;
+	border-top: 1px solid #cdd;
+	}
+	#comments .browse {
+		clear: both;
+		width: 588px;
+		height: 19px;
+		margin: 0;
+		padding-bottom: 9px;
+	}
+
+.commentlist {
+	margin: 10px 0;
+	}
+	.commentlist li {
+		list-style: none;
+		padding: 10px;
+	}
+
+li.comment {
+	border: 1px solid #cdd;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	margin-bottom: 20px;
+	padding-top: 1em;
+	font-size: 12px;
+	}
+	li.comment div, li.pingback div {
+	}
+	.vcard img.avatar {
+		float: left;
+		border: 1px solid #eee;
+		padding: 2px;
+		margin: 0 20px 1em 0;
+		background: #fff;
+	}
+	.vcard cite {
+		font-weight: bold;
+		font-size: 12px;
+	}
+	.vcard span {
+		font-size: 10px;
+	}
+	.commentmetadata {
+		font-size: 10px;
+	}
+	
+	li.comment p {
+		clear: both;
+	}
+	
+	li.comment blockquote {
+		clear: both;
+		font-size: 12px;
+		min-height: 2em;
+	}
+	.reply {
+		font-size: 10px;
+	}
+
+.commentlist li.even {
+	background: #f0f0f0;
+}
+
+.commentlist li.odd {
+	background: #fff;
+}
+
+ul.children {
+	margin: 1em 0 0;
+}
+
+ul.children li {
+	list-style: none;
+	margin-bottom: 10px;
+	padding-top: 1em;
+}
+
+#respond {
+	font-size: 12px;
+	margin: 20px 0;
+	}
+	#respond p.small {
+		font-size: 10px;
+	}
+	#respond textarea {
+		width: 96%;
+	}
+	#respond div.cancel-comment-reply {
+		padding: 10px 0 0;
+	}
+
+#commentform {
+	padding-bottom: 30px;
+}
+
+
+/* Sidebar
+***************************************************************************** */
+
+#sidebar h2 {
+	margin-bottom: .5em;
+	font-size: 1.6em;
+	border-bottom: 1px solid #cdd;
+	color: #999;
+}
+
+#sidebar a {
+	font-size: 1.2em;
+	background: none;
+}
+
+#sidebar ul, #sidebar ul ol {
+	margin: 0;
+	padding: 0;
+}
+
+#sidebar ul li {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+	list-style-image: none;
+	margin-bottom: 20px;
+}
+
+
+#sidebar ul p, #sidebar ul select {
+	margin: 5px 0 8px;
+}
+
+#sidebar ul ul, #sidebar ul ol {
+	margin: 5px 0 0 0;
+}
+
+#sidebar ul ul ul, #sidebar ul ol {
+	margin: .5em 0 .5em 1em;
+}
+
+#sidebar ul ol li {
+	list-style: decimal outside;
+}
+
+#sidebar ul ul li, #sidebar ul ol li {
+	padding: 0;
+	margin: .5em 0 .5em 0;
+}
+
+/* Calendar */
+
+#wp-calendar {
+ 	font-size: 1.2em;
+	empty-cells: show;
+	}
+
+#wp-calendar a {
+ 	font-size: 1.0em;
+	display: block;
+	font-weight: bold;
+	}
+
+#wp-calendar #next a {
+	padding-right: 10px;
+	text-align: right;
+	}
+#wp-calendar #prev a {
+	padding-left: 10px;
+	text-align: left;
+	}
+
+#wp-calendar caption {
+	margin: 8px 0;
+	text-transform: uppercase;
+	letter-spacing: 0.3em;
+	font-weight: lighter;
+ 	font-size: .8em;
+ 	color: #444;
+	text-align: right;
+	}
+
+#wp-calendar th {
+	padding: 4px 5px 4px 6px;
+	font-weight: lighter;
+ 	font-size: .8em;
+ 	color: #666;
+	text-align: right;
+	background: #f4f4f4;
+}
+
+#wp-calendar td {
+	padding: 4px 5px 4px 6px;
+	text-align: right;
+	}
+	#wp-calendar td#today {
+		background: #e0e0e0;
+	}
+	#wp-calendar td#prev a {
+		padding: 0;
+		text-align: left;
+		font-weight: normal;
+	}
+	#wp-calendar td#next a {
+		padding: 0;
+		text-align: right;
+		font-weight: normal;
+}
+
+
+/* Bottom -> Footer
+***************************************************************************** */
+
+#footer span {
+	color: #888;
+	text-align: left;
+	font-size: .9em;
+	line-height: 1.6em;
+	}
+	#footer .copyright {
+		color: #666;
+		font-size: 1.111em;
+	}
+
+
+/* Template. Auxiliary
+***************************************************************************** */
+
+.clear, .clearfix {
+	clear: both;
+	height: 0;
+}
+
+.alignright, .alignleft {
+	padding: 0;
+	margin: 6px 20px 10px 20px;
+	display: inline;
+}
+
+.alignright {
+	float:right;
+}
+
+.alignleft {
+	float:left;
+}
+
+.aligncenter, div.aligncenter {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.wp-caption {
+	border: 1px solid #ccc;
+	text-align: center;
+	background-color: #f3f3f3;
+	padding-top: 4px;
+}
+
+.wp-caption img {
+	margin: 0;
+	padding: 0;
+	border: 0 none;
+}
+
+.wp-caption p.wp-caption-text {
+	font-size: 11px;
+	line-height: 17px;
+	padding: 0 4px 5px;
+	margin: 0;
+}

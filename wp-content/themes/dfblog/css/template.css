@@ -1,0 +1,118 @@
+/*---------------------------------------------------------------- 
+  Copyright: 
+  Copyright (C) 2009 danielfajardo web
+  
+  License: 
+  GPL Software 
+  
+  Author: 
+  danielfajardo - http: //wwww.danielfajardo.com
+---------------------------------------------------------------- */
+
+/* Template structure
+
+	body
+		page
+			wrapper -> width: 940px;
+				header
+					head
+					mainmenu
+					search
+				wrap
+					container
+						content
+						sidebar
+				bottom
+					footer
+*/
+
+
+/* Template. Main areas
+***************************************************************************** */
+
+body {
+	margin: 0;
+}
+#page {
+}
+#wrapper {
+	top: 0;
+	width: 940px;
+	margin: 0 auto;
+	}
+	#header {
+		height: 210px;
+	}
+		#head {
+			height: 210px;
+		}
+		#usermenu {
+			position: absolute;
+			top: 0;
+			width: 900px;
+			margin: 0 20px;
+		}
+		#menubar {
+			position: absolute;
+			top: 102px;
+			width: 802px;
+			height: 60px;
+			margin: 0 40px 0 77px;
+			}
+			#mainmenu {
+			}
+		#searchform {
+			position: absolute;
+			float: right;
+			top: 102px; /* 102px; */
+			width: 190px;
+			margin-top: 64px;
+			margin-left: 710px;
+			}
+			#search-box {
+				width: 190px;
+				height: 23px;
+				background: url(../images/box-search.png) left top no-repeat;
+			}
+			
+			#search-text {
+				background: transparent none no-repeat 0 0;
+				border: none;
+				margin: 1px 32px 4px 4px;
+				color: #444;
+				width: 122px;
+			}
+
+	#wrap {
+		height: 100%; /* Fix IE7 */
+		}
+		#breadcrumb {
+			position: absolute;
+			float: left;
+			top: 182px;
+			margin: 0 40px 0 70px;
+		}
+		#container {
+			margin: 0 40px 0 20px;
+			}
+			#content {
+				width: 640px;
+				float: left;
+				margin-top: 0;
+				margin-right: 30px;
+			}
+			#sidebar {
+				width: 190px;
+				float: right;	
+				margin: 12px 0;
+			}
+	#bottom {
+		clear: both !important;
+		height: 140px;
+		padding: 10px 20px 0;
+	}
+		#footer { 
+			margin: 0 260px 0 50px;
+			padding: 7px 0;
+			border-top: 1px solid #cdd;
+		}

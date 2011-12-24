@@ -1,0 +1,72 @@
+/*---------------------------------------------------------------- 
+  Copyright: 
+  Copyright (C) 2009 danielfajardo web
+  
+  License: 
+  GPL Software 
+  
+  Author: 
+  danielfajardo - http: //wwww.danielfajardo.com
+---------------------------------------------------------------- */
+
+
+#head, #wrap, #bottom, blockquote, img, #search-box, .notice div#icon {
+		behavior: url(wp-content/themes/dfblog/css/iepngfix.htc);
+}
+
+#wrap {
+	height: 100%;
+}
+
+blockquote {
+	width: 80%;
+}
+
+#mainmenu {
+	letter-spacing: .05em;
+}
+
+#mainmenu ul {
+	margin-top: -20px;
+	padding-top: 19px;
+	padding-bottom: 30px;
+	}
+	#mainmenu ul ul {
+		background: #fff;
+	}
+
+#mainmenu ul li {
+		z-index: 9999;
+	margin-left: 0px;
+	}
+	#mainmenu ul li a {
+	padding-left: 1.5em;
+	padding-right: 1.5em;
+	}
+	#mainmenu ul li.page_item,
+	#mainmenu ul li.page_item:hover,
+	#mainmenu ul li.page_item:active,
+	#mainmenu ul li.current_page_item,
+	#mainmenu ul li.page_last {
+		background: none;
+		border-left: 1px solid #cdd;
+	}
+	#mainmenu ul li.current_page_item {
+		background: #fff;
+	}
+	#mainmenu ul ul li,
+	#mainmenu ul ul li.page_item,
+	#mainmenu ul ul li.page_item:hover,
+	#mainmenu ul ul li.page_item:active,
+	#mainmenu ul ul li.current_page_item {
+		border-left: none;
+	}
+	#mainmenu ul ul li.page_item:hover {
+		background: #eee;
+	}
+
+#search-text {
+	margin: 2px 16px 4px 4px;
+	padding: 2px 0 6px 8px;
+	font-size: 1.1em;
+}

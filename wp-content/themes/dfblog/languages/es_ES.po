@@ -1,0 +1,485 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: dfBlog 1.1.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-06-16 18:02+0100\n"
+"PO-Revision-Date: \n"
+"Last-Translator: danielfajardo web <web@danielfajardo.com>\n"
+"Language-Team: danielfajardo web <web@danielfajardo.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-KeywordsList: __;_e;_c\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-Language: Spanish\n"
+"X-Poedit-Country: SPAIN\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: ./includes\n"
+
+#: 404.php:1
+msgid "Upss, not found..."
+msgstr "Upsss, no lo encuentro"
+
+#: 404.php:13
+msgid "The page does not exist"
+msgstr "La página no existe"
+
+#: 404.php:15
+#, php-format
+msgid "Sorry, but there aren't any posts in the %s category yet."
+msgstr "Disculpa, no hay entradas en la categoría %s."
+
+#: 404.php:17
+msgid "Sorry, but you are looking for something that isn&#8217;t here."
+msgstr "Disculpa, lo que estás buscando no está aquí."
+
+#: 404.php:19
+msgid "Sorry, but there aren't any posts with this date."
+msgstr "Disculpa, no hay entradas con esa fecha."
+
+#: 404.php:22
+#, php-format
+msgid "Sorry, but there aren't any posts by %s yet."
+msgstr "Disculpa, aún no hay entradas de %s."
+
+#: 404.php:24
+msgid "No posts found."
+msgstr "No se encontraron entradas."
+
+#: 404.php:29
+msgid "Try a different search?"
+msgstr "¿Quieres probar con otra búsqueda?"
+
+#: 404.php:32
+msgid "Or follow one of these links"
+msgstr "O puedes seguir los siguientes enlaces"
+
+#: archive.php:13
+#: archive.php:22
+#: index.php:13
+#: search.php:13
+#: search.php:25
+#, php-format
+msgid "Permanent Link to %s"
+msgstr "Enlace permanente a %s"
+
+#: archive.php:22
+#: search.php:25
+msgid "Read the rest of this entry &raquo;"
+msgstr "Leer el resto de esta entrada &raquo;"
+
+#: comments.php:6
+msgid "Please do not load this page directly. Thanks!"
+msgstr "Por favor, no accedas a esta página directamente, gracias."
+
+#: comments.php:9
+msgid "This post is password protected. Enter the password to view comments."
+msgstr "Esta entrada está protegida con contraseña. Introduce la contraseña para ver los comentarios."
+
+#: comments.php:20
+#: functions.php:286
+msgid "No Comments &#187;"
+msgstr "Sin comentarios &#187;"
+
+#: comments.php:20
+#: functions.php:287
+msgid "1 Comment &#187;"
+msgstr "Un comentario  &#187;"
+
+#: comments.php:20
+#: functions.php:288
+msgid "% Comments &#187;"
+msgstr "% comentarios  &#187;"
+
+#: comments.php:45
+msgid "Comments are closed."
+msgstr "Los comentarios están cerrados."
+
+#: comments.php:55
+msgid "Leave a Reply"
+msgstr "Deja un comentario"
+
+#: comments.php:55
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr "Dejar un comentario para %s"
+
+#: comments.php:62
+#, php-format
+msgid "You must be <a href=\"%s\">logged in</a> to post a comment."
+msgstr "Tienes que <a href=\"%1$s\">iniciar sesión</a> para escribir un comentario."
+
+#: comments.php:69
+#, php-format
+msgid "Logged in as <a href=\"%1$s\">%2$s</a>."
+msgstr "Identificado como <a href=\"%1$s\">%2$s</a>."
+
+#: comments.php:69
+msgid "Log out of this account"
+msgstr "Cerrar sesión de este usuario"
+
+#: comments.php:69
+msgid "Log out &raquo;"
+msgstr "Cerrar sesión &raquo;"
+
+#: comments.php:72
+msgid "Name"
+msgstr "Nombre"
+
+#: comments.php:72
+#: comments.php:74
+msgid "(required)"
+msgstr "(requerido)"
+
+#: comments.php:74
+msgid "Mail (will not be published)"
+msgstr "e-mail (no será publicado)"
+
+#: comments.php:76
+msgid "Website"
+msgstr "Sitio web"
+
+#: comments.php:78
+#, php-format
+msgid "<strong>XHTML:</strong> You can use these tags: <code>%s</code>"
+msgstr "<strong>XHTML:</strong> Puedes usar las siguientes etiquetas: <code>%s</code>"
+
+#: comments.php:80
+msgid "Submit Comment"
+msgstr "Enviar comentario"
+
+#: footer.php:11
+msgid "Powered by "
+msgstr "Powered by "
+
+#: footer.php:11
+msgid "GoTo top"
+msgstr "Ir arriba"
+
+#: functions.php:38
+msgid "Header Style"
+msgstr "Estilo del encabezado"
+
+#: functions.php:38
+#: functions.php:40
+msgid "must be a directory in"
+msgstr "debe ser un directorio en"
+
+#: functions.php:40
+msgid "Background Style"
+msgstr "Estilo del fondo"
+
+#: functions.php:42
+msgid "Logo type"
+msgstr "Tipo de logo"
+
+#: functions.php:42
+#: functions.php:44
+#: functions.php:46
+#: functions.php:48
+msgid "Default: "
+msgstr "Por defecto: "
+
+#: functions.php:42
+#: functions.php:175
+msgid "Show as text"
+msgstr "Mostrar como texto"
+
+#: functions.php:44
+msgid "Label of the first menu item"
+msgstr "Etiqueta de la primera opción de menu"
+
+#: functions.php:44
+#: functions.php:103
+msgid "Home"
+msgstr "Página principal"
+
+#: functions.php:46
+msgid "Subscribe to Feed visibility"
+msgstr "Suscribirse al Feed"
+
+#: functions.php:46
+#: functions.php:178
+msgid "Show"
+msgstr "Mostrar"
+
+#: functions.php:48
+msgid "Copyright info in the page bottom"
+msgstr "Copyright en el pié de página"
+
+#: functions.php:50
+msgid "Header"
+msgstr "Encabezado"
+
+#: functions.php:52
+msgid "Background"
+msgstr "Fondo"
+
+#: functions.php:54
+msgid "Menu"
+msgstr "Menú"
+
+#: functions.php:56
+msgid "Copyright"
+msgstr "Copyright"
+
+#: functions.php:146
+msgid "Theme Options"
+msgstr "Opciones del tema"
+
+#: functions.php:153
+msgid "settings saved"
+msgstr " ajustes guardados"
+
+#: functions.php:154
+msgid "settings reset"
+msgstr " los ajustes han sido reiniciados"
+
+#: functions.php:159
+msgid "settings"
+msgstr " - ajustes del tema"
+
+#: functions.php:175
+msgid "Show as image"
+msgstr "Mostrar como imagen"
+
+#: functions.php:178
+msgid "Hide"
+msgstr "Ocultar"
+
+#: functions.php:187
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+#: functions.php:204
+msgid "Update"
+msgstr "Actualización"
+
+#: functions.php:205
+#, php-format
+msgid "A new %s update%s is ready for download"
+msgstr "Hay una nueva %s actualización%s disponible para descargar"
+
+#: functions.php:206
+msgid "You have the latest version of the dfBlog Theme installed"
+msgstr "Tienes instalada la última versión del Tema dfBlog"
+
+#: functions.php:207
+msgid "You have a beta version of the dfBlog Theme installed"
+msgstr "Tienes instalada una versión beta del Tema dfBlog"
+
+#: functions.php:209
+#, php-format
+msgid "Visit the %s dfBlog website%s for extras"
+msgstr "Para extras y actualizaciones visita la %s website dfBlog%s"
+
+#: functions.php:274
+#, php-format
+msgid "Posted in %s"
+msgstr "Publicado el %s"
+
+#: functions.php:303
+msgid "Edit"
+msgstr "Editar"
+
+#: functions.php:307
+msgid "-Post metadata unknown-"
+msgstr "-Post metadata desconocido-"
+
+#: functions.php:372
+msgid "Page %CURRENT_PAGE% of %TOTAL_PAGES%"
+msgstr "Página %CURRENT_PAGE% de %TOTAL_PAGES%"
+
+#: functions.php:382
+msgid "First"
+msgstr "Primera"
+
+#: functions.php:384
+#: functions.php:398
+msgid "&#8201;...&#8201;"
+msgstr "&#8201;...&#8201;"
+
+#: functions.php:386
+msgid "&laquo; Previous"
+msgstr "&laquo; Anterior"
+
+#: functions.php:396
+msgid "Next &raquo;"
+msgstr "Siguiente &raquo;"
+
+#: functions.php:399
+msgid "Last"
+msgstr "Última"
+
+#: header.php:15
+msgid "Category &raquo; "
+msgstr "Categoría &raquo;"
+
+#: header.php:18
+msgid "Tag &raquo; "
+msgstr "Etiqueta &raquo;"
+
+#: header.php:21
+msgid "Search results &raquo;"
+msgstr "Resultados de la búsqueda &raquo;"
+
+#: header.php:69
+#, php-format
+msgid "Howdy, <a href=\"%1$s\" title=\"Edit your profile\">%2$s</a>"
+msgstr "Hola, <a href=\"%1$s\" title=\"Editar tu perfil\">%2$s</a>"
+
+#: header.php:77
+msgid "Users"
+msgstr "Usuarios"
+
+#: header.php:85
+#: header.php:89
+msgid "A link to home page"
+msgstr "Enlace a la página principal"
+
+#: header.php:108
+msgid "Subscribe to Feed"
+msgstr "Suscribirse al Feed"
+
+#: searchform.php:3
+msgid "Search..."
+msgstr "Buscar..."
+
+#: sidebar.php:7
+msgid "calendar"
+msgstr "calendario"
+
+#: sidebar.php:11
+msgid "categories"
+msgstr "categorías"
+
+#: sidebar.php:14
+msgid "tag cloud"
+msgstr "etiquetas"
+
+#: sidebar.php:19
+msgid "meta"
+msgstr "meta"
+
+#: sidebar.php:21
+msgid "This page validates as XHTML 1.0 Transitional"
+msgstr "Esta página se valida como XHTML 1.0 Transicional"
+
+#: sidebar.php:21
+msgid "Valid <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+msgstr "<abbr title=\"en inglés, eXtensible HyperText Markup Language\">XHTML</abbr> válido"
+
+#: sidebar.php:22
+msgid "XHTML Friends Network"
+msgstr "Red de Amigos XHTML"
+
+#: sidebar.php:22
+msgid "XFN"
+msgstr "XFN"
+
+#: sidebar.php:23
+msgid "Powered by WordPress, state-of-the-art semantic personal publishing platform."
+msgstr "Gestionado con WordPress, una avanzada plataforma semántica de publicación personal."
+
+#: single.php:23
+#, php-format
+msgid "You can follow any responses to this entry through the <a href='%s'>RSS 2.0</a> feed."
+msgstr "Puedes seguir cualquier respuesta a esta entrada mediante el canal <a href='%s'>RSS 2.0</a>."
+
+#: single.php:26
+#, php-format
+msgid "You can <a href=\"#respond\">leave a response</a>, or <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Puedes <a href=\"#respond\">dejar un comentario</a> o <a href=\"%s\" rel=\"trackback\">enviar un trackback</a> desde tu propio sitio."
+
+#: single.php:29
+#, php-format
+msgid "Responses are currently closed, but you can <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "En este momento no se permiten comentarios, pero puedes <a href=\"%s\" rel=\"trackback\">enviar un trackback</a> desde tu propio sitio."
+
+#: single.php:32
+msgid "You can skip to the end and leave a response. Pinging is currently not allowed."
+msgstr "Puedes ir hasta el final de la página y dejar una respuesta. No se permiten pings."
+
+#: single.php:35
+msgid "Both comments and pings are currently closed."
+msgstr "Los comentarios y los pings están cerrados."
+
+#: includes/content-header.inc.php:4
+msgid "Latest Publications"
+msgstr "Últimas Publicaciones"
+
+#: includes/content-header.inc.php:7
+#, php-format
+msgid "Archive for the &#8216;%s&#8217; Category"
+msgstr "Archivo de la categoría &#8216;%s&#8217;"
+
+#: includes/content-header.inc.php:10
+#, php-format
+msgid "Posts Tagged &#8216;%s&#8217;"
+msgstr "Entradas con la etiqueta &#8216;%s&#8217;"
+
+#: includes/content-header.inc.php:13
+#, php-format
+msgid "Archive for %s|Daily archive page"
+msgstr "Archivo del %s|Página del archivo diario"
+
+#: includes/content-header.inc.php:16
+#, php-format
+msgid "Archive for %s|Monthly archive page"
+msgstr "Archivo de %s|Página del archivo mensual"
+
+#: includes/content-header.inc.php:16
+msgid "F, Y"
+msgstr "F Y"
+
+#: includes/content-header.inc.php:19
+#, php-format
+msgid "Archive for %s|Yearly archive page"
+msgstr "Archivo de %s|Página del archivo mensual"
+
+#: includes/content-header.inc.php:19
+msgid "Y"
+msgstr "Y"
+
+#: includes/content-header.inc.php:22
+msgid "Author Archive"
+msgstr "Archivo por autor"
+
+#: includes/content-header.inc.php:25
+msgid "Search results for "
+msgstr "Resultados para la búsqueda"
+
+#~ msgid "%d processes generated in %s seconds."
+#~ msgstr "%d procesos generados en %s segundos."
+#~ msgid "Reset"
+#~ msgstr "Valores por defecto"
+#~ msgid "Links"
+#~ msgstr "Enlaces"
+#~ msgid "Error 404 - Not Found"
+#~ msgstr "Error 404 - No encontrado"
+#~ msgid "F jS, Y"
+#~ msgstr "j F Y"
+#~ msgid "Blog Archives"
+#~ msgstr "Archivos del blog"
+#~ msgid "&laquo; Older Entries"
+#~ msgstr "&laquo; Anteriores"
+#~ msgid "Sorry, no posts matched your criteria."
+#~ msgstr "Disculpa, no hay entradas con lo que buscas."
+#~ msgid "Archives"
+#~ msgstr "Archivos"
+#~ msgid "Archives by Month"
+#~ msgstr "Archivos por mes"
+#~ msgid "Archives by Subject"
+#~ msgstr "Archivos por tema"
+#~ msgid "Tags"
+#~ msgstr "Etiquetas"
+#~ msgid "Read the rest of this page &raquo;"
+#~ msgstr "Leer más &raquo;"
+#~ msgid "Pages:"
+#~ msgstr "Páginas:"
+#~ msgid "Read the rest of the article"
+#~ msgstr "Leer más &raquo;"
+#~ msgid "Edit this entry"
+#~ msgstr "Editar"
+

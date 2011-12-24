@@ -1,0 +1,421 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: dfBlog 1.1.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-05-14 13:53+0100\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Michael Persson <mip69@hotmail.com>\n"
+"Language-Team: danielfajardo web <web@danielfajardo.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-KeywordsList: __;_e;_c\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-Language: Swedish\n"
+"X-Poedit-Country: SWEDEN\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: ./includes\n"
+
+#: 404.php:1
+msgid "Upss, not found..."
+msgstr "Oops, kunde inte hittas..."
+
+#: 404.php:13
+msgid "The page does not exist"
+msgstr "Sidan finns inte"
+
+#: 404.php:15
+#, php-format
+msgid "Sorry, but there aren't any posts in the %s category yet."
+msgstr "Det finns tyvärr inga inlägg i kategorin %s än."
+
+#: 404.php:17
+msgid "Sorry, but you are looking for something that isn&#8217;t here."
+msgstr "Ledsen, men du letar efter något som inte finns här."
+
+#: 404.php:19
+msgid "Sorry, but there aren't any posts with this date."
+msgstr "Det finns tyvärr inga inlägg gjorda detta datum."
+
+#: 404.php:22
+#, php-format
+msgid "Sorry, but there aren't any posts by %s yet."
+msgstr "Det finns tyvärr inga inlägg gjorda av %s än."
+
+#: 404.php:24
+msgid "No posts found."
+msgstr "Inga inlägg funna."
+
+#: 404.php:29
+msgid "Try a different search?"
+msgstr "Försök med en annan sökning?"
+
+#: 404.php:32
+msgid "Or follow one of these links"
+msgstr "Eller följ en av dessa länkar"
+
+#: archive.php:13
+#: archive.php:22
+#: index.php:13
+#: search.php:13
+#: search.php:25
+#, php-format
+msgid "Permanent Link to %s"
+msgstr "Permanent länk till %s"
+
+#: archive.php:22
+#: search.php:25
+msgid "Read the rest of this entry &raquo;"
+msgstr "Läs hela inlägget &raquo;"
+
+#: comments.php:6
+msgid "Please do not load this page directly. Thanks!"
+msgstr "Ladda inte om sidan direkt, tack!"
+
+#: comments.php:9
+msgid "This post is password protected. Enter the password to view comments."
+msgstr "Detta inlägg är lösenordsskyddat. Ange lösenordet för att se kommentarer."
+
+#: comments.php:20
+#: functions.php:312
+msgid "No Comments &#187;"
+msgstr "Inga kommentarer &#187;"
+
+#: comments.php:20
+#: functions.php:313
+msgid "1 Comment &#187;"
+msgstr "1 Kommentar &#187;"
+
+#: comments.php:20
+#: functions.php:314
+msgid "% Comments &#187;"
+msgstr "% Kommentarer &#187;"
+
+#: comments.php:45
+msgid "Comments are closed."
+msgstr "Kommentering avstängd."
+
+#: comments.php:55
+msgid "Leave a Reply"
+msgstr "Lämna en kommentar"
+
+#: comments.php:55
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr "Lämna en kommentar till %s"
+
+#: comments.php:62
+#, php-format
+msgid "You must be <a href=\"%s\">logged in</a> to post a comment."
+msgstr "Du måste vara <a href=\"%s\">inloggad</a> för att lämna en kommentar."
+
+#: comments.php:69
+#, php-format
+msgid "Logged in as <a href=\"%1$s\">%2$s</a>."
+msgstr "Inloggad som <a href=\"%1$s\">%2$s</a>."
+
+#: comments.php:69
+msgid "Log out of this account"
+msgstr "Logga ut från detta konto"
+
+#: comments.php:69
+msgid "Log out &raquo;"
+msgstr "Logga ut &raquo;"
+
+#: comments.php:72
+msgid "Name"
+msgstr "Namn"
+
+#: comments.php:72
+#: comments.php:74
+msgid "(required)"
+msgstr "(måste fyllas i)"
+
+#: comments.php:74
+msgid "Mail (will not be published)"
+msgstr "E-post (kommer inte att visas)"
+
+#: comments.php:76
+msgid "Website"
+msgstr "Hemsida"
+
+#: comments.php:78
+#, php-format
+msgid "<strong>XHTML:</strong> You can use these tags: <code>%s</code>"
+msgstr "<strong>XHTML:</strong> Du kan använda följande taggar: <code>%s</code>"
+
+#: comments.php:80
+msgid "Submit Comment"
+msgstr "Skicka kommentar"
+
+#: footer.php:7
+msgid "Powered by "
+msgstr "Drivs av "
+
+#: footer.php:7
+#, php-format
+msgid "%d processes generated in %s seconds."
+msgstr "%d processer genererade på %s sekunder."
+
+#: footer.php:8
+msgid "GoTo top"
+msgstr "Överst"
+
+#: functions.php:39
+msgid "Header Style"
+msgstr "Stil för sidhuvud"
+
+#: functions.php:39
+#: functions.php:42
+msgid "must be a directory in"
+msgstr "måste ligga i mappen"
+
+#: functions.php:42
+msgid "Background Style"
+msgstr "Bakrundsstil"
+
+#: functions.php:45
+msgid "Logo type"
+msgstr "Typ av sidlogga"
+
+#: functions.php:45
+#: functions.php:48
+#: functions.php:51
+msgid "Default: "
+msgstr "Standard: "
+
+#: functions.php:45
+#: functions.php:213
+msgid "Show as text"
+msgstr "Visa som text"
+
+#: functions.php:48
+msgid "Label of the first menu item"
+msgstr "Etikett på det första menyobjektet"
+
+#: functions.php:48
+#: functions.php:107
+msgid "Home"
+msgstr "Hem"
+
+#: functions.php:51
+msgid "Subscribe to Feed visibility"
+msgstr "Visning av prenumeration på flöde"
+
+#: functions.php:51
+#: functions.php:225
+msgid "Show"
+msgstr "Visa"
+
+#: functions.php:54
+msgid "Header"
+msgstr "Sidhuvud"
+
+#: functions.php:57
+msgid "Background"
+msgstr "Bakgrund"
+
+#: functions.php:60
+msgid "Menu"
+msgstr "Meny"
+
+#: functions.php:140
+msgid "Theme Options"
+msgstr "Temainställningar"
+
+#: functions.php:147
+msgid "settings saved"
+msgstr "inställningar sparade"
+
+#: functions.php:148
+msgid "settings reset"
+msgstr "återställ inställningar"
+
+#: functions.php:151
+msgid "settings"
+msgstr "inställningar"
+
+#: functions.php:155
+msgid "Reset"
+msgstr "Återställ"
+
+#: functions.php:208
+msgid "Show as image"
+msgstr "Visa som bild"
+
+#: functions.php:230
+msgid "Hide"
+msgstr "Göm"
+
+#: functions.php:250
+msgid "Save changes"
+msgstr "Spara inställningar"
+
+#: functions.php:300
+#, php-format
+msgid "Posted in %s"
+msgstr "Postat den %s"
+
+#: functions.php:329
+msgid "Edit"
+msgstr "Ändra"
+
+#: functions.php:333
+msgid "-Post metadata unknown-"
+msgstr "-Inläggets metadata okänt-"
+
+#: functions.php:390
+msgid "Page %CURRENT_PAGE% of %TOTAL_PAGES%"
+msgstr "Sida %CURRENT_PAGE% of %TOTAL_PAGES%"
+
+#: functions.php:400
+msgid "First"
+msgstr "Första"
+
+#: functions.php:402
+#: functions.php:416
+msgid "&#8201;...&#8201;"
+msgstr "&#8201;...&#8201;"
+
+#: functions.php:404
+msgid "&laquo; Previous"
+msgstr "&laquo; Föregående"
+
+#: functions.php:414
+msgid "Next &raquo;"
+msgstr "Nästa &raquo;"
+
+#: functions.php:417
+msgid "Last"
+msgstr "Sista"
+
+#: header.php:16
+msgid "Category &raquo; "
+msgstr "Kategori &raquo; "
+
+#: header.php:19
+msgid "Tag &raquo; "
+msgstr "Tag &raquo; "
+
+#: header.php:22
+msgid "Search results &raquo;"
+msgstr "Sökresultat &raquo;"
+
+#: header.php:64
+#: header.php:68
+msgid "A link to home page"
+msgstr "En länk till hemsidan"
+
+#: header.php:87
+msgid "Subscribe to Feed"
+msgstr "Prenumerera på flöde"
+
+#: searchform.php:3
+msgid "Search..."
+msgstr "Sök..."
+
+#: sidebar.php:7
+msgid "calendar"
+msgstr "kalender"
+
+#: sidebar.php:11
+msgid "categories"
+msgstr "kategorier"
+
+#: sidebar.php:14
+msgid "tag cloud"
+msgstr "tag moln"
+
+#: sidebar.php:19
+msgid "meta"
+msgstr "meta"
+
+#: sidebar.php:23
+msgid "This page validates as XHTML 1.0 Transitional"
+msgstr "Denna sida validerar som XHTML 1.0 Transitional"
+
+#: sidebar.php:23
+msgid "Valid <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+msgstr "Validerande <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+
+#: sidebar.php:24
+msgid "XHTML Friends Network"
+msgstr "XHTML Friends Network"
+
+#: sidebar.php:24
+msgid "XFN"
+msgstr "XFN"
+
+#: sidebar.php:25
+msgid "Powered by WordPress, state-of-the-art semantic personal publishing platform."
+msgstr "Drivs med WordPress, ett modernt personligt publiceringsverktyg."
+
+#: single.php:23
+#, php-format
+msgid "You can follow any responses to this entry through the <a href='%s'>RSS 2.0</a> feed."
+msgstr "Du kan följa svar på detta inlägg via <a href='%s'>RSS 2.0</a>-flödet."
+
+#: single.php:26
+#, php-format
+msgid "You can <a href=\"#respond\">leave a response</a>, or <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Du kan <a href=\"#respond\">lämna en kommentar</a> eller en <a href=\"%s\" rel=\"trackback\">trackback</a> från din egen sida."
+
+#: single.php:29
+#, php-format
+msgid "Responses are currently closed, but you can <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Kommenteringen är avstängd just nu, men du kan lämna en <a href=\"%s\" rel=\"trackback\">trackback</a> från dig egen sida."
+
+#: single.php:32
+msgid "You can skip to the end and leave a response. Pinging is currently not allowed."
+msgstr "Du kan hoppa ner till slutet på sidan för att lämna en kommentar. Pingning är inte tillåten för tillfället."
+
+#: single.php:35
+msgid "Both comments and pings are currently closed."
+msgstr "Både kommentering och pingning är inaktiverat."
+
+#: includes/content-header.inc.php:4
+msgid "Latest Publications"
+msgstr "De senaste inläggen"
+
+#: includes/content-header.inc.php:7
+#, php-format
+msgid "Archive for the &#8216;%s&#8217; Category"
+msgstr "Arkiv för kategorin &#8216;%s&#8217;"
+
+#: includes/content-header.inc.php:10
+#, php-format
+msgid "Posts Tagged &#8216;%s&#8217;"
+msgstr "Inlägg märkta &#8216;%s&#8217;"
+
+#: includes/content-header.inc.php:13
+#, php-format
+msgid "Archive for %s|Daily archive page"
+msgstr "Arkiv för %s"
+
+#: includes/content-header.inc.php:16
+#, php-format
+msgid "Archive for %s|Monthly archive page"
+msgstr "Arkiv för %s"
+
+#: includes/content-header.inc.php:16
+msgid "F, Y"
+msgstr "F, Y"
+
+#: includes/content-header.inc.php:19
+#, php-format
+msgid "Archive for %s|Yearly archive page"
+msgstr "Arkiv för %s"
+
+#: includes/content-header.inc.php:19
+msgid "Y"
+msgstr "Y"
+
+#: includes/content-header.inc.php:22
+msgid "Author Archive"
+msgstr "Författararkiv"
+
+#: includes/content-header.inc.php:25
+msgid "Search results for "
+msgstr "Sökresultat för"
+

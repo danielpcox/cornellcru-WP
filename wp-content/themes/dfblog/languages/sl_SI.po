@@ -1,0 +1,422 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: dfBlog 1.1.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-05-14 13:53+0100\n"
+"PO-Revision-Date: 2009-06-03 00:52+0100\n"
+"Last-Translator: Jure Merhar <dev@merhar.si>\n"
+"Language-Team: Jure Merhar <dev@merhar.si>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-KeywordsList: __;_e;_c\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-Language: Slovenian\n"
+"X-Poedit-Country: SLOVENIA\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"Plural-Forms: nplurals=4; plural=n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3;\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: ./includes\n"
+
+#: 404.php:1
+msgid "Upss, not found..."
+msgstr "Ups, prispevek ne obstaja..."
+
+#: 404.php:13
+msgid "The page does not exist"
+msgstr "Stran ne obstaja"
+
+#: 404.php:15
+#, php-format
+msgid "Sorry, but there aren't any posts in the %s category yet."
+msgstr "Kategorija %s je prazna."
+
+#: 404.php:17
+msgid "Sorry, but you are looking for something that isn&#8217;t here."
+msgstr "Iskanje ni obrodilo sadov."
+
+#: 404.php:19
+msgid "Sorry, but there aren't any posts with this date."
+msgstr "Na ta datum ni bil objavljen noben prispevek."
+
+#: 404.php:22
+#, php-format
+msgid "Sorry, but there aren't any posts by %s yet."
+msgstr "%s še ni napisal(a) nobenega prispevka."
+
+#: 404.php:24
+msgid "No posts found."
+msgstr "Ni prispevkov."
+
+#: 404.php:29
+msgid "Try a different search?"
+msgstr "Poskusite ponovno"
+
+#: 404.php:32
+msgid "Or follow one of these links"
+msgstr "Ali pojdite na eno od teh povezav:"
+
+#: archive.php:13
+#: archive.php:22
+#: index.php:13
+#: search.php:13
+#: search.php:25
+#, php-format
+msgid "Permanent Link to %s"
+msgstr "Trajna povezava na %s"
+
+#: archive.php:22
+#: search.php:25
+msgid "Read the rest of this entry &raquo;"
+msgstr "Beri dalje &raquo;"
+
+#: comments.php:6
+msgid "Please do not load this page directly. Thanks!"
+msgstr "Prosim, ne odpirajte te strani direktno. Hvala!"
+
+#: comments.php:9
+msgid "This post is password protected. Enter the password to view comments."
+msgstr "Ta prispevek je zaščiten z geslom. Vtipkajte geslo, če želite videti komentarje."
+
+#: comments.php:20
+#: functions.php:312
+msgid "No Comments &#187;"
+msgstr "Ni komentarjev &#187;"
+
+#: comments.php:20
+#: functions.php:313
+msgid "1 Comment &#187;"
+msgstr "1 komentar &#187;"
+
+#: comments.php:20
+#: functions.php:314
+msgid "% Comments &#187;"
+msgstr "% komentarjev &#187;"
+
+#: comments.php:45
+msgid "Comments are closed."
+msgstr "Komentiranje ni dovoljeno."
+
+#: comments.php:55
+msgid "Leave a Reply"
+msgstr "Objavi komentar"
+
+#: comments.php:55
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr "Odgovori osebi %s"
+
+#: comments.php:62
+#, php-format
+msgid "You must be <a href=\"%s\">logged in</a> to post a comment."
+msgstr "Za oddajo komentarja morate biti <a href=\"%s\">prijavljeni</a>."
+
+#: comments.php:69
+#, php-format
+msgid "Logged in as <a href=\"%1$s\">%2$s</a>."
+msgstr "Prijavljeni ste kot: <a href=\"%1$s\">%2$s</a>."
+
+#: comments.php:69
+msgid "Log out of this account"
+msgstr "Odjavi se"
+
+#: comments.php:69
+msgid "Log out &raquo;"
+msgstr "Odjava &raquo;"
+
+#: comments.php:72
+msgid "Name"
+msgstr "Ime"
+
+#: comments.php:72
+#: comments.php:74
+msgid "(required)"
+msgstr "(obvezno)"
+
+#: comments.php:74
+msgid "Mail (will not be published)"
+msgstr "E-naslov (ne bo javno objavljen)"
+
+#: comments.php:76
+msgid "Website"
+msgstr "Spletna stran"
+
+#: comments.php:78
+#, php-format
+msgid "<strong>XHTML:</strong> You can use these tags: <code>%s</code>"
+msgstr "<strong>XHTML:</strong> Uporabite lahko naslednje značke: <code>%s</code>"
+
+#: comments.php:80
+msgid "Submit Comment"
+msgstr "Oddaj komentar"
+
+#: footer.php:7
+msgid "Powered by "
+msgstr "Spletno stran poganja "
+
+#: footer.php:7
+#, php-format
+msgid "%d processes generated in %s seconds."
+msgstr "%d procesov je bilo obdelanih v %s sekunde."
+
+#: footer.php:8
+msgid "GoTo top"
+msgstr "Na vrh"
+
+#: functions.php:39
+msgid "Header Style"
+msgstr "Tip glave"
+
+#: functions.php:39
+#: functions.php:42
+msgid "must be a directory in"
+msgstr "mora biti direktorij v"
+
+#: functions.php:42
+msgid "Background Style"
+msgstr "Tip ozadja"
+
+#: functions.php:45
+msgid "Logo type"
+msgstr "Prikaži logo kot"
+
+#: functions.php:45
+#: functions.php:48
+#: functions.php:51
+msgid "Default: "
+msgstr "Privzeto:"
+
+#: functions.php:45
+#: functions.php:213
+msgid "Show as text"
+msgstr "Tekst"
+
+#: functions.php:48
+msgid "Label of the first menu item"
+msgstr "Napis na prvi povezavi menija"
+
+#: functions.php:48
+#: functions.php:107
+msgid "Home"
+msgstr "Domov"
+
+#: functions.php:51
+msgid "Subscribe to Feed visibility"
+msgstr "Povezava RSS"
+
+#: functions.php:51
+#: functions.php:225
+msgid "Show"
+msgstr "Prikaži"
+
+#: functions.php:54
+msgid "Header"
+msgstr "Glava"
+
+#: functions.php:57
+msgid "Background"
+msgstr "Ozadje"
+
+#: functions.php:60
+msgid "Menu"
+msgstr "Meni"
+
+#: functions.php:140
+msgid "Theme Options"
+msgstr "Nastavitve teme"
+
+#: functions.php:147
+msgid "settings saved"
+msgstr "Nastavitve so bile shranjene."
+
+#: functions.php:148
+msgid "settings reset"
+msgstr "Nastavitve so bile razveljavljene."
+
+#: functions.php:151
+msgid "settings"
+msgstr "Nastavitve"
+
+#: functions.php:155
+msgid "Reset"
+msgstr "Razveljavi"
+
+#: functions.php:208
+msgid "Show as image"
+msgstr "Sliko"
+
+#: functions.php:230
+msgid "Hide"
+msgstr "Skrij"
+
+#: functions.php:250
+msgid "Save changes"
+msgstr "Shrani spremembe"
+
+#: functions.php:300
+#, php-format
+msgid "Posted in %s"
+msgstr "Objevljeno v %s"
+
+#: functions.php:329
+msgid "Edit"
+msgstr "Uredi"
+
+#: functions.php:333
+msgid "-Post metadata unknown-"
+msgstr "-Metapodatki prispevka niso znani-"
+
+#: functions.php:390
+msgid "Page %CURRENT_PAGE% of %TOTAL_PAGES%"
+msgstr "Stran %CURRENT_PAGE% od %TOTAL_PAGES%"
+
+#: functions.php:400
+msgid "First"
+msgstr "Prva"
+
+#: functions.php:402
+#: functions.php:416
+msgid "&#8201;...&#8201;"
+msgstr "&#8201;...&#8201;"
+
+#: functions.php:404
+msgid "&laquo; Previous"
+msgstr "&laquo; Prejšnja"
+
+#: functions.php:414
+msgid "Next &raquo;"
+msgstr "Naslednja &raquo;"
+
+#: functions.php:417
+msgid "Last"
+msgstr "Zadnja"
+
+#: header.php:16
+msgid "Category &raquo; "
+msgstr "Kategorija &raquo; "
+
+#: header.php:19
+msgid "Tag &raquo; "
+msgstr "Značka &raquo; "
+
+#: header.php:22
+msgid "Search results &raquo;"
+msgstr "Rezultat iskanja &raquo;"
+
+#: header.php:64
+#: header.php:68
+msgid "A link to home page"
+msgstr "Povezava na prvo stran"
+
+#: header.php:87
+msgid "Subscribe to Feed"
+msgstr "RSS"
+
+#: searchform.php:3
+msgid "Search..."
+msgstr "Iskanje"
+
+#: sidebar.php:7
+msgid "calendar"
+msgstr "Koledar"
+
+#: sidebar.php:11
+msgid "categories"
+msgstr "Kategorije"
+
+#: sidebar.php:14
+msgid "tag cloud"
+msgstr "Oblak značk"
+
+#: sidebar.php:19
+msgid "meta"
+msgstr "meta"
+
+#: sidebar.php:23
+msgid "This page validates as XHTML 1.0 Transitional"
+msgstr "Ta stran je veljavna po standardu XHTML 1.0 Transitional."
+
+#: sidebar.php:23
+msgid "Valid <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+msgstr "Veljaven <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+
+#: sidebar.php:24
+msgid "XHTML Friends Network"
+msgstr "XHTML mreža prijateljev"
+
+#: sidebar.php:24
+msgid "XFN"
+msgstr "XFN"
+
+#: sidebar.php:25
+msgid "Powered by WordPress, state-of-the-art semantic personal publishing platform."
+msgstr "Stran poganja WordPress, semantična osebna platforma za objavljanje."
+
+#: single.php:23
+#, php-format
+msgid "You can follow any responses to this entry through the <a href='%s'>RSS 2.0</a> feed."
+msgstr "Komentarje na ta prispevek lahko spremljate preko <a href='%s'>RSS 2.0</a> kanala."
+
+#: single.php:26
+#, php-format
+msgid "You can <a href=\"#respond\">leave a response</a>, or <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Lahko <a href=\"#respond\">objavite komentar</a>, ali <a href=\"%s\" rel=\"trackback\">povratno povezavo</a> z vaše spletne strani."
+
+#: single.php:29
+#, php-format
+msgid "Responses are currently closed, but you can <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Komentiranje je trenutno onemogočeno, lahko pa objavite <a href=\"%s\" rel=\"trackback\">povratno povezavo</a> z vaše spletne strani."
+
+#: single.php:32
+msgid "You can skip to the end and leave a response. Pinging is currently not allowed."
+msgstr "Lahko preskočite na konec in pustite komentar. Povratne povezave so trenutno onemogočene."
+
+#: single.php:35
+msgid "Both comments and pings are currently closed."
+msgstr "Komentiranje in objavljanje povratnih povezav je onemogočeno."
+
+#: includes/content-header.inc.php:4
+msgid "Latest Publications"
+msgstr "Zadnji prispevki"
+
+#: includes/content-header.inc.php:7
+#, php-format
+msgid "Archive for the &#8216;%s&#8217; Category"
+msgstr "Arhiv kategorije &#8216;%s&#8217; "
+
+#: includes/content-header.inc.php:10
+#, php-format
+msgid "Posts Tagged &#8216;%s&#8217;"
+msgstr "Prispevki z oznako &#8216;%s&#8217;"
+
+#: includes/content-header.inc.php:13
+#, php-format
+msgid "Archive for %s|Daily archive page"
+msgstr "Arhiv za %s|Dnevni arhiv"
+
+#: includes/content-header.inc.php:16
+#, php-format
+msgid "Archive for %s|Monthly archive page"
+msgstr "Arhiv za %s|Mesečni arhiv"
+
+#: includes/content-header.inc.php:16
+msgid "F, Y"
+msgstr "F, Y"
+
+#: includes/content-header.inc.php:19
+#, php-format
+msgid "Archive for %s|Yearly archive page"
+msgstr "Arhiv za %s|Letni arhiv"
+
+#: includes/content-header.inc.php:19
+msgid "Y"
+msgstr "Y"
+
+#: includes/content-header.inc.php:22
+msgid "Author Archive"
+msgstr "Arhiv avtorja"
+
+#: includes/content-header.inc.php:25
+msgid "Search results for "
+msgstr "Rezultat iskanja za"
+

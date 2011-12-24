@@ -1,0 +1,448 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: cfBlog 1.1.4 in Danish / på dansk\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-06-03 20:26+0100\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Team Blogos <wordpress@blogos.dk>\n"
+"Language-Team: Team Blogos <wordpress@blogos.dk>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2;plural=n != 1;\n"
+"X-Poedit-Language: Danish\n"
+"X-Poedit-Country: DENMARK\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_c;_e;__ngettext:1,2;__ngettext_noop:1,2\n"
+"X-Poedit-Basepath: d:\\wordpress\\themes\\translated\\dfblog\n"
+"X-Poedit-SearchPath-0: d:\\wordpress\\themes\\translated\\dfblog\n"
+
+#: d:\wordpress\themes\translated\dfblog/404.php:1
+msgid "Upss, not found..."
+msgstr "Uuups &ndash; ikke fundet ..."
+
+#: d:\wordpress\themes\translated\dfblog/404.php:13
+msgid "The page does not exist"
+msgstr "Siden findes ikke"
+
+#: d:\wordpress\themes\translated\dfblog/404.php:15
+#, php-format
+msgid "Sorry, but there aren't any posts in the %s category yet."
+msgstr "Beklager, men der er ikke noget indlæg i kategorien %s endnu."
+
+#: d:\wordpress\themes\translated\dfblog/404.php:17
+msgid "Sorry, but you are looking for something that isn&#8217;t here."
+msgstr "Beklager, men du leder efter noget, der ikke findes her"
+
+#: d:\wordpress\themes\translated\dfblog/404.php:19
+msgid "Sorry, but there aren't any posts with this date."
+msgstr "Beklager, men der er ingen indlæg fra denne dato."
+
+#: d:\wordpress\themes\translated\dfblog/404.php:22
+#, php-format
+msgid "Sorry, but there aren't any posts by %s yet."
+msgstr "Beklager, men %s har ikke skrevet noget indlæg endnu."
+
+#: d:\wordpress\themes\translated\dfblog/404.php:24
+msgid "No posts found."
+msgstr "Ingen indlæg fundet"
+
+#: d:\wordpress\themes\translated\dfblog/404.php:29
+msgid "Try a different search?"
+msgstr "Prøv en anden søgning?"
+
+#: d:\wordpress\themes\translated\dfblog/404.php:32
+msgid "Or follow one of these links"
+msgstr "Eller følg en af disse links"
+
+#: d:\wordpress\themes\translated\dfblog/archive.php:13
+#: d:\wordpress\themes\translated\dfblog/archive.php:22
+#: d:\wordpress\themes\translated\dfblog/index.php:13
+#: d:\wordpress\themes\translated\dfblog/search.php:13
+#: d:\wordpress\themes\translated\dfblog/search.php:25
+#, php-format
+msgid "Permanent Link to %s"
+msgstr "Permanent link til %s"
+
+#: d:\wordpress\themes\translated\dfblog/archive.php:22
+#: d:\wordpress\themes\translated\dfblog/search.php:25
+msgid "Read the rest of this entry &raquo;"
+msgstr "Læst resten af dette indlæg &raquo;"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:6
+msgid "Please do not load this page directly. Thanks!"
+msgstr "Vær venlig ikke at indlæse denne side direkte. Tak!"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:9
+msgid "This post is password protected. Enter the password to view comments."
+msgstr "Dette indlæg er beskyttet med et kodeord. Skriv kodeordet for at se kommentarer."
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:20
+#: d:\wordpress\themes\translated\dfblog/functions.php:293
+msgid "No Comments &#187;"
+msgstr "Ingen kommentarer &#187;"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:20
+#: d:\wordpress\themes\translated\dfblog/functions.php:294
+msgid "1 Comment &#187;"
+msgstr "&Eacute;n kommentar &#187;"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:20
+#: d:\wordpress\themes\translated\dfblog/functions.php:295
+msgid "% Comments &#187;"
+msgstr "% kommentarer &#187;"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:45
+msgid "Comments are closed."
+msgstr "Der er lukket for kommentarer."
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:55
+msgid "Leave a Reply"
+msgstr "Læg et svar"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:55
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr "Skriv et svar til %s"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:62
+#, php-format
+msgid "You must be <a href=\"%s\">logged in</a> to post a comment."
+msgstr "Du skal være <a href=\"%s\">logget ind</a>, før du kan poste en kommentar."
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:69
+#, php-format
+msgid "Logged in as <a href=\"%1$s\">%2$s</a>."
+msgstr "Logget ind som <a href=\"%1$s\">%2$s</a>."
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:69
+msgid "Log out of this account"
+msgstr "Log ud af denne konto"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:69
+msgid "Log out &raquo;"
+msgstr "Log ud &raquo;"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:72
+msgid "Name"
+msgstr "Navn"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:72
+#: d:\wordpress\themes\translated\dfblog/comments.php:74
+msgid "(required)"
+msgstr "(skal udfyldes)"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:74
+msgid "Mail (will not be published)"
+msgstr "E-mail (vil ikke blive offentliggjort)"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:76
+msgid "Website"
+msgstr "Hjemmeside"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:78
+#, php-format
+msgid "<strong>XHTML:</strong> You can use these tags: <code>%s</code>"
+msgstr "<strong>XHTML:</strong> Du kan bruge disse tags: <code>%s</code>"
+
+#: d:\wordpress\themes\translated\dfblog/comments.php:80
+msgid "Submit Comment"
+msgstr "Indsend kommentar"
+
+#: d:\wordpress\themes\translated\dfblog/footer.php:7
+msgid "Powered by "
+msgstr "Kører på"
+
+#: d:\wordpress\themes\translated\dfblog/footer.php:7
+#, php-format
+msgid "%d processes generated in %s seconds."
+msgstr "%d processer genereret på %s sekunder."
+
+#: d:\wordpress\themes\translated\dfblog/footer.php:8
+msgid "GoTo top"
+msgstr "Gå til top"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:38
+msgid "Header Style"
+msgstr "Header-style"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:38
+#: d:\wordpress\themes\translated\dfblog/functions.php:40
+msgid "must be a directory in"
+msgstr "skal være en mappe i"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:40
+msgid "Background Style"
+msgstr "Baggrunds-style"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:42
+msgid "Logo type"
+msgstr "Logo-type"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:42
+#: d:\wordpress\themes\translated\dfblog/functions.php:44
+#: d:\wordpress\themes\translated\dfblog/functions.php:46
+msgid "Default: "
+msgstr "Standard:"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:42
+#: d:\wordpress\themes\translated\dfblog/functions.php:195
+msgid "Show as text"
+msgstr "Vis som tekst"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:44
+msgid "Label of the first menu item"
+msgstr "Etiket på første menupunkt"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:44
+#: d:\wordpress\themes\translated\dfblog/functions.php:98
+msgid "Home"
+msgstr "Hjem"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:46
+msgid "Subscribe to Feed visibility"
+msgstr "Visning af Abonnér på feed"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:46
+#: d:\wordpress\themes\translated\dfblog/functions.php:207
+msgid "Show"
+msgstr "Vis"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:48
+msgid "Header"
+msgstr "Header"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:50
+msgid "Background"
+msgstr "Baggrund"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:52
+msgid "Menu"
+msgstr "Menu"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:131
+msgid "Theme Options"
+msgstr "Temaet-indstillinger"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:138
+msgid "settings saved"
+msgstr "indstillinger gemt"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:139
+msgid "settings reset"
+msgstr "indstillinger nulstillet"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:142
+msgid "settings"
+msgstr "Indstillinger"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:190
+msgid "Show as image"
+msgstr "Vis som billede"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:212
+msgid "Hide"
+msgstr "Skjul"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:232
+msgid "Save changes"
+msgstr "Gem ændringer"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:281
+#, php-format
+msgid "Posted in %s"
+msgstr "Udgivet i %s"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:310
+msgid "Edit"
+msgstr "Redigér"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:314
+msgid "-Post metadata unknown-"
+msgstr "-Indlægs-metadata ukendt-"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:371
+msgid "Page %CURRENT_PAGE% of %TOTAL_PAGES%"
+msgstr "Side %CURRENT_PAGE% af %TOTAL_PAGES%"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:381
+msgid "First"
+msgstr "Første"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:383
+#: d:\wordpress\themes\translated\dfblog/functions.php:397
+msgid "&#8201;...&#8201;"
+msgstr "&#8201;...&#8201;"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:385
+msgid "&laquo; Previous"
+msgstr "&laquo; Forrige"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:395
+msgid "Next &raquo;"
+msgstr "Næste &raquo;"
+
+#: d:\wordpress\themes\translated\dfblog/functions.php:398
+msgid "Last"
+msgstr "Sidste"
+
+#: d:\wordpress\themes\translated\dfblog/header.php:16
+msgid "Category &raquo; "
+msgstr "Kategori &raquo; "
+
+#: d:\wordpress\themes\translated\dfblog/header.php:19
+msgid "Tag &raquo; "
+msgstr "Tag &raquo; "
+
+#: d:\wordpress\themes\translated\dfblog/header.php:22
+msgid "Search results &raquo;"
+msgstr "Søgeresultater &raquo;"
+
+#: d:\wordpress\themes\translated\dfblog/header.php:65
+#: d:\wordpress\themes\translated\dfblog/header.php:69
+msgid "A link to home page"
+msgstr "Et link til hjem-siden"
+
+#: d:\wordpress\themes\translated\dfblog/header.php:88
+msgid "Subscribe to Feed"
+msgstr "Abonnér på feed"
+
+#: d:\wordpress\themes\translated\dfblog/searchform.php:3
+msgid "Search..."
+msgstr "Søg ..."
+
+#: d:\wordpress\themes\translated\dfblog/sidebar.php:7
+msgid "calendar"
+msgstr "kalender"
+
+#: d:\wordpress\themes\translated\dfblog/sidebar.php:11
+msgid "categories"
+msgstr "kategorier"
+
+#: d:\wordpress\themes\translated\dfblog/sidebar.php:14
+msgid "tag cloud"
+msgstr "tag-oversigt"
+
+#: d:\wordpress\themes\translated\dfblog/sidebar.php:19
+msgid "meta"
+msgstr "meta"
+
+#: d:\wordpress\themes\translated\dfblog/sidebar.php:23
+msgid "This page validates as XHTML 1.0 Transitional"
+msgstr "Denne side validerer som XHTML 1.0 Transitional"
+
+#: d:\wordpress\themes\translated\dfblog/sidebar.php:23
+msgid "Valid <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+msgstr "Gyldig <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+
+#: d:\wordpress\themes\translated\dfblog/sidebar.php:24
+msgid "XHTML Friends Network"
+msgstr "XHTML Friends Network"
+
+#: d:\wordpress\themes\translated\dfblog/sidebar.php:24
+msgid "XFN"
+msgstr "XFN"
+
+#: d:\wordpress\themes\translated\dfblog/sidebar.php:25
+msgid "Powered by WordPress, state-of-the-art semantic personal publishing platform."
+msgstr "Kører på WordPress, state-of-the-art semantisk personlig udgivelsesplatform."
+
+#: d:\wordpress\themes\translated\dfblog/single.php:23
+#, php-format
+msgid "You can follow any responses to this entry through the <a href='%s'>RSS 2.0</a> feed."
+msgstr "Du kan følge med på alle reaktioner til dette indlæg via <a href='%s'>RSS 2.0</a>-feedet."
+
+#: d:\wordpress\themes\translated\dfblog/single.php:26
+#, php-format
+msgid "You can <a href=\"#respond\">leave a response</a>, or <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Du kan <a href=\"#respond\">lægge et svar</a> &ndash; eller <a href=\"%s\" rel=\"trackback\">trackbacke</a> fra dit eget site."
+
+#: d:\wordpress\themes\translated\dfblog/single.php:29
+#, php-format
+msgid "Responses are currently closed, but you can <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Der er i øjeblikket lukket for reaktioner, men du kan <a href=\"%s\" rel=\"trackback\">trackbacke</a> fra dit eget websted."
+
+#: d:\wordpress\themes\translated\dfblog/single.php:32
+msgid "You can skip to the end and leave a response. Pinging is currently not allowed."
+msgstr "Du kan springe direkte til bunden og lægge et svar. Det er i øjeblikket ikke tilladt at pinge."
+
+#: d:\wordpress\themes\translated\dfblog/single.php:35
+msgid "Both comments and pings are currently closed."
+msgstr "Der er lukket for både kommentarer og pings i øjeblikket."
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:4
+msgid "Latest Publications"
+msgstr "Seneste udgivelser"
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:7
+#, php-format
+msgid "Archive for the &#8216;%s&#8217; Category"
+msgstr "Arkiv for kategorien &#8216;%s&#8217;"
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:10
+#, php-format
+msgid "Posts Tagged &#8216;%s&#8217;"
+msgstr "Indlæg tagget &#8216;%s&#8217;"
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:13
+#, php-format
+msgid "Archive for %s|Daily archive page"
+msgstr "Arkiv for %s|Side med dagligt arkiv"
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:16
+#, php-format
+msgid "Archive for %s|Monthly archive page"
+msgstr "Arkiv for %s|Side med månedligt arkiv"
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:16
+msgid "F, Y"
+msgstr "F Y"
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:19
+#, php-format
+msgid "Archive for %s|Yearly archive page"
+msgstr "Arkiv for %s|Side med årligt arkiv"
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:19
+msgid "Y"
+msgstr "Y"
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:22
+msgid "Author Archive"
+msgstr "Forfatterarkiv"
+
+#: d:\wordpress\themes\translated\dfblog/includes/content-header.inc.php:25
+msgid "Search results for "
+msgstr "Søgeresultater for "
+
+#~ msgid "Reset"
+#~ msgstr "Nulstil"
+#~ msgid "Pages:"
+#~ msgstr "Sider:"
+#~ msgid "Edit this entry"
+#~ msgstr "Redigér dette indlæg"
+#~ msgid "Sorry, no posts matched your criteria."
+#~ msgstr "Beklager, men der var ingen indlæg, der matchede dine søgekriterier"
+#~ msgid "Read the rest of the article"
+#~ msgstr "Læs resten af denne artikel"
+#~ msgid "&laquo; Older Entries"
+#~ msgstr "&laquo; Ældre indlæg"
+#~ msgid "Read the rest of this page &raquo;"
+#~ msgstr "Læs resten af denne side &raquo;"
+#~ msgid "Links"
+#~ msgstr "Links"
+#~ msgid "Archives"
+#~ msgstr "Arkiver"
+#~ msgid "Archives by Month"
+#~ msgstr "Månedlige arkiver"
+#~ msgid "Archives by Subject"
+#~ msgstr "Emneopdelte arkiver:"
+#~ msgid "Tags"
+#~ msgstr "Tags"
+#~ msgid "F jS, Y"
+#~ msgstr "j. F Y"
+#~ msgid "Blog Archives"
+#~ msgstr "Blogarkiv"
+#~ msgid "Error 404 - Not Found"
+#~ msgstr "Fejl 404 &ndash; Ikke fundet"
+

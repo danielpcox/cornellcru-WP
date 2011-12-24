@@ -1,0 +1,421 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: dfBlog 1.1.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-05-14 13:53+0100\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Marina Gorobevskaya <marina.gorobevskaya@gmail.com>\n"
+"Language-Team: danielfajardo web <web@danielfajardo.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-KeywordsList: __;_e;_c\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-Language: Russian\n"
+"X-Poedit-Country: UNITED KINGDOM\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: ./includes\n"
+
+#: 404.php:1
+msgid "Upss, not found..."
+msgstr "Поиск не дал результатов..."
+
+#: 404.php:13
+msgid "The page does not exist"
+msgstr "Страница не существует"
+
+#: 404.php:15
+#, php-format
+msgid "Sorry, but there aren't any posts in the %s category yet."
+msgstr "К сожалению, в разделе %s пока нет записей"
+
+#: 404.php:17
+msgid "Sorry, but you are looking for something that isn&#8217;t here."
+msgstr "К сожалению, вы ищете что-то, чего здесь нет."
+
+#: 404.php:19
+msgid "Sorry, but there aren't any posts with this date."
+msgstr "К сожалению, записи с этой датой не обнаружены."
+
+#: 404.php:22
+#, php-format
+msgid "Sorry, but there aren't any posts by %s yet."
+msgstr "К сожалению, пока нет записей автора %s."
+
+#: 404.php:24
+msgid "No posts found."
+msgstr "Записи не обнаружены."
+
+#: 404.php:29
+msgid "Try a different search?"
+msgstr "Попробуте задать другие слова для поиска."
+
+#: 404.php:32
+msgid "Or follow one of these links"
+msgstr "Или используйте эти ссылки"
+
+#: archive.php:13
+#: archive.php:22
+#: index.php:13
+#: search.php:13
+#: search.php:25
+#, php-format
+msgid "Permanent Link to %s"
+msgstr "Постоянная ссылка на %s"
+
+#: archive.php:22
+#: search.php:25
+msgid "Read the rest of this entry &raquo;"
+msgstr "Читать продолжение этой записи &raquo;"
+
+#: comments.php:6
+msgid "Please do not load this page directly. Thanks!"
+msgstr "Пожалуйста, не загружайте эту страницу непосредственно. Спасибо!"
+
+#: comments.php:9
+msgid "This post is password protected. Enter the password to view comments."
+msgstr "Доступ к этой записи ограничен. Введите пароль для просмотра комментариев."
+
+#: comments.php:20
+#: functions.php:312
+msgid "No Comments &#187;"
+msgstr "Нет комментариев &#187;"
+
+#: comments.php:20
+#: functions.php:313
+msgid "1 Comment &#187;"
+msgstr "1 комментарий &#187;"
+
+#: comments.php:20
+#: functions.php:314
+msgid "% Comments &#187;"
+msgstr "Комментарии: % &#187;"
+
+#: comments.php:45
+msgid "Comments are closed."
+msgstr "Комментарии не разрешены."
+
+#: comments.php:55
+msgid "Leave a Reply"
+msgstr "Оставить комментарий"
+
+#: comments.php:55
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr "Оставить комментарий о %s"
+
+#: comments.php:62
+#, php-format
+msgid "You must be <a href=\"%s\">logged in</a> to post a comment."
+msgstr "Вам нужно <a href=\"%s\">войти</a>, чтобы оставить комментарий."
+
+#: comments.php:69
+#, php-format
+msgid "Logged in as <a href=\"%1$s\">%2$s</a>."
+msgstr "Вы вошли как <a href=\"%1$s\">%2$s</a>."
+
+#: comments.php:69
+msgid "Log out of this account"
+msgstr "Выйти"
+
+#: comments.php:69
+msgid "Log out &raquo;"
+msgstr "Выйти &raquo;"
+
+#: comments.php:72
+msgid "Name"
+msgstr "Имя"
+
+#: comments.php:72
+#: comments.php:74
+msgid "(required)"
+msgstr "(обязательно)"
+
+#: comments.php:74
+msgid "Mail (will not be published)"
+msgstr "Email (не будет опубликован)"
+
+#: comments.php:76
+msgid "Website"
+msgstr "Вебсайт"
+
+#: comments.php:78
+#, php-format
+msgid "<strong>XHTML:</strong> You can use these tags: <code>%s</code>"
+msgstr "<strong>XHTML:</strong> Вы можете использовать следующие HTML-тэги <code>%s</code>"
+
+#: comments.php:80
+msgid "Submit Comment"
+msgstr "Сохранить комментарий"
+
+#: footer.php:7
+msgid "Powered by "
+msgstr "Движок"
+
+#: footer.php:7
+#, php-format
+msgid "%d processes generated in %s seconds."
+msgstr "%d процессов сгенерировано за %s сек."
+
+#: footer.php:8
+msgid "GoTo top"
+msgstr "В начало"
+
+#: functions.php:39
+msgid "Header Style"
+msgstr "Стиль заголовка"
+
+#: functions.php:39
+#: functions.php:42
+msgid "must be a directory in"
+msgstr "должна быть директория в"
+
+#: functions.php:42
+msgid "Background Style"
+msgstr "Стиль фона"
+
+#: functions.php:45
+msgid "Logo type"
+msgstr "Тип логотипа"
+
+#: functions.php:45
+#: functions.php:48
+#: functions.php:51
+msgid "Default: "
+msgstr "По умолчанию:"
+
+#: functions.php:45
+#: functions.php:213
+msgid "Show as text"
+msgstr "Показывать как текст"
+
+#: functions.php:48
+msgid "Label of the first menu item"
+msgstr "Название первого элемента меню "
+
+#: functions.php:48
+#: functions.php:107
+msgid "Home"
+msgstr "Главная"
+
+#: functions.php:51
+msgid "Subscribe to Feed visibility"
+msgstr "Включить Подписаться на RSS"
+
+#: functions.php:51
+#: functions.php:225
+msgid "Show"
+msgstr "Показать"
+
+#: functions.php:54
+msgid "Header"
+msgstr "Заголовок"
+
+#: functions.php:57
+msgid "Background"
+msgstr "Фон"
+
+#: functions.php:60
+msgid "Menu"
+msgstr "Меню"
+
+#: functions.php:140
+msgid "Theme Options"
+msgstr "Параметры темы"
+
+#: functions.php:147
+msgid "settings saved"
+msgstr "настройки сохранены"
+
+#: functions.php:148
+msgid "settings reset"
+msgstr "настройки сброшены"
+
+#: functions.php:151
+msgid "settings"
+msgstr "настройки"
+
+#: functions.php:155
+msgid "Reset"
+msgstr "сброс"
+
+#: functions.php:208
+msgid "Show as image"
+msgstr "Показывать как картинку"
+
+#: functions.php:230
+msgid "Hide"
+msgstr "Скрыть"
+
+#: functions.php:250
+msgid "Save changes"
+msgstr "Сохранить изменения"
+
+#: functions.php:300
+#, php-format
+msgid "Posted in %s"
+msgstr "Опубликовано %s"
+
+#: functions.php:329
+msgid "Edit"
+msgstr "Редактировать"
+
+#: functions.php:333
+msgid "-Post metadata unknown-"
+msgstr "-Метаданные записи неизвестны-"
+
+#: functions.php:390
+msgid "Page %CURRENT_PAGE% of %TOTAL_PAGES%"
+msgstr "Страница %CURRENT_PAGE% из %TOTAL_PAGES%"
+
+#: functions.php:400
+msgid "First"
+msgstr "Первая"
+
+#: functions.php:402
+#: functions.php:416
+msgid "&#8201;...&#8201;"
+msgstr "&#8201;...&#8201;"
+
+#: functions.php:404
+msgid "&laquo; Previous"
+msgstr "&laquo; Предыдущая"
+
+#: functions.php:414
+msgid "Next &raquo;"
+msgstr "Следующая &raquo;"
+
+#: functions.php:417
+msgid "Last"
+msgstr "Последняя"
+
+#: header.php:16
+msgid "Category &raquo; "
+msgstr "Категория &raquo;"
+
+#: header.php:19
+msgid "Tag &raquo; "
+msgstr "Метка &raquo; "
+
+#: header.php:22
+msgid "Search results &raquo;"
+msgstr "Результаты поиска &raquo;"
+
+#: header.php:64
+#: header.php:68
+msgid "A link to home page"
+msgstr "Ссылка на главную"
+
+#: header.php:87
+msgid "Subscribe to Feed"
+msgstr "Подписаться на RSS"
+
+#: searchform.php:3
+msgid "Search..."
+msgstr "Поиск..."
+
+#: sidebar.php:7
+msgid "calendar"
+msgstr "календарь"
+
+#: sidebar.php:11
+msgid "categories"
+msgstr "разделы"
+
+#: sidebar.php:14
+msgid "tag cloud"
+msgstr "облако тем"
+
+#: sidebar.php:19
+msgid "meta"
+msgstr "мета"
+
+#: sidebar.php:23
+msgid "This page validates as XHTML 1.0 Transitional"
+msgstr "Эта страница проверяет XHTML 1.0 Transitional"
+
+#: sidebar.php:23
+msgid "Valid <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+msgstr "Допустимый <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+
+#: sidebar.php:24
+msgid "XHTML Friends Network"
+msgstr "XHTML Friends Network"
+
+#: sidebar.php:24
+msgid "XFN"
+msgstr "XFN"
+
+#: sidebar.php:25
+msgid "Powered by WordPress, state-of-the-art semantic personal publishing platform."
+msgstr "Сайт работает на ультрасовременной платформе WordPress."
+
+#: single.php:23
+#, php-format
+msgid "You can follow any responses to this entry through the <a href='%s'>RSS 2.0</a> feed."
+msgstr "Вы можете отслеживать комментарии к этой записи с помощью <a href='%s'>RSS 2.0</a>."
+
+#: single.php:26
+#, php-format
+msgid "You can <a href=\"#respond\">leave a response</a>, or <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Вы можете <a href=\"#respond\">оставить комментарий</a>, или <a href=\"%s\" rel=\"trackback\">использовать trackback</a> с вашего сайта."
+
+#: single.php:29
+#, php-format
+msgid "Responses are currently closed, but you can <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "В настоящее время комментарии не разрешены, но вы можете <a href=\"%s\" rel=\"trackback\">использовать trackback</a> с вашего сайта."
+
+#: single.php:32
+msgid "You can skip to the end and leave a response. Pinging is currently not allowed."
+msgstr "Вы можете перейти к концу страницы и оставить комментарий. Эхо-тестирование не разрешено."
+
+#: single.php:35
+msgid "Both comments and pings are currently closed."
+msgstr "Комментарии и эхо-тестирование не разрешены."
+
+#: includes/content-header.inc.php:4
+msgid "Latest Publications"
+msgstr "Последние записи."
+
+#: includes/content-header.inc.php:7
+#, php-format
+msgid "Archive for the &#8216;%s&#8217; Category"
+msgstr "Архив раздела &#8216;%s&#8217; "
+
+#: includes/content-header.inc.php:10
+#, php-format
+msgid "Posts Tagged &#8216;%s&#8217;"
+msgstr "Записи с метками &#8216;%s&#8217;"
+
+#: includes/content-header.inc.php:13
+#, php-format
+msgid "Archive for %s|Daily archive page"
+msgstr "Архив за день %s"
+
+#: includes/content-header.inc.php:16
+#, php-format
+msgid "Archive for %s|Monthly archive page"
+msgstr "Архив за месяц %s"
+
+#: includes/content-header.inc.php:16
+msgid "F, Y"
+msgstr "F, Y"
+
+#: includes/content-header.inc.php:19
+#, php-format
+msgid "Archive for %s|Yearly archive page"
+msgstr "Архив за год %s"
+
+#: includes/content-header.inc.php:19
+msgid "Y"
+msgstr "Y"
+
+#: includes/content-header.inc.php:22
+msgid "Author Archive"
+msgstr "Архив автора"
+
+#: includes/content-header.inc.php:25
+msgid "Search results for "
+msgstr "Результаты поиска по"
+

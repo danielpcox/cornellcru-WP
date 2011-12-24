@@ -1,0 +1,452 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: dfBlog 1.1.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-06-16 17:53+0100\n"
+"PO-Revision-Date: \n"
+"Last-Translator: FYGureout <webmester@sakraft.hu>\n"
+"Language-Team: danielfajardo web <web@danielfajardo.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-KeywordsList: __;_e;_c\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-Language: English\n"
+"X-Poedit-Country: UNITED KINGDOM\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: ./includes\n"
+
+#: 404.php:1
+msgid "Upss, not found..."
+msgstr "Hoppá! Valamit nem találtam..."
+
+#: 404.php:13
+msgid "The page does not exist"
+msgstr "Az oldal nem létezik, vagy átnevezték, áthelyezték, esetleg rosszul lett beírva."
+
+#: 404.php:15
+#, php-format
+msgid "Sorry, but there aren't any posts in the %s category yet."
+msgstr "Elnézést, de a(z) %s kategóriában még nincs bejegyzés."
+
+#: 404.php:17
+msgid "Sorry, but you are looking for something that isn&#8217;t here."
+msgstr "Elnézést, amit keresett, itt nem található."
+
+#: 404.php:19
+msgid "Sorry, but there aren't any posts with this date."
+msgstr "Elnézést, ezzel a dátummal nem találtunk bejegyzést."
+
+#: 404.php:22
+#, php-format
+msgid "Sorry, but there aren't any posts by %s yet."
+msgstr "Elnézést, de a(z) %s szerzőtől nincs még bejegyzés."
+
+#: 404.php:24
+msgid "No posts found."
+msgstr "Nincs bejegyzés."
+
+#: 404.php:29
+msgid "Try a different search?"
+msgstr "Javasolhatunk egy másik keresést,"
+
+#: 404.php:32
+msgid "Or follow one of these links"
+msgstr " vagy ezen linkek közül kiválaszt egyet?"
+
+#: archive.php:13
+#: archive.php:22
+#: index.php:13
+#: search.php:13
+#: search.php:25
+#, php-format
+msgid "Permanent Link to %s"
+msgstr "Közvetlen link a(z) %s című bejegyzéshez"
+
+#: archive.php:22
+#: search.php:25
+msgid "Read the rest of this entry &raquo;"
+msgstr "Érdemes továbbolvasni... &raquo;"
+
+#: comments.php:6
+msgid "Please do not load this page directly. Thanks!"
+msgstr "Kérjük, ezt az oldalt ne olvastassa be közvetlenül! Köszönjük!"
+
+#: comments.php:9
+msgid "This post is password protected. Enter the password to view comments."
+msgstr "Ez a bejegyzés jelszóval védett. A hozzászólások megtekintéséhez meg kell adni a jelszót."
+
+#: comments.php:20
+#: functions.php:286
+msgid "No Comments &#187;"
+msgstr "Nincs hozzászólás &#187;"
+
+#: comments.php:20
+#: functions.php:287
+msgid "1 Comment &#187;"
+msgstr "1 hozzászólás &#187;"
+
+#: comments.php:20
+#: functions.php:288
+msgid "% Comments &#187;"
+msgstr "% hozzászólás &#187;"
+
+#: comments.php:45
+msgid "Comments are closed."
+msgstr "Hozzászólások jelenleg, ezen a részen, nem engedélyezettek"
+
+#: comments.php:55
+msgid "Leave a Reply"
+msgstr "ITT és MOST SZÓLJON HOZZÁ!"
+
+#: comments.php:55
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr "Mondja el véleményét a(z) %s bejegyzésről"
+
+#: comments.php:62
+#, php-format
+msgid "You must be <a href=\"%s\">logged in</a> to post a comment."
+msgstr "<a href=\"%s\">Be kell jelentkezni</a> egy hozzászólás beküldéséhez"
+
+#: comments.php:69
+#, php-format
+msgid "Logged in as <a href=\"%1$s\">%2$s</a>."
+msgstr "Bejelentkezve <a href=\"%1$s\">%2$s</a> néven."
+
+#: comments.php:69
+msgid "Log out of this account"
+msgstr "Kijelentkezés"
+
+#: comments.php:69
+msgid "Log out &raquo;"
+msgstr "  Kijelentkezés  &raquo;"
+
+#: comments.php:72
+msgid "Name"
+msgstr "Név:"
+
+#: comments.php:72
+#: comments.php:74
+msgid "(required)"
+msgstr "(kötelező megadni)"
+
+#: comments.php:74
+msgid "Mail (will not be published)"
+msgstr "E-mail cím (nem kerül nyilvánosságra)"
+
+#: comments.php:76
+msgid "Website"
+msgstr "Honlap"
+
+#: comments.php:78
+#, php-format
+msgid "<strong>XHTML:</strong> You can use these tags: <code>%s</code>"
+msgstr "<strong>XHTML</strong> (engedélyezett tag-ek): <code>%s</code>"
+
+#: comments.php:80
+msgid "Submit Comment"
+msgstr "Üzenet küldése"
+
+#: footer.php:11
+msgid "Powered by "
+msgstr "A honlap motorja:"
+
+#: footer.php:11
+msgid "GoTo top"
+msgstr "Ugrás a lap tetejére"
+
+#: functions.php:38
+msgid "Header Style"
+msgstr "Fejléc stílus"
+
+#: functions.php:38
+#: functions.php:40
+msgid "must be a directory in"
+msgstr "kell egy könyvtárnak léteznie"
+
+#: functions.php:40
+msgid "Background Style"
+msgstr "Háttér stílus"
+
+#: functions.php:42
+msgid "Logo type"
+msgstr "Logó típus"
+
+#: functions.php:42
+#: functions.php:44
+#: functions.php:46
+#: functions.php:48
+msgid "Default: "
+msgstr "Alapbeállítás:"
+
+#: functions.php:42
+#: functions.php:175
+msgid "Show as text"
+msgstr "Mutassa szövegként"
+
+#: functions.php:44
+msgid "Label of the first menu item"
+msgstr "A menü első címkéje"
+
+#: functions.php:44
+#: functions.php:103
+msgid "Home"
+msgstr "Kezdőlap"
+
+#: functions.php:46
+msgid "Subscribe to Feed visibility"
+msgstr "RSS-feliratkozás láthatósága"
+
+#: functions.php:46
+#: functions.php:178
+msgid "Show"
+msgstr "Mutassa"
+
+#: functions.php:48
+msgid "Copyright info in the page bottom"
+msgstr "Jognyilatkozat az oldal alján"
+
+#: functions.php:50
+msgid "Header"
+msgstr "Fejléc"
+
+#: functions.php:52
+msgid "Background"
+msgstr "Háttér"
+
+#: functions.php:54
+msgid "Menu"
+msgstr "Menü"
+
+#: functions.php:56
+msgid "Copyright"
+msgstr "Copyright"
+
+#: functions.php:146
+msgid "Theme Options"
+msgstr "Sablon beállítások"
+
+#: functions.php:153
+msgid "settings saved"
+msgstr "váltpzások elmentve"
+
+#: functions.php:154
+msgid "settings reset"
+msgstr "beállítások alaphelyzetbe"
+
+#: functions.php:159
+msgid "settings"
+msgstr "beállítások"
+
+#: functions.php:175
+msgid "Show as image"
+msgstr "Mutassa képként"
+
+#: functions.php:178
+msgid "Hide"
+msgstr "Rejtett"
+
+#: functions.php:187
+msgid "Save changes"
+msgstr "Változások mentése"
+
+#: functions.php:204
+msgid "Update"
+msgstr "Frissítés"
+
+#: functions.php:205
+#, php-format
+msgid "A new %s update%s is ready for download"
+msgstr "Új %s update%s  készen áll a letöltésre"
+
+#: functions.php:206
+msgid "You have the latest version of the dfBlog Theme installed"
+msgstr "A dfBlog legutóbbi verziója van telepítve"
+
+#: functions.php:207
+msgid "You have a beta version of the dfBlog Theme installed"
+msgstr "A dfBlog egyik béta verziója van telepítve"
+
+#: functions.php:209
+#, php-format
+msgid "Visit the %s dfBlog website%s for extras"
+msgstr "Keresse fel a %s dfBlog website%s a különlegességekért"
+
+#: functions.php:274
+#, php-format
+msgid "Posted in %s"
+msgstr " %s"
+
+#: functions.php:303
+msgid "Edit"
+msgstr "Szerkeszt"
+
+#: functions.php:307
+msgid "-Post metadata unknown-"
+msgstr "- Bejegyzés metaadata ismeretlen -"
+
+#: functions.php:372
+msgid "Page %CURRENT_PAGE% of %TOTAL_PAGES%"
+msgstr "%TOTAL_PAGES% oldalból ez a(z) %CURRENT_PAGE%."
+
+#: functions.php:382
+msgid "First"
+msgstr "Első"
+
+#: functions.php:384
+#: functions.php:398
+msgid "&#8201;...&#8201;"
+msgstr "&#8201;...&#8201;"
+
+#: functions.php:386
+msgid "&laquo; Previous"
+msgstr "&laquo; Előző"
+
+#: functions.php:396
+msgid "Next &raquo;"
+msgstr "Következő &raquo;"
+
+#: functions.php:399
+msgid "Last"
+msgstr "Utolsó"
+
+#: header.php:15
+msgid "Category &raquo; "
+msgstr "Kategória &raquo; "
+
+#: header.php:18
+msgid "Tag &raquo; "
+msgstr "Kiemelt szó &raquo; "
+
+#: header.php:21
+msgid "Search results &raquo;"
+msgstr "Keresés eredménye &raquo;"
+
+#: header.php:69
+#, php-format
+msgid "Howdy, <a href=\"%1$s\" title=\"Edit your profile\">%2$s</a>"
+msgstr "Mi újság, <a href=\"%1$s\" title=\"Saját adatok szerkesztése\">%2$s</a>?"
+
+#: header.php:77
+msgid "Users"
+msgstr "Felhasználó"
+
+#: header.php:85
+#: header.php:89
+msgid "A link to home page"
+msgstr "Kezdőlap"
+
+#: header.php:108
+msgid "Subscribe to Feed"
+msgstr "RSS-hírekre feliratkozás"
+
+#: searchform.php:3
+msgid "Search..."
+msgstr "Keresés..."
+
+#: sidebar.php:7
+msgid "calendar"
+msgstr "naptár"
+
+#: sidebar.php:11
+msgid "categories"
+msgstr "kategória"
+
+#: sidebar.php:14
+msgid "tag cloud"
+msgstr "kiemelt szavak"
+
+#: sidebar.php:19
+msgid "meta"
+msgstr "meta"
+
+#: sidebar.php:21
+msgid "This page validates as XHTML 1.0 Transitional"
+msgstr "Ez az oldal megfelel az XHTML 1.0 Transitional előírásainak"
+
+#: sidebar.php:21
+msgid "Valid <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+msgstr "<abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr> ellenőrzés"
+
+#: sidebar.php:22
+msgid "XHTML Friends Network"
+msgstr "XHTML Barátok Hálózata"
+
+#: sidebar.php:22
+msgid "XFN"
+msgstr "XFN"
+
+#: sidebar.php:23
+msgid "Powered by WordPress, state-of-the-art semantic personal publishing platform."
+msgstr "A honlap lelke a Wordpress"
+
+#: single.php:23
+#, php-format
+msgid "You can follow any responses to this entry through the <a href='%s'>RSS 2.0</a> feed."
+msgstr "Valamennyi hozzászólást az <a href='%s'>RSS 2.0</a> hírcsatornán lehet követni."
+
+#: single.php:26
+#, php-format
+msgid "You can <a href=\"#respond\">leave a response</a>, or <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "<a href=\"#respond\">Szóljon hozzá</a>, vagy adjon a saját honlapjáról egy <a href=\"%s\" rel=\"trackback\">visszakövetés</a>t."
+
+#: single.php:29
+#, php-format
+msgid "Responses are currently closed, but you can <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "A hozzászólás ezen a részen nem engedélyezett, de lehetősége van a saját honlapjáról egy <a href=\"%s\" rel=\"trackback\">visszakövetés</a>t indítani."
+
+#: single.php:32
+msgid "You can skip to the end and leave a response. Pinging is currently not allowed."
+msgstr "A bejegyzés végére ugorhat, és megírhatja hozzászólását. Visszajelzés jelenleg nem engedélyezett."
+
+#: single.php:35
+msgid "Both comments and pings are currently closed."
+msgstr "A hozzászólás és a visszajelzés jelenleg nem engedélyezett."
+
+#: includes/content-header.inc.php:4
+msgid "Latest Publications"
+msgstr "Legutóbbi bejegyzések"
+
+#: includes/content-header.inc.php:7
+#, php-format
+msgid "Archive for the &#8216;%s&#8217; Category"
+msgstr "&#8216;%s&#8217; kategória bejegyzései"
+
+#: includes/content-header.inc.php:10
+#, php-format
+msgid "Posts Tagged &#8216;%s&#8217;"
+msgstr "&#8216;%s&#8217; kifejezéssel jelölt bejegyzések"
+
+#: includes/content-header.inc.php:13
+#, php-format
+msgid "Archive for %s|Daily archive page"
+msgstr "%s nap bejegyzései|Naponkénti bejegyzések gyűjtőoldala"
+
+#: includes/content-header.inc.php:16
+#, php-format
+msgid "Archive for %s|Monthly archive page"
+msgstr "%s hónap bejegyzései|Havonkénti bejegyzések gyűjtőoldala"
+
+#: includes/content-header.inc.php:16
+msgid "F, Y"
+msgstr "Y. F"
+
+#: includes/content-header.inc.php:19
+#, php-format
+msgid "Archive for %s|Yearly archive page"
+msgstr "%s év bejegyzései|Évenkénti bejegyzések gyűjtőoldala"
+
+#: includes/content-header.inc.php:19
+msgid "Y"
+msgstr "Y."
+
+#: includes/content-header.inc.php:22
+msgid "Author Archive"
+msgstr "Szerzők szerinti bejegyzések"
+
+#: includes/content-header.inc.php:25
+msgid "Search results for "
+msgstr "Keresési eredmény"
+

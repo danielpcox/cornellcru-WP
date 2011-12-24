@@ -1,0 +1,379 @@
+#: functions.php:244
+msgid ""
+msgstr ""
+"Project-Id-Version: dfBlog v1.1.0\n"
+"PO-Revision-Date: 2009-05-04 17:01-0400\n"
+"Last-Translator: admin <milansvec@msn.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%100/10==1 ? 2 : n%10==1 ? 0 : (n+9)%10>3 ? 2 : 1;\n"
+"X-Poedit-Language: Czech\n"
+"X-Poedit-Country: CZECH REPUBLIC\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e;__ngettext:1,2;__ngettext_noop:1,2;_c\n"
+"X-Poedit-Basepath: \n"
+"X-Poedit-SearchPath-0: ."
+
+#: includes/content-header.inc.php:7
+#, php-format
+msgid "Archive for the &#8216;%s&#8217; Category"
+msgstr "Archiv pro &#8216;%s&#8217; Rubrika"
+
+#: includes/content-header.inc.php:10
+#, php-format
+msgid "Posts Tagged &#8216;%s&#8217;"
+msgstr "Příspěvky označeny štítky"
+
+#: includes/content-header.inc.php:13
+#, php-format
+msgid "Archive for %s|Daily archive page"
+msgstr "Archiv pro %s|Stránka archivu dne"
+
+#: includes/content-header.inc.php:16
+#, php-format
+msgid "Archive for %s|Monthly archive page"
+msgstr "Archiv pro %s|Stránka archivu měsíce"
+
+#: includes/content-header.inc.php:16
+msgid "F, Y"
+msgstr "F, Y"
+
+#: includes/content-header.inc.php:19
+#, php-format
+msgid "Archive for %s|Yearly archive page"
+msgstr "Archiv pro %s|Stránka archivu roku"
+
+#: includes/content-header.inc.php:19
+msgid "Y"
+msgstr "Y"
+
+#: includes/content-header.inc.php:22
+msgid "Author Archive"
+msgstr "Archiv autora"
+
+#: archive.php:13
+#: archive.php:22
+#: index.php:13
+#: search.php:13
+#: search.php:25
+#, php-format
+msgid "Permanent Link to %s"
+msgstr "Stálý odkaz na %s "
+
+#: functions.php:211
+#, php-format
+msgid "Posted in %s"
+msgstr "Vloženo %s"
+
+#: comments.php:20
+#: functions.php:223
+msgid "No Comments &#187;"
+msgstr "Žádné komentáře &#187;"
+
+#: comments.php:20
+#: functions.php:224
+msgid "1 Comment &#187;"
+msgstr "1 Komentář &#187;"
+
+#: comments.php:20
+#: functions.php:225
+msgid "% Comments &#187;"
+msgstr "% Komentáře &#187;"
+
+#: archive.php:22
+#: search.php:25
+msgid "Read the rest of this entry &raquo;"
+msgstr "... celý příspěvek &raquo;"
+
+#: functions.php:240
+msgid "Edit"
+msgstr "Upravit"
+
+#: 404.php:15
+#, php-format
+msgid "Sorry, but there aren't any posts in the %s category yet."
+msgstr "Promiňte, v rubrice %s ještě nejsou příspěvky."
+
+#: 404.php:19
+msgid "Sorry, but there aren't any posts with this date."
+msgstr "Promiňte, s tímto datumem ještě nejsou příspěvky."
+
+#: 404.php:22
+#, php-format
+msgid "Sorry, but there aren't any posts by %s yet."
+msgstr "Promiňte, od %s ještě nejsou příspěvky."
+
+#: 404.php:24
+msgid "No posts found."
+msgstr "Žádné příspěvky nebyly nalezeny."
+
+#: archives.php:12
+msgid "Archives"
+msgstr "Archivy"
+
+#: archives.php:14
+msgid "Archives by Month"
+msgstr "Archiv podle měsíce"
+
+#: archives.php:19
+msgid "Archives by Subject"
+msgstr "Archiv podle předmětu"
+
+#: archives.php:26
+msgid "Tags"
+msgstr "Štítky"
+
+#: comments.php:6
+msgid "Please do not load this page directly. Thanks!"
+msgstr "Nestahujte tuto stránku. Díky!"
+
+#: comments.php:9
+msgid "This post is password protected. Enter the password to view comments."
+msgstr "Tento příspěvek je chráněn heslem. Pro zobrazení komentářů zadejte heslo."
+
+#: comments.php:45
+msgid "Comments are closed."
+msgstr "Komentáře nejsou dostupné."
+
+#: comments.php:55
+msgid "Leave a Reply"
+msgstr "Napište komentář"
+
+#: comments.php:55
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr "Napište odpověď %s"
+
+#: comments.php:62
+#, php-format
+msgid "You must be <a href=\"%s\">logged in</a> to post a comment."
+msgstr "Pro napsání komentáře se nedřív <a href=\"%s\">přihlašte</a> "
+
+#: comments.php:69
+#, php-format
+msgid "Logged in as <a href=\"%1$s\">%2$s</a>."
+msgstr "Přihlášeni jako <a href=\"%1$s\">%2$s</a>."
+
+#: comments.php:69
+msgid "Log out of this account"
+msgstr "Odhlášení od účtu."
+
+#: comments.php:69
+msgid "Log out &raquo;"
+msgstr "Odhlášeni &raquo;"
+
+#: comments.php:72
+msgid "Name"
+msgstr "Jméno"
+
+#: comments.php:72
+#: comments.php:74
+msgid "(required)"
+msgstr "(povinné)"
+
+#: comments.php:74
+msgid "Mail (will not be published)"
+msgstr "E-mail (nezveřejňuje se)"
+
+#: comments.php:76
+msgid "Website"
+msgstr "Web"
+
+#: comments.php:78
+#, php-format
+msgid "<strong>XHTML:</strong> You can use these tags: <code>%s</code>"
+msgstr "<strong>XHTML:</strong> Můžete použít tyto štítky: <code>%s</code>"
+
+#: comments.php:80
+msgid "Submit Comment"
+msgstr "Komentář odeslat"
+
+#: footer.php:7
+msgid "Powered by "
+msgstr "Podporuje  "
+
+#: footer.php:7
+#, php-format
+msgid "%d processes generated in %s seconds."
+msgstr "%d procesů vytvořeno během %s vteřin."
+
+#: functions.php:60
+#: functions.php:63
+msgid "Home"
+msgstr "Home"
+
+#: functions.php:97
+msgid "Theme Options"
+msgstr "Možnosti vzhledu"
+
+#: functions.php:104
+msgid "settings saved"
+msgstr "nastavení uložena"
+
+#: functions.php:105
+msgid "settings reset"
+msgstr "původní nastavení obnovena"
+
+#: functions.php:108
+msgid "settings"
+msgstr "nastavení"
+
+#: functions.php:112
+msgid "Reset"
+msgstr "Obnovit nastavení"
+
+#: functions.php:162
+msgid "Save changes"
+msgstr "Uložit změny"
+
+#: header.php:16
+msgid "Category &raquo; "
+msgstr "Rubrika &raquo;"
+
+#: header.php:19
+msgid "Tag &raquo; "
+msgstr "Štítek &raquo;"
+
+#: header.php:22
+msgid "Search results &raquo;"
+msgstr "Výsledky hledání &raquo;"
+
+#: header.php:64
+#: header.php:68
+msgid "A link to home page"
+msgstr "Odkaz na hlavní stránku"
+
+#: header.php:87
+msgid "Subscribe to Feed"
+msgstr "RSS"
+
+#: includes/content-header.inc.php:4
+msgid "Latest Publications"
+msgstr "Novinky"
+
+#: 404.php:1
+#: archive.php:40
+#: index.php:39
+#: links.php:41
+#: page.php:28
+#: search.php:39
+#: single.php:50
+msgid "Upss, not found..."
+msgstr "Upss, nenalezeno..."
+
+#: 404.php:17
+msgid "Sorry, but you are looking for something that isn&#8217;t here."
+msgstr "Promiňte, hledáte něco, co tu není."
+
+#: includes/content-header.inc.php:25
+msgid "Search results for "
+msgstr "Výsledky vyhledávání pro"
+
+#: searchform.php:3
+#: searchform.php:3
+#: searchform.php:3
+msgid "Search..."
+msgstr "Hledat..."
+
+#: sidebar.php:7
+msgid "calendar"
+msgstr "kalendář"
+
+#: sidebar.php:11
+msgid "categories"
+msgstr "rubriky"
+
+#: sidebar.php:14
+msgid "tag cloud"
+msgstr "oblak štítků"
+
+#: sidebar.php:19
+msgid "meta"
+msgstr "meta"
+
+#: sidebar.php:23
+msgid "This page validates as XHTML 1.0 Transitional"
+msgstr "Tato stránka se potvrzuje jako XHTML 1.0 Transitional"
+
+#: sidebar.php:23
+msgid "Valid <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+msgstr "Platný <abbr title=\"eXtensible HyperText Markup Language\">XHTML</abbr>"
+
+#: sidebar.php:24
+msgid "XHTML Friends Network"
+msgstr "Síť přátel XHTML"
+
+#: sidebar.php:24
+msgid "XFN"
+msgstr "XFN"
+
+#: sidebar.php:25
+msgid "Powered by WordPress, state-of-the-art semantic personal publishing platform."
+msgstr "Podporuje WordPress, nejmodernější semantický osobní redakční systém."
+
+#: single.php:23
+#, php-format
+msgid "You can follow any responses to this entry through the <a href='%s'>RSS 2.0</a> feed."
+msgstr "Můžete sledovat každou odpověď na tento příspěvek službou <a href='%s'>RSS 2.0</a>."
+
+#: single.php:26
+#, php-format
+msgid "You can <a href=\"#respond\">leave a response</a>, or <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Můžete <a href=\"#respond\">napsat odpověď</a>, nebo <a href=\"%s\" rel=\"trackback\">využít trackback</a> z vašeho vlastního webu."
+
+#: single.php:29
+#, php-format
+msgid "Responses are currently closed, but you can <a href=\"%s\" rel=\"trackback\">trackback</a> from your own site."
+msgstr "Odpovědi nejsou nyní dostupné, ale můžete <a href=\"%s\" rel=\"trackback\">využít trackback</a> z vašeho vlastního webu."
+
+#: single.php:32
+msgid "You can skip to the end and leave a response. Pinging is currently not allowed."
+msgstr "Můžete přejít na konec a napsat odpověď. Ping odkazy nejsou nyní povoleny."
+
+#: single.php:35
+msgid "Both comments and pings are currently closed."
+msgstr "Komentáře i ping odkazy nejsou nyní dostupné."
+
+#: 404.php:13
+msgid "The page does not exist"
+msgstr "Stránka neexistuje"
+
+#: 404.php:29
+msgid "Try a different search?"
+msgstr "Zkusíme jiné hledání?"
+
+#: 404.php:32
+msgid "Or follow one of these links"
+msgstr "Nebo zvolit jeden z těchto odkazů"
+
+#: footer.php:8
+msgid "GoTo top"
+msgstr "Jdi na začátek"
+
+#: functions.php:301
+#, php-format
+msgid "Page %CURRENT_PAGE% of %TOTAL_PAGES%"
+msgstr "Stránka %CURRENT_PAGE% z %TOTAL_PAGES%"
+
+#: functions.php:311
+msgid "First"
+msgstr "První"
+
+#: functions.php:313
+#: functions.php:327
+msgid "&#8201;...&#8201;"
+msgstr "&#8201;...&#8201;"
+
+#: functions.php:315
+msgid "&laquo; Previous"
+msgstr "&laquo; Předchozí"
+
+#: functions.php:325
+msgid "Next &raquo;"
+msgstr "Další &raquo;"
+
+#: functions.php:328
+msgid "Last"
+msgstr "Poslední"
+
